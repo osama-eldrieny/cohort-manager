@@ -964,7 +964,8 @@ function calculateChecklistProgress(student) {
     
     const completedItems = checklistItems.filter(item => {
         if (item === 'figmaStatus') {
-            return student.checklist[item] && student.checklist[item].length > 0;
+            // Only count as completed if it's NOT "Not started"
+            return student.checklist[item] && student.checklist[item] !== 'Not started';
         }
         return student.checklist[item];
     }).length;
