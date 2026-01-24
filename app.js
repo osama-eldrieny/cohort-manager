@@ -1098,6 +1098,7 @@ function saveStudent(event) {
     };
 
     console.log('📝 Saving student:', student.name, '| Status:', student.status, '| ID:', student.id);
+    console.log('💰 Payment: Method=' + student.paymentMethod + ', Total=' + student.totalAmount + ', Paid=' + student.paidAmount, ', Remaining=' + student.remaining);
 
     // Add checklist for any cohort-related status
     const isCohortStatus = student.status && (student.status.startsWith('Cohort') || student.status === 'Next Cohort');
@@ -1160,10 +1161,9 @@ function saveStudent(event) {
 // ============================================
 
 async function saveToStorage() {
-    // Save to localStorage first (immediate)
-    localStorage.setItem('students', JSON.stringify(students));
+    // Skip localStorage - it has a size limit. Use Supabase only
     
-    // Try to save to server
+    // Save to server
     try {
         const response = await fetch(`${API_BASE_URL}/api/students`, {
             method: 'POST',

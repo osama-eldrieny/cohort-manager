@@ -324,8 +324,13 @@ app.post('/api/send-email', async (req, res) => {
             html: `<pre style="font-family: Arial, sans-serif; white-space: pre-wrap; word-wrap: break-word;">${body.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>`
         };
 
+        console.log(`📧 Email headers: From=${mailOptions.from}, To=${trimmedEmail}, Subject="${subject.substring(0, 50)}..."`);
+        
         const info = await transporter.sendMail(mailOptions);
-        console.log(`✅ Email sent to ${studentName} <${trimmedEmail}> (Message ID: ${info.messageId})`);
+        console.log(`✅ Email sent to ${studentName} <${trimmedEmail}>`);
+        console.log(`   Message ID: ${info.messageId}`);
+        console.log(`   Response: ${info.response}`);
+        console.log(`   ⚠️  If user doesn't receive: check spam/promotions folder or verify email address`);
         
         res.json({ 
             success: true, 
