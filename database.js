@@ -90,13 +90,23 @@ export async function saveAllStudents(students) {
             deduplicatedStudents.push(student);
         });
 
-        // Prepare data for upsert
+        // Prepare data for upsert - include ALL fields from form
         const studentsData = deduplicatedStudents.map(student => ({
             name: student.name || null,
             email: student.email || null,
             cohort: student.cohort || null,
             status: student.status || null,
             location: student.location || null,
+            linkedin: student.linkedin || null,
+            whatsapp: student.whatsapp || null,
+            figma_email: student.figmaEmail || null,
+            language: student.language || null,
+            total_amount: parseFloat(student.totalAmount) || 0,
+            paid_amount: parseFloat(student.paidAmount) || 0,
+            remaining: parseFloat(student.remaining) || 0,
+            note: student.note || null,
+            payment_method: student.paymentMethod || null,
+            checklist: student.checklist ? JSON.stringify(student.checklist) : null
         }));
 
         const { error: upsertError } = await supabase
