@@ -1,0 +1,6 @@
+ID,Name,Email,LinkedIn,WhatsApp,Location,Language,Status,Total Amount,Paid Amount,Remaining,Payment Method,Note,Added to Community,Shared Agreement,Signed Agreement,Shared Drive,Created Figma,Shared Master Figma,Figma Status
+1,Ahmed Hassan,ahmed@example.com,https://linkedin.com/in/ahmed,+20123456789,Egypt,Arabic,Next Cohort,500,0,500,Stripe,Sample student,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,Not started
+2,Layla Mohamed,layla@example.com,https://linkedin.com/in/layla,+966501234567,Saudi Arabia,Arabic,Next Cohort,500,250,250,Instapay,Payment plan needed,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,Not started
+3,John Smith,john@example.com,https://linkedin.com/in/john,+12345678900,United States,English,Waiting list,500,0,500,Stripe,Interested,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,Not started
+4,Sarah Johnson,sarah@example.com,https://linkedin.com/in/sarah,+19876543210,Canada,English,Graduated,500,500,0,Stripe,Completed successfully,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,Approved
+5,Fatima Al-Mansouri,fatima@example.com,https://linkedin.com/in/fatima,+971501234567,United Arab Emirates,Arabic,Standby,500,500,0,Instapay,Ready to start,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,Not started
