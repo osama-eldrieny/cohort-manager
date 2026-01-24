@@ -1113,7 +1113,7 @@ function saveStudent(event) {
         paymentMethod: document.getElementById('paymentMethod').value
     };
 
-    console.log('📝 Saving student:', student.name, '| Status:', student.status, '| ID:', student.id);
+    console.log('📝 Saving student:', student.name, '| Status:', student.status, '| ID:', student.id, '| Email:', student.email);
     console.log('💰 Payment: Method=' + student.paymentMethod + ', Total=' + student.totalAmount + ', Paid=' + student.paidAmount, ', Remaining=' + student.remaining);
 
     // Add checklist for any cohort-related status
@@ -1138,9 +1138,14 @@ function saveStudent(event) {
         const numericId = parseInt(currentEditingId, 10) || currentEditingId;
         const index = students.findIndex(s => s.id === numericId || String(s.id) === String(currentEditingId));
         if (index !== -1) {
+            console.log('✏️ UPDATE: Found student at index', index, '- updating existing record');
             students[index] = student;
+        } else {
+            console.log('⚠️ UPDATE: Could not find student with ID', currentEditingId, '- creating new record');
+            students.push(student);
         }
     } else {
+        console.log('➕ CREATE: Adding new student to local array');
         students.push(student);
     }
 
@@ -1148,8 +1153,9 @@ function saveStudent(event) {
     
     // If editing and email changed, delete old record from server first
     if (currentEditingId && originalEditingEmail && originalEditingEmail !== newEmail) {
-        console.log(`📝 Email changed from "${originalEditingEmail}" to "${newEmail}" - removing old record`);
+        console.log(`🔄 Email changed from "${originalEditingEmail}" to "${newEmail}" - will delete old record first`);
         deleteStudentByEmail(originalEditingEmail).then(() => {
+            console.log(`✅ Old email record deleted, now saving new student with email: ${newEmail}`);
             saveToStorage(student).then(() => {
                 loadStudents().then(() => {
                     renderPage(document.querySelector('.page.active').id);
@@ -1159,6 +1165,7 @@ function saveStudent(event) {
         });
     } else {
         // Save to storage and refresh UI - pass only the single student
+        console.log(`💾 Saving student to server (${currentEditingId ? 'update' : 'create'}): ${newEmail}`);
         saveToStorage(student).then(() => {
             loadStudents().then(() => {
                 renderPage(document.querySelector('.page.active').id);
@@ -1179,13 +1186,21 @@ function saveStudent(event) {
 async function saveToStorage(studentToSave = null) {
     // If a specific student is provided, save only that one. Otherwise save all (for initial load)
     const dataToSend = studentToSave || students;
+    const dataArray = Array.isArray(dataToSend) ? dataToSend : [dataToSend];
+    
+    console.log(`📤 Sending to server: ${dataArray.length} student(s)`);
+    if (dataArray.length === 1) {
+        console.log(`   - Single student: ${dataArray[0].name} (${dataArray[0].email})`);
+    } else {
+        console.log(`   - Bulk students: IDs ${dataArray.map(s => s.id).join(', ')}`);
+    }
     
     // Save to server
     try {
         const response = await fetch(`${API_BASE_URL}/api/students`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(Array.isArray(dataToSend) ? dataToSend : [dataToSend])
+            body: JSON.stringify(dataArray)
         });
         
         if (response.ok) {
@@ -1195,7 +1210,7 @@ async function saveToStorage(studentToSave = null) {
         } else {
             const errorData = await response.json();
             const errorMsg = errorData.error || 'Server save failed';
-            console.warn('⚠️ Server error:', errorMsg);
+            console.warn('⚠️ Server error (HTTP', response.status + '):', errorMsg);
             showToast(errorMsg, 'error');
             throw new Error(errorMsg);
         }
