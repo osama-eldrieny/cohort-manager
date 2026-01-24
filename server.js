@@ -77,6 +77,7 @@ const corsOptions = {
         const allowedOrigins = [
             'https://osama-eldrieny.github.io',
             'http://localhost:3000',
+            'http://localhost:3002',
             'http://localhost:8000',
             'http://localhost:5173'
         ];
