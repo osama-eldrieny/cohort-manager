@@ -157,6 +157,40 @@ export async function deleteStudent(id) {
     }
 }
 
+// Delete student by email (for handling email changes during edit)
+export async function deleteStudentByEmail(email) {
+    try {
+        if (!supabase) {
+            // Fallback to JSON file
+            const studentsPath = path.join(__dirname, 'students.json');
+            let students = [];
+
+            try {
+                const data = fs.readFileSync(studentsPath, 'utf-8');
+                students = JSON.parse(data);
+            } catch {
+                students = [];
+            }
+
+            students = students.filter(s => s.email !== email);
+            fs.writeFileSync(studentsPath, JSON.stringify(students, null, 2));
+            console.log(`✅ Student with email ${email} deleted from JSON file (local fallback)`);
+            return;
+        }
+
+        const { error } = await supabase
+            .from('students')
+            .delete()
+            .eq('email', email);
+
+        if (error) throw error;
+        console.log(`✅ Student with email ${email} deleted from Supabase`);
+    } catch (error) {
+        console.error('❌ Error deleting student by email:', error.message);
+        throw error;
+    }
+}
+
 // Export data
 export async function exportData() {
     try {

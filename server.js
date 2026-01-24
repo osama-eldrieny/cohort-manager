@@ -156,16 +156,24 @@ app.get('/api/students', async (req, res) => {
     }
 });
 
-// POST /api/students - Save all students
+// POST /api/students - Save all students or delete by email
 app.post('/api/students', async (req, res) => {
     try {
-        const students = req.body;
+        const body = req.body;
         
-        if (!Array.isArray(students)) {
+        // Handle delete by email request
+        if (body.deleteByEmail) {
+            await deleteStudentByEmail(body.deleteByEmail);
+            console.log(`✅ Deleted student with email: ${body.deleteByEmail}`);
+            return res.json({ success: true, message: 'Student deleted successfully' });
+        }
+        
+        // Handle save students
+        if (!Array.isArray(body)) {
             return res.status(400).json({ error: 'Students must be an array' });
         }
         
-        const result = await saveAllStudents(students);
+        const result = await saveAllStudents(body);
         console.log(`✅ Auto-saved ${result.count} students to database`);
         res.json({ 
             success: true, 

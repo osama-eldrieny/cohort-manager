@@ -4,6 +4,7 @@
 
 let students = [];
 let currentEditingId = null;
+let originalEditingEmail = null; // Track original email when editing
 let charts = {};
 const COHORTS = ['Cohort 0', 'Cohort 1 - Cradis', 'Cohort 1 - Zomra', 'Cohort 2', 'Cohort 3'];
 
@@ -941,6 +942,7 @@ function editStudent(id) {
     }
 
     currentEditingId = id;
+    originalEditingEmail = student.email; // Store original email for comparison
     document.getElementById('modalTitle').textContent = 'Edit Student';
     
     document.getElementById('name').value = student.name || '';
@@ -1008,6 +1010,25 @@ function deleteStudent(id) {
     }
 }
 
+// Delete student by email (for handling email changes during edit)
+async function deleteStudentByEmail(email) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/students`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deleteByEmail: email })
+        });
+        
+        if (!response.ok) {
+            console.warn('⚠️ Failed to delete old email record:', email);
+        } else {
+            console.log('✅ Deleted old email record:', email);
+        }
+    } catch (error) {
+        console.warn('⚠️ Error deleting old email record:', error);
+    }
+}
+
 function calculateRemaining() {
     const total = parseFloat(document.getElementById('totalAmount').value) || 0;
     const paid = parseFloat(document.getElementById('paidAmount').value) || 0;
@@ -1056,11 +1077,12 @@ function saveStudent(event) {
     event.preventDefault();
 
     const statusValue = document.getElementById('status').value;
+    const newEmail = document.getElementById('email').value;
     
     const student = {
         id: currentEditingId || Date.now().toString(),
         name: document.getElementById('name').value,
-        email: document.getElementById('email').value,
+        email: newEmail,
         linkedin: document.getElementById('linkedin').value,
         whatsapp: document.getElementById('whatsapp').value,
         figmaEmail: document.getElementById('figmaEmail').value,
@@ -1105,13 +1127,30 @@ function saveStudent(event) {
 
     closeStudentModal();
     
-    // Save to storage and refresh UI
-    saveToStorage().then(() => {
-        loadStudents().then(() => {
-            renderPage(document.querySelector('.page.active').id);
-            showToast('Student saved successfully!', 'success');
+    // If editing and email changed, delete old record from server first
+    if (currentEditingId && originalEditingEmail && originalEditingEmail !== newEmail) {
+        console.log(`📝 Email changed from "${originalEditingEmail}" to "${newEmail}" - removing old record`);
+        deleteStudentByEmail(originalEditingEmail).then(() => {
+            saveToStorage().then(() => {
+                loadStudents().then(() => {
+                    renderPage(document.querySelector('.page.active').id);
+                    showToast('Student updated successfully!', 'success');
+                });
+            });
         });
-    });
+    } else {
+        // Save to storage and refresh UI
+        saveToStorage().then(() => {
+            loadStudents().then(() => {
+                renderPage(document.querySelector('.page.active').id);
+                showToast('Student saved successfully!', 'success');
+            });
+        });
+    }
+    
+    // Reset tracking variables
+    currentEditingId = null;
+    originalEditingEmail = null;
 }
 
 // ============================================
