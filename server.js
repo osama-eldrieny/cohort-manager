@@ -56,11 +56,12 @@ app.use((req, res, next) => {
         'http://localhost:5173'
     ];
     
-    // Always allow the origin if it's in our list
-    if (!origin || allowedOrigins.includes(origin)) {
-        res.header('Access-Control-Allow-Origin', origin || '*');
-    } else {
+    // Always allow if origin is in our list
+    if (allowedOrigins.includes(origin)) {
         res.header('Access-Control-Allow-Origin', origin);
+    } else {
+        // For other origins, set to *
+        res.header('Access-Control-Allow-Origin', '*');
     }
     
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
@@ -172,12 +173,10 @@ app.post('/api/students', async (req, res) => {
             return res.json({ success: true, message: 'Student deleted successfully' });
         }
         
-        // Handle save students
-        if (!Array.isArray(body)) {
-            return res.status(400).json({ error: 'Students must be an array' });
-        }
+        // Handle save students - can be array or single object
+        const studentsToSave = Array.isArray(body) ? body : [body];
         
-        const result = await saveAllStudents(body);
+        const result = await saveAllStudents(studentsToSave);
         console.log(`✅ Auto-saved ${result.count} students to database`);
         res.json({ 
             success: true, 
@@ -194,12 +193,13 @@ app.post('/api/students', async (req, res) => {
 app.delete('/api/students/:id', async (req, res) => {
     try {
         const { id } = req.params;
+        console.log(`🗑️ DELETE request for student ID: ${id}`);
         await deleteStudent(id);
         console.log(`✅ Deleted student with ID: ${id}`);
         res.json({ success: true, message: 'Student deleted successfully' });
     } catch (error) {
         console.error('❌ Error deleting student:', error.message);
-        res.status(500).json({ error: 'Failed to delete student' });
+        res.status(500).json({ error: 'Failed to delete student: ' + error.message });
     }
 });
 

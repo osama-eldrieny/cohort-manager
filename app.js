@@ -994,18 +994,34 @@ function deleteStudent(id) {
     if (confirm('Are you sure you want to delete this student?')) {
         // Convert to number for comparison with Supabase IDs, but also try string comparison
         const numericId = parseInt(id, 10) || id;
-        const studentName = students.find(s => s.id === numericId || String(s.id) === String(id))?.name || id;
+        const student = students.find(s => s.id === numericId || String(s.id) === String(id));
+        const studentName = student?.name || id;
+        
+        // Remove from local array
         students = students.filter(s => !(s.id === numericId || String(s.id) === String(id)));
         
-        console.log('🗑️ Deleted student:', studentName);
-        saveToStorage();
+        console.log('🗑️ Deleting student:', studentName, 'with ID:', id);
         
-        // Reload data from server to ensure consistency
-        saveToStorage().then(() => {
-            loadStudents().then(() => {
-                renderPage(document.querySelector('.page.active').id);
-                showToast('Student deleted successfully', 'success');
-            });
+        // Call dedicated delete endpoint
+        fetch(`${API_BASE_URL}/api/students/${id}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => {
+            if (response.ok) {
+                console.log('✅ Student deleted from server');
+                loadStudents().then(() => {
+                    renderPage(document.querySelector('.page.active').id);
+                    showToast('Student deleted successfully', 'success');
+                });
+            } else {
+                console.warn('⚠️ Server delete failed, but local removed');
+                showToast('Deleted locally (server update may have failed)', 'warning');
+            }
+        })
+        .catch(error => {
+            console.error('❌ Error deleting student:', error);
+            showToast('Error deleting student', 'error');
         });
     }
 }
