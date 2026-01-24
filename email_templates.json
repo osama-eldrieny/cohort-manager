@@ -34,5 +34,14 @@
     "body": "🎉 Congratulations! {name},\nYou’re just one step away from joining the Design Tokens Community. Click the links below to get started:\n\n🔗 Main Community\nJoin all students from past & current camps.\nhttps://chat.whatsapp.com/DgEOepsbvR60G19QlQh9NW\n\n💬 General Group Chat\nA space for everyone to share & discuss design, UI/UX, and more.\nhttps://chat.whatsapp.com/EFhfq1GlGmwLhijfwKEvVv\n\n👥 Design Tokens Camp Cohort 3\nYour private group for this camp—say hi and introduce yourself!\nhttps://chat.whatsapp.com/JUjg4hCxGlE6jv1flQGOrW",
     "created_at": "2026-01-24 16:32:06",
     "updated_at": "2026-01-24 16:32:06"
+  },
+  {
+    "id": "template_1769252530903",
+    "name": "Camp Feedback",
+    "button_label": "Camp Feedback",
+    "subject": "Your Honest Feedback = Your Bootcamp Certificate",
+    "body": "Dear {name} 🎉,\n\nCongratulations on successfully completing the Bootcamp 👏\n\nTo receive your certificate, submitting your honest feedback is a required step.\n\nWe kindly ask that you take a few minutes to provide honest feedback, which will be shared publicly to help future cohorts.\n\nYour input helps us improve the program and make it even better for everyone 🚀\n\nPlease submit your feedback here:\nhttps://forms.gle/Kff3Snxuv5tHrwUp7\n\nThank you for your effort and commitment throughout the Bootcamp 🙌\n\nWishing you continued success ahead 🌟",
+    "created_at": "2026-01-24 17:28:56",
+    "updated_at": "2026-01-24 17:28:56"
   }
 ]
