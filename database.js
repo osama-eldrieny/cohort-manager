@@ -74,7 +74,8 @@ export async function saveAllStudents(students) {
             return { count: students.length };
         }
 
-        // Prepare data for insert/update
+        // Use UPSERT to handle both new and existing students
+        // Match by email to update existing students
         const studentsData = students.map(student => ({
             name: student.name || null,
             email: student.email || null,
@@ -83,21 +84,11 @@ export async function saveAllStudents(students) {
             location: student.location || null,
         }));
 
-        // Clear existing and insert new
-        const { error: deleteError } = await supabase
+        const { error: upsertError } = await supabase
             .from('students')
-            .delete()
-            .neq('id', -1); // Delete all
+            .upsert(studentsData, { onConflict: 'email' });
 
-        if (deleteError && deleteError.code !== 'PGRST116') {
-            throw deleteError;
-        }
-
-        const { error: insertError } = await supabase
-            .from('students')
-            .insert(studentsData);
-
-        if (insertError) throw insertError;
+        if (upsertError) throw upsertError;
 
         console.log(`✅ Saved ${students.length} students to Supabase`);
         return { count: students.length };
@@ -221,6 +212,7 @@ export async function saveEmailTemplate(id, name, button_label, subject, body) {
             .from('email_templates')
             .upsert({
                 name,
+                button_label,
                 subject,
                 body
             }, {
