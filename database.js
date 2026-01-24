@@ -302,16 +302,17 @@ export async function saveEmailTemplate(id, name, button_label, subject, body) {
         const { error } = await supabase
             .from('email_templates')
             .upsert({
+                id,
                 name,
                 button_label,
                 subject,
                 body
             }, {
-                onConflict: 'name'
+                onConflict: 'id'
             });
 
         if (error) throw error;
-        console.log(`✅ Email template "${name}" saved to Supabase`);
+        console.log(`✅ Email template "${name}" saved to Supabase (UPSERT on ID to prevent duplicates when name changes)`);
     } catch (error) {
         console.error('❌ Error saving email template:', error.message);
         throw error;
