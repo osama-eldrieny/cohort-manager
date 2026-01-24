@@ -8,7 +8,9 @@ let charts = {};
 const COHORTS = ['Cohort 0', 'Cohort 1 - Cradis', 'Cohort 1 - Zomra', 'Cohort 2', 'Cohort 3'];
 
 // API Server Configuration
-const API_BASE_URL = 'http://localhost:3002';
+// Determine API base URL based on environment
+const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const API_BASE_URL = isDev ? 'http://localhost:3002' : 'https://cohort-manager-api.vercel.app';
 
 // Google Sheets Integration
 // Replace with your Google Apps Script deployment URL
