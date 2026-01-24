@@ -761,31 +761,39 @@ input:focus, select:focus, textarea:focus {
     letter-spacing: normal;
 }
 
-.figma-status {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-top: 12px;
+.figma-status-simple {
+    display: block;
 }
 
-.figma-status > div {
-    display: flex;
-    align-items: center;
-}
-
-.figma-status input[type="radio"] {
+.figma-status-simple input[type="radio"] {
     width: 16px;
     height: 16px;
-    margin-right: 8px;
     cursor: pointer;
     accent-color: #667eea;
 }
 
-.figma-status label {
+.figma-status-simple label {
     margin-bottom: 0;
     cursor: pointer;
     font-weight: 500;
     font-size: 14px;
+}
+
+.post-course-actions {
+    background: var(--bg-light-secondary);
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 4px solid #34a853;
+    border: 1px solid var(--border-light);
+}
+
+.post-course-actions h4 {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
 }
 
 /* ============================================

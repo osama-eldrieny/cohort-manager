@@ -380,11 +380,15 @@ function renderStudentsTable() {
 
     const tbody = document.getElementById('studentsTableBody');
     if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" class="empty">No students found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" class="empty">No students found</td></tr>';
         return;
     }
 
-    tbody.innerHTML = filtered.map(student => `
+    tbody.innerHTML = filtered.map(student => {
+        const onboardingPct = (student.status.startsWith('Cohort') || student.status === 'Next Cohort') ? calculateChecklistProgress(student) : '-';
+        const postCourseItems = student.checklist ? [student.checklist.sharedFeedbackForm, student.checklist.submittedCourseFeedback, student.checklist.issuedCertificate].filter(Boolean).length : 0;
+        const postCoursePct = (student.status.startsWith('Cohort') || student.status === 'Next Cohort') ? Math.round((postCourseItems / 3) * 100) + '%' : '-';
+        return `
         <tr>
             <td><strong>${student.name}</strong></td>
             <td>${student.email}</td>
@@ -398,12 +402,15 @@ function renderStudentsTable() {
                 ${student.whatsapp ? `<a href="https://wa.me/${student.whatsapp.replace(/\D/g, '')}" target="_blank" title="Send WhatsApp message" style="color: #25D366; text-decoration: none; display: flex; align-items: center; gap: 4px;"><i class="fab fa-whatsapp"></i> ${student.whatsapp}</a>` : '-'}
             </td>
             <td>${student.note || '-'}</td>
+            <td>${onboardingPct === '-' ? '-' : onboardingPct + '%'}</td>
+            <td>${postCoursePct}</td>
             <td>
                 <button class="btn-small btn-edit" data-student-id="${student.id}" title="Edit"><i class="fas fa-pencil-alt"></i></button>
                 <button class="btn-small btn-danger btn-delete" data-student-id="${student.id}" title="Delete"><i class="fas fa-trash"></i></button>
             </td>
         </tr>
-    `).join('');
+    `;
+    }).join('');
 
     // Attach event listeners to action buttons
     document.querySelectorAll('#studentsTableBody .btn-edit').forEach(btn => {
@@ -495,12 +502,16 @@ function renderCohortPage(cohortId) {
                         <th>Language</th>
                         <th>LinkedIn</th>
                         <th>WhatsApp</th>
-                        ${showChecklistProgress ? '<th>Onboarding Progress</th>' : ''}
+                        ${showChecklistProgress ? '<th>Onboarding</th>' : ''}
+                        <th>Post-Course</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="cohortTableBody-${cohortId}">
-                    ${cohortStudents.map(student => `
+                    ${cohortStudents.map(student => {
+                        const postCourseItems = student.checklist ? [student.checklist.sharedFeedbackForm, student.checklist.submittedCourseFeedback, student.checklist.issuedCertificate].filter(Boolean).length : 0;
+                        const postCoursePct = Math.round((postCourseItems / 3) * 100) + '%';
+                        return `
                         <tr>
                             <td><strong>${student.name}</strong></td>
                             <td>${student.email}</td>
@@ -513,12 +524,14 @@ function renderCohortPage(cohortId) {
                                 ${student.whatsapp ? `<a href="https://wa.me/${student.whatsapp.replace(/\\D/g, '')}" target="_blank" title="Send WhatsApp message" style="color: #25D366; text-decoration: none; display: flex; align-items: center; gap: 4px;"><i class="fab fa-whatsapp"></i> ${student.whatsapp}</a>` : '-'}
                             </td>
                             ${showChecklistProgress ? `<td>${calculateChecklistProgress(student)}%</td>` : ''}
+                            <td>${postCoursePct}</td>
                             <td>
                                 <button class="btn-small btn-edit" data-student-id="${student.id}" title="Edit"><i class="fas fa-pencil-alt"></i></button>
                                 <button class="btn-small btn-danger btn-delete" data-student-id="${student.id}" title="Delete"><i class="fas fa-trash"></i></button>
                             </td>
                         </tr>
-                    `).join('')}
+                    `;
+                    }).join('')}
                 </tbody>
             </table>
         </div>
@@ -537,11 +550,14 @@ function renderCohortPage(cohortId) {
             );
             
             const tbody = document.getElementById(`cohortTableBody-${cohortId}`);
-            const colspanNum = showChecklistProgress ? 8 : 7;
+            const colspanNum = showChecklistProgress ? 9 : 8;
             if (filtered.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="${colspanNum}" class="empty">No students found</td></tr>`;
             } else {
-                tbody.innerHTML = filtered.map(student => `
+                tbody.innerHTML = filtered.map(student => {
+                    const postCourseItems = student.checklist ? [student.checklist.sharedFeedbackForm, student.checklist.submittedCourseFeedback, student.checklist.issuedCertificate].filter(Boolean).length : 0;
+                    const postCoursePct = Math.round((postCourseItems / 3) * 100) + '%';
+                    return `
                     <tr>
                         <td><strong>${student.name}</strong></td>
                         <td>${student.email}</td>
@@ -554,12 +570,14 @@ function renderCohortPage(cohortId) {
                             ${student.whatsapp ? `<a href="https://wa.me/${student.whatsapp.replace(/\\D/g, '')}" target="_blank" title="Send WhatsApp message" style="color: #25D366; text-decoration: none; display: flex; align-items: center; gap: 4px;"><i class="fab fa-whatsapp"></i> ${student.whatsapp}</a>` : '-'}
                         </td>
                         ${showChecklistProgress ? `<td>${calculateChecklistProgress(student)}%</td>` : ''}
+                        <td>${postCoursePct}</td>
                         <td>
                             <button class="btn-small btn-edit" data-student-id="${student.id}" title="Edit"><i class="fas fa-pencil-alt"></i></button>
-                            <button class="btn-small btn-danger btn-delete" data-student-id="${student.id}" title="Delete"><i class="fas fa-trash"></i></button>
+                            <button class="btn-small btn-danger btn-delete" data-student-id="${student.id}" title="Delete"><i class="fas fa-trash\"></i></button>
                         </td>
                     </tr>
-                `).join('');
+                `;
+                }).join('');
             }
             attachCohortButtonListeners(page);
         });
@@ -640,11 +658,16 @@ function renderStatusPage(status) {
                         <th>LinkedIn</th>
                         <th>WhatsApp</th>
                         <th>Notes</th>
+                        <th>Onboarding</th>
+                        <th>Post-Course</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="statusTableBody-${pageId}">
-                    ${statusStudents.map(student => `
+                    ${statusStudents.map(student => {
+                        const postCourseItems = student.checklist ? [student.checklist.sharedFeedbackForm, student.checklist.submittedCourseFeedback, student.checklist.issuedCertificate].filter(Boolean).length : 0;
+                        const postCoursePct = Math.round((postCourseItems / 3) * 100) + '%';
+                        return `
                         <tr>
                             <td><strong>${student.name}</strong></td>
                             <td>${student.email}</td>
@@ -657,12 +680,15 @@ function renderStatusPage(status) {
                                 ${student.whatsapp ? `<a href="https://wa.me/${student.whatsapp.replace(/\\D/g, '')}" target="_blank" title="Send WhatsApp message" style="color: #25D366; text-decoration: none; display: flex; align-items: center; gap: 4px;"><i class="fab fa-whatsapp"></i> ${student.whatsapp}</a>` : '-'}
                             </td>
                             <td>${student.note || '-'}</td>
+                            <td>${calculateChecklistProgress(student)}%</td>
+                            <td>${postCoursePct}</td>
                             <td>
                                 <button class="btn-small btn-edit" data-student-id="${student.id}" title="Edit"><i class="fas fa-pencil-alt"></i></button>
                                 <button class="btn-small btn-danger btn-delete" data-student-id="${student.id}" title="Delete"><i class="fas fa-trash"></i></button>
                             </td>
                         </tr>
-                    `).join('')}
+                    `;
+                    }).join('')}
                 </tbody>
             </table>
         </div>
@@ -682,9 +708,12 @@ function renderStatusPage(status) {
             
             const tbody = document.getElementById(`statusTableBody-${pageId}`);
             if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="empty">No students found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="10" class="empty">No students found</td></tr>';
             } else {
-                tbody.innerHTML = filtered.map(student => `
+                tbody.innerHTML = filtered.map(student => {
+                    const postCourseItems = student.checklist ? [student.checklist.sharedFeedbackForm, student.checklist.submittedCourseFeedback, student.checklist.issuedCertificate].filter(Boolean).length : 0;
+                    const postCoursePct = Math.round((postCourseItems / 3) * 100) + '%';
+                    return `
                     <tr>
                         <td><strong>${student.name}</strong></td>
                         <td>${student.email}</td>
@@ -697,12 +726,15 @@ function renderStatusPage(status) {
                             ${student.whatsapp ? `<a href="https://wa.me/${student.whatsapp.replace(/\\D/g, '')}" target="_blank" title="Send WhatsApp message" style="color: #25D366; text-decoration: none; display: flex; align-items: center; gap: 4px;"><i class="fab fa-whatsapp"></i> ${student.whatsapp}</a>` : '-'}
                         </td>
                         <td>${student.note || '-'}</td>
+                        <td>${calculateChecklistProgress(student)}%</td>
+                        <td>${postCoursePct}</td>
                         <td>
                             <button class="btn-small btn-edit" data-student-id="${student.id}" title="Edit"><i class="fas fa-pencil-alt"></i></button>
                             <button class="btn-small btn-danger btn-delete" data-student-id="${student.id}" title="Delete"><i class="fas fa-trash"></i></button>
                         </td>
                     </tr>
-                `).join('');
+                `;
+                }).join('');
             }
             attachStatusButtonListeners(page);
         });
@@ -876,6 +908,9 @@ function editStudent(id) {
         const sharedDriveEl = document.getElementById('sharedDrive');
         const createdFigmaEl = document.getElementById('createdFigma');
         const sharedMasterFigmaEl = document.getElementById('sharedMasterFigma');
+        const sharedFeedbackFormEl = document.getElementById('sharedFeedbackForm');
+        const submittedCourseFeedbackEl = document.getElementById('submittedCourseFeedback');
+        const issuedCertificateEl = document.getElementById('issuedCertificate');
         
         if (addedCommunityEl) addedCommunityEl.checked = student.checklist?.addedCommunity || false;
         if (sharedAgreementEl) sharedAgreementEl.checked = student.checklist?.sharedAgreement || false;
@@ -883,6 +918,9 @@ function editStudent(id) {
         if (sharedDriveEl) sharedDriveEl.checked = student.checklist?.sharedDrive || false;
         if (createdFigmaEl) createdFigmaEl.checked = student.checklist?.createdFigma || false;
         if (sharedMasterFigmaEl) sharedMasterFigmaEl.checked = student.checklist?.sharedMasterFigma || false;
+        if (sharedFeedbackFormEl) sharedFeedbackFormEl.checked = student.checklist?.sharedFeedbackForm || false;
+        if (submittedCourseFeedbackEl) submittedCourseFeedbackEl.checked = student.checklist?.submittedCourseFeedback || false;
+        if (issuedCertificateEl) issuedCertificateEl.checked = student.checklist?.issuedCertificate || false;
 
         if (student.checklist?.figmaStatus) {
             const figmaStatusEl = document.getElementById(`figma${student.checklist.figmaStatus}`);
@@ -920,7 +958,10 @@ function calculateChecklistProgress(student) {
         'sharedDrive',
         'createdFigma',
         'sharedMasterFigma',
-        'figmaStatus'
+        'figmaStatus',
+        'sharedFeedbackForm',
+        'submittedCourseFeedback',
+        'issuedCertificate'
     ];
     
     const completedItems = checklistItems.filter(item => {
@@ -980,7 +1021,10 @@ function saveStudent(event) {
             sharedDrive: document.getElementById('sharedDrive').checked,
             createdFigma: document.getElementById('createdFigma').checked,
             sharedMasterFigma: document.getElementById('sharedMasterFigma').checked,
-            figmaStatus: document.querySelector('input[name="figmaStatus"]:checked')?.value || 'Not started'
+            figmaStatus: document.querySelector('input[name="figmaStatus"]:checked')?.value || 'Not started',
+            sharedFeedbackForm: document.getElementById('sharedFeedbackForm')?.checked || false,
+            submittedCourseFeedback: document.getElementById('submittedCourseFeedback')?.checked || false,
+            issuedCertificate: document.getElementById('issuedCertificate')?.checked || false
         };
     }
 

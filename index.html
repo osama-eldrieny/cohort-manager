@@ -455,22 +455,41 @@
                         <label for="sharedMasterFigma">Shared Master Figma file</label>
                     </div>
                     
-                    <div class="figma-status" style="margin-top: 15px; border-top: 1px solid #ddd; padding-top: 15px;">
-                        <div>
-                            <input type="radio" id="figmaNotStarted" name="figmaStatus" value="Not started" checked>
-                            <label for="figmaNotStarted">Not started</label>
+                    <div class="figma-status-simple" style="margin-top: 15px; border-top: 1px solid #ddd; padding-top: 15px;">
+                        <label style="font-weight: 600; display: block; margin-bottom: 12px; color: #1a1a1a;">Figma Submission Status</label>
+                        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center;">
+                                <input type="radio" id="figmaNotStarted" name="figmaStatus" value="Not started" checked>
+                                <label for="figmaNotStarted" style="cursor: pointer; margin: 0; margin-left: 8px; font-weight: 500;">Not started</label>
+                            </div>
+                            <div style="display: flex; align-items: center;">
+                                <input type="radio" id="figmaSubmitted" name="figmaStatus" value="Submitted">
+                                <label for="figmaSubmitted" style="cursor: pointer; margin: 0; margin-left: 8px; font-weight: 500;">Submitted</label>
+                            </div>
+                            <div style="display: flex; align-items: center;">
+                                <input type="radio" id="figmaUnderReview" name="figmaStatus" value="Under review">
+                                <label for="figmaUnderReview" style="cursor: pointer; margin: 0; margin-left: 8px; font-weight: 500;">Under review</label>
+                            </div>
+                            <div style="display: flex; align-items: center;">
+                                <input type="radio" id="figmaApproved" name="figmaStatus" value="Approved">
+                                <label for="figmaApproved" style="cursor: pointer; margin: 0; margin-left: 8px; font-weight: 500;">Approved</label>
+                            </div>
                         </div>
-                        <div>
-                            <input type="radio" id="figmaSubmitted" name="figmaStatus" value="Submitted">
-                            <label for="figmaSubmitted">Submitted</label>
+                    </div>
+
+                    <div class="post-course-actions" style="margin-top: 20px; border-top: 1px solid #ddd; padding-top: 15px;">
+                        <h4 style="font-weight: 600; margin-bottom: 12px; color: #1a1a1a;"><i class="fas fa-flag-checkered"></i> Post-Course Actions</h4>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="sharedFeedbackForm">
+                            <label for="sharedFeedbackForm">Shared feedback form</label>
                         </div>
-                        <div>
-                            <input type="radio" id="figmaUnderReview" name="figmaStatus" value="Under review">
-                            <label for="figmaUnderReview">Under review</label>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="submittedCourseFeedback">
+                            <label for="submittedCourseFeedback">Submitted course feedback</label>
                         </div>
-                        <div>
-                            <input type="radio" id="figmaApproved" name="figmaStatus" value="Approved">
-                            <label for="figmaApproved">Approved</label>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="issuedCertificate">
+                            <label for="issuedCertificate">Issued the certificate</label>
                         </div>
                     </div>
                 </div>
