@@ -14,9 +14,22 @@ const API_BASE_URL = 'http://localhost:3002';
 // Replace with your Google Apps Script deployment URL
 const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbyCPsBG3QKSPx84Dwzepm_Fruh7EXdG0mz84AM20NxT4fS8Vzhod875meY-oAHXqZW-/exec';
 
+// Utility Functions
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
     await loadStudents();
+    await loadEmailTemplates();
     setupEventListeners();
     
     // Handle URL routing
@@ -412,7 +425,7 @@ function renderStudentsTable() {
         const postCoursePct = (student.status.startsWith('Cohort') || student.status === 'Next Cohort') ? Math.round((postCourseItems / 3) * 100) + '%' : '-';
         return `
         <tr>
-            <td><strong>${student.name}</strong></td>
+            <td><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" onclick="openStudentContactModal('${student.id}')" title="Click to view details">${student.name}</strong></td>
             <td><span class="copy-email" title="Click to copy">${student.email}</span></td>
             <td><span class="status-badge status-${student.status.toLowerCase().replace(/\s+/g, '-')}">${student.status}</span></td>
             <td>${student.location}</td>
@@ -448,6 +461,8 @@ function renderStudentsTable() {
             deleteStudent(btn.dataset.studentId);
         });
     });
+
+
 }
 
 // ============================================
@@ -536,7 +551,7 @@ function renderCohortPage(cohortId) {
                         const postCoursePct = Math.round((postCourseItems / 3) * 100) + '%';
                         return `
                         <tr>
-                            <td><strong>${student.name}</strong></td>
+                            <td><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" onclick="openStudentContactModal('${student.id}')" title="Click to view details">${student.name}</strong></td>
                             <td><span class="copy-email" title="Click to copy">${student.email}</span></td>
                             <td>${student.figmaEmail ? `<span class="copy-email" title="Click to copy">${student.figmaEmail}</span>` : '-'}</td>
                             <td>${student.location}</td>
@@ -598,7 +613,7 @@ function renderCohortPage(cohortId) {
                         <td>${postCoursePct}</td>
                         <td>
                             <button class="btn-small btn-edit" data-student-id="${student.id}" title="Edit"><i class="fas fa-pencil-alt"></i></button>
-                            <button class="btn-small btn-danger btn-delete" data-student-id="${student.id}" title="Delete"><i class="fas fa-trash\"></i></button>
+                            <button class="btn-small btn-danger btn-delete" data-student-id="${student.id}" title="Delete"><i class="fas fa-trash"></i></button>
                         </td>
                     </tr>
                 `;
@@ -612,13 +627,15 @@ function renderCohortPage(cohortId) {
 }
 
 function attachCohortButtonListeners(page) {
-    // Attach event listeners to action buttons in cohort table
+    // Attach event listeners to edit buttons in cohort table
     page.querySelectorAll('.btn-edit').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
             editStudent(btn.dataset.studentId);
         });
     });
+
+
 
     page.querySelectorAll('.btn-delete').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -694,7 +711,7 @@ function renderStatusPage(status) {
                         const postCoursePct = Math.round((postCourseItems / 3) * 100) + '%';
                         return `
                         <tr>
-                            <td><strong>${student.name}</strong></td>
+                            <td><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" onclick="openStudentContactModal('${student.id}')" title="Click to view details">${student.name}</strong></td>
                             <td><span class="copy-email" title="Click to copy">${student.email}</span></td>
                             <td>${student.location}</td>
                             <td>${student.language || 'Not specified'}</td>
@@ -740,7 +757,7 @@ function renderStatusPage(status) {
                     const postCoursePct = Math.round((postCourseItems / 3) * 100) + '%';
                     return `
                     <tr>
-                        <td><strong>${student.name}</strong></td>
+                        <td><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" onclick="openStudentContactModal('${student.id}')" title="Click to view details">${student.name}</strong></td>
                         <td><span class="copy-email" title="Click to copy">${student.email}</span></td>
                         <td>${student.location}</td>
                         <td>${student.language || 'Not specified'}</td>
@@ -769,13 +786,15 @@ function renderStatusPage(status) {
 }
 
 function attachStatusButtonListeners(page) {
-    // Attach event listeners to action buttons in status table
+    // Attach event listeners to edit buttons in status table
     page.querySelectorAll('.btn-edit').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
             editStudent(btn.dataset.studentId);
         });
     });
+
+
 
     page.querySelectorAll('.btn-delete').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -964,7 +983,13 @@ function deleteStudent(id) {
         students = students.filter(s => s.id !== id);
         console.log('🗑️ Deleted student:', studentName);
         saveToStorage();
-        renderPage(document.querySelector('.page.active').id);
+        
+        // Reload data from server to ensure consistency
+        setTimeout(() => {
+            loadStudents().then(() => {
+                renderPage(document.querySelector('.page.active').id);
+            });
+        }, 300);
     }
 }
 
@@ -1065,7 +1090,13 @@ function saveStudent(event) {
 
     saveToStorage();
     closeStudentModal();
-    renderPage(document.querySelector('.page.active').id);
+    
+    // Reload data from server to ensure consistency
+    setTimeout(() => {
+        loadStudents().then(() => {
+            renderPage(document.querySelector('.page.active').id);
+        });
+    }, 300);
 }
 
 // ============================================
@@ -1529,8 +1560,353 @@ function generateCSV(data) {
 }
 
 window.onclick = function(event) {
-    const modal = document.getElementById('studentModal');
-    if (event.target === modal) {
+    const studentModal = document.getElementById('studentModal');
+    const emailTemplateModal = document.getElementById('emailTemplateModal');
+    const studentContactModal = document.getElementById('studentContactModal');
+    
+    if (event.target === studentModal) {
         closeStudentModal();
     }
+    if (event.target === emailTemplateModal) {
+        closeEmailTemplateModal();
+    }
+    if (event.target === studentContactModal) {
+        closeStudentContactModal();
+    }
+}
+
+// ============================================
+// EMAIL TEMPLATES MANAGEMENT
+// ============================================
+
+let emailTemplates = [];
+
+async function loadEmailTemplates() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/email-templates`);
+        if (response.ok) {
+            emailTemplates = await response.json();
+            renderEmailTemplatesList();
+        }
+    } catch (error) {
+        console.error('Error loading email templates:', error);
+    }
+}
+
+function renderEmailTemplatesList() {
+    const tbody = document.getElementById('emailTemplatesBody');
+    
+    if (emailTemplates.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px; color: #999;">No templates yet</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = emailTemplates.map(template => `
+        <tr>
+            <td><strong>${template.name}</strong></td>
+            <td>${template.button_label}</td>
+            <td>${template.subject.substring(0, 50)}${template.subject.length > 50 ? '...' : ''}</td>
+            <td>
+                <button class="btn-small btn-edit" onclick="editEmailTemplate('${template.id}')" title="Edit"><i class="fas fa-pencil-alt"></i></button>
+                <button class="btn-small btn-danger" onclick="deleteEmailTemplate('${template.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function openEmailTemplateModal(templateId = null) {
+    const modal = document.getElementById('emailTemplateModal');
+    const form = document.getElementById('emailTemplateForm');
+    const title = document.getElementById('emailModalTitle');
+    
+    if (templateId) {
+        const template = emailTemplates.find(t => t.id === templateId);
+        title.textContent = 'Edit Email Template';
+        document.getElementById('templateName').value = template.name;
+        document.getElementById('buttonLabel').value = template.button_label;
+        document.getElementById('emailSubject').value = template.subject;
+        document.getElementById('emailBody').value = template.body;
+        form.dataset.templateId = templateId;
+    } else {
+        title.textContent = 'Create Email Template';
+        form.reset();
+        delete form.dataset.templateId;
+    }
+    
+    modal.style.display = 'block';
+}
+
+function closeEmailTemplateModal() {
+    document.getElementById('emailTemplateModal').style.display = 'none';
+    document.getElementById('emailTemplateForm').reset();
+}
+
+async function saveEmailTemplate(event) {
+    event.preventDefault();
+    
+    const form = document.getElementById('emailTemplateForm');
+    const id = form.dataset.templateId || `template_${Date.now()}`;
+    const name = document.getElementById('templateName').value;
+    const button_label = document.getElementById('buttonLabel').value;
+    const subject = document.getElementById('emailSubject').value;
+    const body = document.getElementById('emailBody').value;
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/email-templates`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, name, button_label, subject, body })
+        });
+
+        if (response.ok) {
+            await loadEmailTemplates();
+            closeEmailTemplateModal();
+            showToast(`Template "${name}" saved successfully!`, 'success');
+        }
+    } catch (error) {
+        console.error('Error saving email template:', error);
+        alert('Failed to save email template');
+    }
+}
+
+async function editEmailTemplate(templateId) {
+    openEmailTemplateModal(templateId);
+}
+
+async function deleteEmailTemplate(templateId) {
+    if (!confirm('Are you sure you want to delete this email template?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/email-templates/${templateId}`, {
+            method: 'DELETE'
+        });
+
+        if (response.ok) {
+            await loadEmailTemplates();
+            showToast('Email template deleted successfully', 'success');
+        }
+    } catch (error) {
+        console.error('Error deleting email template:', error);
+        alert('Failed to delete email template');
+    }
+}
+
+// ============================================
+// STUDENT CONTACT & EMAIL SENDING
+// ============================================
+
+let currentContactStudent = null;
+
+function openStudentContactModal(studentId) {
+    const student = students.find(s => s.id === studentId);
+    if (!student) return;
+
+    currentContactStudent = student;
+    
+    const modal = document.getElementById('studentContactModal');
+    
+    // Fields to display in contact info (in order of importance)
+    const fieldOrder = ['id', 'name', 'email', 'linkedin', 'whatsapp', 'figmaEmail', 'location', 'language', 'status', 'cohort', 'totalAmount', 'paidAmount', 'remaining', 'paymentMethod', 'note'];
+    
+    // Display all user details
+    const detailsDiv = document.getElementById('allContactDetails');
+    const detailsHTML = fieldOrder.map(key => {
+        const value = student[key];
+        const displayValue = value && value.toString().trim() ? value : 'N/A';
+        const labelText = key
+            .replace(/([A-Z])/g, ' $1')
+            .replace(/^./, str => str.toUpperCase())
+            .trim();
+        
+        return `
+            <div>
+                <label style="font-size: 12px; color: #999; text-transform: uppercase;">${labelText}</label>
+                <div style="font-weight: 600; font-size: 14px; margin-top: 4px; word-break: break-word;">${escapeHtml(String(displayValue))}</div>
+            </div>
+        `;
+    }).join('');
+    
+    detailsDiv.innerHTML = detailsHTML;
+    
+    // Display checklist information if available
+    const checklistDiv = document.getElementById('checklistContactInfo');
+    if (student.checklist && Object.keys(student.checklist).length > 0) {
+        const checklist = student.checklist;
+        const checklistItems = [];
+        
+        // Onboarding Checklist
+        const onboardingItems = ['addedCommunity', 'sharedAgreement', 'signedAgreement', 'sharedDrive', 'createdFigma', 'sharedMasterFigma'];
+        const onboardingChecked = onboardingItems.filter(item => checklist[item]).length;
+        
+        // Post-Course Actions
+        const postCourseItems = ['sharedFeedbackForm', 'submittedCourseFeedback', 'issuedCertificate'];
+        const postCourseChecked = postCourseItems.filter(item => checklist[item]).length;
+        
+        let checklistHTML = '<div style="border-top: 1px solid #ddd; padding-top: 15px; margin-top: 15px;">';
+        
+        // Onboarding Section
+        checklistHTML += '<h4 style="color: #333; margin-bottom: 12px; font-weight: 600;">Onboarding Checklist</h4>';
+        checklistHTML += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">';
+        
+        const onboardingLabels = {
+            'addedCommunity': 'Added to community group',
+            'sharedAgreement': 'Shared course agreement',
+            'signedAgreement': 'Signed course agreement',
+            'sharedDrive': 'Shared Google Drive folder',
+            'createdFigma': 'Created Figma account',
+            'sharedMasterFigma': 'Shared Master Figma file'
+        };
+        
+        Object.entries(onboardingLabels).forEach(([key, label]) => {
+            const isChecked = checklist[key] || false;
+            const checkMark = isChecked ? '✓' : '○';
+            checklistHTML += `<div style="font-size: 13px;"><span style="color: ${isChecked ? '#4CAF50' : '#999'};">${checkMark}</span> ${label}</div>`;
+        });
+        
+        checklistHTML += '</div>';
+        
+        // Figma Status
+        if (checklist.figmaStatus) {
+            checklistHTML += `<div style="background: white; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 13px;"><strong>Figma Status:</strong> ${escapeHtml(checklist.figmaStatus)}</div>`;
+        }
+        
+        // Post-Course Actions
+        checklistHTML += '<h4 style="color: #333; margin-bottom: 12px; font-weight: 600; margin-top: 15px;">Post-Course Actions</h4>';
+        checklistHTML += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">';
+        
+        const postCourseLabels = {
+            'sharedFeedbackForm': 'Shared feedback form',
+            'submittedCourseFeedback': 'Submitted course feedback',
+            'issuedCertificate': 'Issued the certificate'
+        };
+        
+        Object.entries(postCourseLabels).forEach(([key, label]) => {
+            const isChecked = checklist[key] || false;
+            const checkMark = isChecked ? '✓' : '○';
+            checklistHTML += `<div style="font-size: 13px;"><span style="color: ${isChecked ? '#4CAF50' : '#999'};">${checkMark}</span> ${label}</div>`;
+        });
+        
+        checklistHTML += '</div>';
+        checklistHTML += '</div>';
+        
+        checklistDiv.innerHTML = checklistHTML;
+    } else {
+        checklistDiv.innerHTML = '';
+    }
+
+    // Render template buttons
+    const templatesDiv = document.getElementById('studentEmailTemplates');
+    if (emailTemplates.length === 0) {
+        templatesDiv.innerHTML = '<p style="color: #999; text-align: center;">No email templates available. Create one in Settings.</p>';
+    } else {
+        templatesDiv.innerHTML = emailTemplates.map(template => `
+            <button 
+                type="button" 
+                class="btn-primary" 
+                onclick="sendEmailToStudent('${template.id}', '${student.id}')" 
+                style="text-align: left;">
+                <i class="fas fa-paper-plane"></i> ${template.button_label}
+            </button>
+        `).join('');
+    }
+
+    modal.style.display = 'block';
+}
+
+function closeStudentContactModal() {
+    document.getElementById('studentContactModal').style.display = 'none';
+    currentContactStudent = null;
+}
+
+async function sendEmailToStudent(templateId, studentId) {
+    const student = students.find(s => s.id === studentId);
+    const template = emailTemplates.find(t => t.id === templateId);
+
+    if (!student || !template) return;
+
+    // Show loading state
+    const sendButtons = document.querySelectorAll('[data-template-id]');
+    sendButtons.forEach(btn => btn.disabled = true);
+    
+    const loadingIndicator = document.getElementById('emailLoadingIndicator');
+    if (loadingIndicator) loadingIndicator.style.display = 'flex';
+
+    // Replace all dynamic placeholders in template
+    let subject = template.subject;
+    let body = template.body;
+
+    // Student basic info
+    subject = subject.replace(/{name}/g, student.name || '');
+    subject = subject.replace(/{email}/g, student.email || '');
+    subject = subject.replace(/{cohort}/g, student.cohort || 'N/A');
+    subject = subject.replace(/{status}/g, student.status || '');
+    subject = subject.replace(/{location}/g, student.location || '');
+    subject = subject.replace(/{language}/g, student.language || '');
+    subject = subject.replace(/{note}/g, student.note || '');
+    subject = subject.replace(/{linkedin}/g, student.linkedin || '');
+    subject = subject.replace(/{whatsapp}/g, student.whatsapp || '');
+    subject = subject.replace(/{figmaEmail}/g, student.figmaEmail || '');
+    subject = subject.replace(/{paymentMethod}/g, student.paymentMethod || '');
+    
+    // Payment info
+    subject = subject.replace(/{totalAmount}/g, student.totalAmount || '0');
+    subject = subject.replace(/{paidAmount}/g, student.paidAmount || '0');
+    subject = subject.replace(/{remaining}/g, student.remaining || '0');
+
+    body = body.replace(/{name}/g, student.name || '');
+    body = body.replace(/{email}/g, student.email || '');
+    body = body.replace(/{cohort}/g, student.cohort || 'N/A');
+    body = body.replace(/{status}/g, student.status || '');
+    body = body.replace(/{location}/g, student.location || '');
+    body = body.replace(/{language}/g, student.language || '');
+    body = body.replace(/{note}/g, student.note || '');
+    body = body.replace(/{linkedin}/g, student.linkedin || '');
+    body = body.replace(/{whatsapp}/g, student.whatsapp || '');
+    body = body.replace(/{figmaEmail}/g, student.figmaEmail || '');
+    body = body.replace(/{paymentMethod}/g, student.paymentMethod || '');
+    
+    // Payment info
+    body = body.replace(/{totalAmount}/g, student.totalAmount || '0');
+    body = body.replace(/{paidAmount}/g, student.paidAmount || '0');
+    body = body.replace(/{remaining}/g, student.remaining || '0');
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/send-email`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                studentEmail: student.email,
+                studentName: student.name,
+                templateId,
+                subject,
+                body
+            })
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            showToast(`Email sent to ${student.name}!`, 'success');
+            closeStudentContactModal();
+        }
+    } catch (error) {
+        console.error('Error sending email:', error);
+        showToast('Failed to send email', 'error');
+    } finally {
+        // Hide loading state
+        if (loadingIndicator) loadingIndicator.style.display = 'none';
+        sendButtons.forEach(btn => btn.disabled = false);
+    }
+}
+
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.textContent = message;
+    let bgColor = '#2196F3'; // default blue (info)
+    if (type === 'success') bgColor = '#34a853'; // green
+    if (type === 'error') bgColor = '#f44336'; // red
+    toast.style.cssText = `position: fixed; bottom: 20px; right: 20px; background-color: ${bgColor}; color: white; padding: 12px 16px; border-radius: 4px; font-size: 14px; z-index: 10001; box-shadow: 0 2px 5px rgba(0,0,0,0.2);`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
 }

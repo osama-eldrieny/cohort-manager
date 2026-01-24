@@ -68,6 +68,26 @@ async function createTablesIfNotExist() {
                     }
                 }
             );
+
+            // Create email templates table
+            db.run(
+                `CREATE TABLE IF NOT EXISTS email_templates (
+                    id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    button_label TEXT NOT NULL,
+                    subject TEXT NOT NULL,
+                    body TEXT NOT NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )`,
+                (err) => {
+                    if (err) {
+                        console.error('❌ Error creating email_templates table:', err.message);
+                    } else {
+                        console.log('✅ Email templates table ready');
+                    }
+                }
+            );
         });
     });
 }
@@ -269,4 +289,49 @@ export function closeDatabase() {
             }
         });
     }
+}
+
+// Email template functions
+export function getAllEmailTemplates() {
+    return new Promise((resolve, reject) => {
+        db.all('SELECT * FROM email_templates ORDER BY created_at ASC', (err, rows) => {
+            if (err) {
+                console.error('❌ Error fetching email templates:', err.message);
+                reject(err);
+            } else {
+                resolve(rows || []);
+            }
+        });
+    });
+}
+
+export function saveEmailTemplate(id, name, button_label, subject, body) {
+    return new Promise((resolve, reject) => {
+        db.run(
+            `INSERT OR REPLACE INTO email_templates (id, name, button_label, subject, body, updated_at)
+            VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+            [id, name, button_label, subject, body],
+            (err) => {
+                if (err) {
+                    console.error('❌ Error saving email template:', err.message);
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            }
+        );
+    });
+}
+
+export function deleteEmailTemplate(id) {
+    return new Promise((resolve, reject) => {
+        db.run('DELETE FROM email_templates WHERE id = ?', [id], (err) => {
+            if (err) {
+                console.error('❌ Error deleting email template:', err.message);
+                reject(err);
+            } else {
+                resolve();
+            }
+        });
+    });
 }

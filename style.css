@@ -1,4 +1,23 @@
 /* ============================================
+   ANIMATIONS
+   ============================================ */
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* ============================================
    FONT AWESOME ICONS
    ============================================ */
 
@@ -534,6 +553,12 @@ tbody tr:hover {
 .actions {
     display: flex;
     gap: 8px;
+}
+
+/* Make Actions column wider for students page */
+th:last-child,
+td:last-child {
+    min-width: 120px;
 }
 
 .btn-edit {
@@ -1351,6 +1376,256 @@ button {
     th, td {
         padding: 8px;
     }
+}
+
+/* ============================================
+   INLINE STYLES MOVED FROM HTML
+   ============================================ */
+
+.sidebar-cohorts-divider {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.sidebar-section-label {
+    font-size: 12px;
+    color: #999;
+    padding-left: 15px;
+}
+
+.sidebar-section-list {
+    margin-top: 10px;
+}
+
+.sidebar-settings-divider {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.analytics-title {
+    margin-bottom: 20px;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 2px solid #e0e0e0;
+    color: #1a1a1a;
+}
+
+.students-controls {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.search-input {
+    flex: 1;
+    min-width: 200px;
+    padding: 12px 14px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.status-filter-wrapper-inline {
+    position: relative;
+    min-width: 350px;
+}
+
+.empty-tbody-cell {
+    text-align: center;
+    padding: 30px;
+    color: #999;
+}
+
+.settings-title {
+    margin-bottom: 25px;
+    color: #1a1a1a;
+}
+
+.email-templates-section {
+    margin-bottom: 40px;
+}
+
+.email-templates-title {
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.btn-primary-margin-bottom {
+    margin-bottom: 20px;
+}
+
+.hr-divider {
+    margin: 40px 0;
+    border: none;
+    border-top: 2px solid #e0e0e0;
+}
+
+.settings-table-row {
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.settings-table-label {
+    padding: 16px 15px;
+    font-weight: 600;
+    width: 300px;
+}
+
+.settings-table-action {
+    padding: 16px 15px;
+}
+
+.settings-table-label-error {
+    padding: 16px 15px;
+    font-weight: 600;
+    color: #f44336;
+}
+
+.settings-table-margin-bottom {
+    margin-bottom: 20px;
+}
+
+.settings-tip {
+    color: #999;
+    font-size: 13px;
+    margin-top: 20px;
+}
+
+.import-file-input {
+    display: none;
+}
+
+.modal-header-icon {
+    margin-right: 8px;
+}
+
+.figma-status-simple {
+    margin-top: 15px;
+    border-top: 1px solid #ddd;
+    padding-top: 15px;
+}
+
+.figma-status-section {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.figma-status-item {
+    display: flex;
+    align-items: center;
+}
+
+.figma-status-radio {
+    cursor: pointer;
+    margin: 0;
+    margin-left: 8px;
+    font-weight: 500;
+}
+
+.figma-status-label-main {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 12px;
+    color: #1a1a1a;
+}
+
+.post-course-actions-margin {
+    margin-top: 20px;
+    border-top: 1px solid #ddd;
+    padding-top: 15px;
+}
+
+.email-body-textarea {
+    min-height: 250px;
+    resize: vertical;
+    font-family: monospace;
+}
+
+.email-body-help {
+    color: #999;
+    margin-top: 8px;
+    display: block;
+}
+
+.email-loading-indicator {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    padding: 20px;
+    background: #f0f8ff;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.loading-spinner {
+    width: 20px;
+    height: 20px;
+    border: 3px solid #2196F3;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.loading-text {
+    color: #2196F3;
+    font-weight: 500;
+}
+
+.contact-info-background {
+    background: #f5f5f5;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.contact-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-bottom: 20px;
+}
+
+.contact-modal-title {
+    color: #333;
+    margin-bottom: 15px;
+    margin-top: 20px;
+}
+
+.contact-email-templates {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.contact-modal-buttons {
+    margin-top: 20px;
+}
+
+.empty-templates-cell {
+    text-align: center;
+    padding: 30px;
+    color: #999;
+}
+
+#syncStatus {
+    margin-top: 20px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    display: none;
+    font-weight: 600;
+}
+
+#checklistSection {
+    display: none;
+}
+
+.post-course-actions h4 {
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #1a1a1a;
 }
 
 /* Email Copy Functionality */
