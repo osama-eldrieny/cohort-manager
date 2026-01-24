@@ -241,13 +241,20 @@ app.post('/api/email-templates', async (req, res) => {
             return res.status(400).json({ error: 'Missing required fields' });
         }
         
+        console.log(`📝 Saving email template: ${name} (ID: ${id})`);
         await saveEmailTemplate(id, name, button_label, subject, body);
-        // Auto-export to JSON after saving
-        await exportEmailTemplatesToJson();
+        
+        // Auto-export to JSON after saving (skipped in serverless)
+        try {
+            await exportEmailTemplatesToJson();
+        } catch (exportError) {
+            console.warn('⚠️  Export to JSON skipped (serverless or file system issue), but template saved');
+        }
+        
         res.json({ success: true, message: 'Email template saved successfully' });
     } catch (error) {
-        console.error('❌ Error saving email template:', error.message);
-        res.status(500).json({ error: 'Failed to save email template' });
+        console.error('❌ Error saving email template:', error.message, error.stack);
+        res.status(500).json({ error: 'Failed to save email template: ' + error.message });
     }
 });
 
@@ -255,13 +262,20 @@ app.post('/api/email-templates', async (req, res) => {
 app.delete('/api/email-templates/:id', async (req, res) => {
     try {
         const { id } = req.params;
+        console.log(`🗑️  Deleting email template: ${id}`);
         await deleteEmailTemplate(id);
-        // Auto-export to JSON after deleting
-        await exportEmailTemplatesToJson();
+        
+        // Auto-export to JSON after deleting (skipped in serverless)
+        try {
+            await exportEmailTemplatesToJson();
+        } catch (exportError) {
+            console.warn('⚠️  Export to JSON skipped (serverless or file system issue), but template deleted');
+        }
+        
         res.json({ success: true, message: 'Email template deleted successfully' });
     } catch (error) {
-        console.error('❌ Error deleting email template:', error.message);
-        res.status(500).json({ error: 'Failed to delete email template' });
+        console.error('❌ Error deleting email template:', error.message, error.stack);
+        res.status(500).json({ error: 'Failed to delete email template: ' + error.message });
     }
 });
 

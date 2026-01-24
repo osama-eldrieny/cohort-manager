@@ -466,6 +466,13 @@ export function deleteEmailTemplate(id) {
 // Export email templates to JSON file
 export async function exportEmailTemplatesToJson() {
     try {
+        // In serverless environment, skip file export (data is already in JSON file)
+        if (isServerless) {
+            console.log('ℹ️  Serverless mode - skipping file export (data saved to JSON)');
+            const templates = await getAllEmailTemplates();
+            return templates;
+        }
+
         const templates = await getAllEmailTemplates();
         const templatesPath = path.join(__dirname, 'email_templates.json');
         fs.writeFileSync(templatesPath, JSON.stringify(templates, null, 2));
