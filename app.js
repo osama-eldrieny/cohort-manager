@@ -1921,8 +1921,12 @@ function closeStudentContactModal() {
 }
 
 async function sendEmailToStudent(templateId, studentId) {
-    const student = students.find(s => s.id === studentId);
-    const template = emailTemplates.find(t => t.id === templateId);
+    // Use type-safe comparison for string/int IDs from Supabase
+    const numericStudentId = parseInt(studentId, 10) || studentId;
+    const numericTemplateId = parseInt(templateId, 10) || templateId;
+    
+    const student = students.find(s => s.id === numericStudentId || String(s.id) === String(studentId));
+    const template = emailTemplates.find(t => t.id === numericTemplateId || String(t.id) === String(templateId));
 
     if (!student || !template) return;
 
