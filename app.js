@@ -1583,13 +1583,31 @@ let emailTemplates = [];
 
 async function loadEmailTemplates() {
     try {
-        const response = await fetch(`${API_BASE_URL}/api/email-templates`);
-        if (response.ok) {
-            emailTemplates = await response.json();
+        // Try to load from API first (works on local server)
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/email-templates`);
+            if (response.ok) {
+                emailTemplates = await response.json();
+                renderEmailTemplatesList();
+                return;
+            }
+        } catch (apiError) {
+            console.log('API not available, trying to load from JSON file...');
+        }
+
+        // Fallback: Load from JSON file (works on GitHub Pages)
+        const jsonResponse = await fetch('./email_templates.json');
+        if (jsonResponse.ok) {
+            emailTemplates = await jsonResponse.json();
+            renderEmailTemplatesList();
+        } else {
+            emailTemplates = [];
             renderEmailTemplatesList();
         }
     } catch (error) {
         console.error('Error loading email templates:', error);
+        emailTemplates = [];
+        renderEmailTemplatesList();
     }
 }
 

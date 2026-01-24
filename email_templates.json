@@ -1,0 +1,38 @@
+[
+  {
+    "id": "template_1769252530596",
+    "name": "Community Invitation",
+    "button_label": "Community Invitation",
+    "subject": "Welcome to Design Tokens Bootcamp",
+    "body": "🎉 Congratulations! {name},\nYou’re just one step away from joining the Design Tokens Community. Click the links below to get started:\n\n🔗 Main Community\nJoin all students from past & current camps.\nhttps://chat.whatsapp.com/DgEOepsbvR60G19QlQh9NW\n\n💬 General Group Chat\nA space for everyone to share & discuss design, UI/UX, and more.\nhttps://chat.whatsapp.com/EFhfq1GlGmwLhijfwKEvVv\n\n👥 Design Tokens Camp Cohort 3\nYour private group for this camp—say hi and introduce yourself!\nhttps://chat.whatsapp.com/DEazZBorkyv3fFU176NhYA",
+    "created_at": "2026-01-24 11:17:55",
+    "updated_at": "2026-01-24 11:17:55"
+  },
+  {
+    "id": "template_1769254212479",
+    "name": "Waiting list",
+    "button_label": "Waiting list",
+    "subject": "Design Tokens Bootcamp Round 3 is open",
+    "body": "Hi {name}, this is Osama El Drieny 👋\nI’m contacting you because you previously applied to the Design Tokens Camp.\nThe new round is now open and will start on November 1st 🎉\n\n📌 Camp details:\n• Duration: 6 weeks\n• Sessions: 2 per week\n• Session length: 3–4 hours\n• Schedule: Saturday and Tuesday evenings (around 7–8 PM)\n\n💰 Cost: $500\nInstallment payments are available, as long as the full amount is completed before the course starts.\n\n🎁 Referral offer: Invite a friend and you’ll both receive $50 off.\n\n\nWould you like me to send you the payment link to join this round, or would you prefer to wait for the next one?\n\nYou can reply to this message or contact me on WhatsApp:\nhttps://wa.me/60192231094\n\n📖 Course content details:\nhttps://www.osamaeldrieny.com/courses/design-tokens-from-basic-to-mastery-course",
+    "created_at": "2026-01-24 12:31:30",
+    "updated_at": "2026-01-24 12:31:30"
+  },
+  {
+    "id": "template_1769262268885",
+    "name": "Roles & Agreement",
+    "button_label": "Roles & Agreement",
+    "subject": "Design Tokens Bootcamp Roles & Agreement – Action Required",
+    "body": "Dear {name},\n\nBefore we start the Bootcamp, please review the program guidelines and agreement using the link below.\n\nThese guidelines help ensure a smooth and valuable experience for everyone. At the end of the form, select “Agree” to confirm your acceptance.\n\nhttps://forms.gle/UpQ4D53TKJeLFieP8\n\nCompletion is required before the Bootcamp begins.\n\nBest regards,\nOsama",
+    "created_at": "2026-01-24 13:44:28",
+    "updated_at": "2026-01-24 13:44:28"
+  },
+  {
+    "id": "template_1769262473326",
+    "name": "Cohort Grouping Form",
+    "button_label": "Cohort Grouping Form",
+    "subject": "Cohort Grouping Form – Required",
+    "body": "Dear {name},\n\nTo help us group cohorts effectively, please complete the form below.\n\nYour answers will be used to balance experience levels, skills, and leadership preferences across groups, ensuring a better learning experience for everyone.\n\nPlease submit the form as soon as possible:\n\nhttps://forms.gle/4GPqkDvo6tEw8YCZA\n\nThank you.\n\nBest regards,\nOsama",
+    "created_at": "2026-01-24 13:47:53",
+    "updated_at": "2026-01-24 13:47:53"
+  }
+]

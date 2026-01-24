@@ -14,7 +14,8 @@ import {
     closeDatabase,
     getAllEmailTemplates,
     saveEmailTemplate,
-    deleteEmailTemplate
+    deleteEmailTemplate,
+    exportEmailTemplatesToJson
 } from './database.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -143,6 +144,8 @@ app.post('/api/email-templates', async (req, res) => {
         }
         
         await saveEmailTemplate(id, name, button_label, subject, body);
+        // Auto-export to JSON after saving
+        await exportEmailTemplatesToJson();
         res.json({ success: true, message: 'Email template saved successfully' });
     } catch (error) {
         console.error('❌ Error saving email template:', error.message);
@@ -155,6 +158,8 @@ app.delete('/api/email-templates/:id', async (req, res) => {
     try {
         const { id } = req.params;
         await deleteEmailTemplate(id);
+        // Auto-export to JSON after deleting
+        await exportEmailTemplatesToJson();
         res.json({ success: true, message: 'Email template deleted successfully' });
     } catch (error) {
         console.error('❌ Error deleting email template:', error.message);

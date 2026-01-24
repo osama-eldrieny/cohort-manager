@@ -335,3 +335,17 @@ export function deleteEmailTemplate(id) {
         });
     });
 }
+
+// Export email templates to JSON file
+export async function exportEmailTemplatesToJson() {
+    try {
+        const templates = await getAllEmailTemplates();
+        const templatesPath = path.join(__dirname, 'email_templates.json');
+        fs.writeFileSync(templatesPath, JSON.stringify(templates, null, 2));
+        console.log('✅ Email templates exported to email_templates.json');
+        return templates;
+    } catch (error) {
+        console.error('❌ Error exporting email templates:', error.message);
+        throw error;
+    }
+}
