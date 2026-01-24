@@ -361,6 +361,50 @@ export function getAllEmailTemplates() {
 
 export function saveEmailTemplate(id, name, button_label, subject, body) {
     return new Promise((resolve, reject) => {
+        // If in serverless environment, save to JSON
+        if (isServerless || !db) {
+            try {
+                const templatesPath = path.join(__dirname, 'email_templates.json');
+                let templates = [];
+                
+                // Read existing templates
+                try {
+                    const data = fs.readFileSync(templatesPath, 'utf-8');
+                    templates = JSON.parse(data);
+                } catch {
+                    templates = [];
+                }
+                
+                // Find and update or add new template
+                const existingIndex = templates.findIndex(t => t.id === id);
+                const newTemplate = {
+                    id,
+                    name,
+                    button_label,
+                    subject,
+                    body,
+                    updated_at: new Date().toISOString(),
+                    created_at: existingIndex >= 0 ? templates[existingIndex].created_at : new Date().toISOString()
+                };
+                
+                if (existingIndex >= 0) {
+                    templates[existingIndex] = newTemplate;
+                } else {
+                    templates.push(newTemplate);
+                }
+                
+                // Save back to JSON
+                fs.writeFileSync(templatesPath, JSON.stringify(templates, null, 2));
+                console.log('✅ Email template saved to JSON file');
+                resolve();
+            } catch (err) {
+                console.error('❌ Error saving email template to JSON:', err.message);
+                reject(err);
+            }
+            return;
+        }
+
+        // Otherwise use database
         db.run(
             `INSERT OR REPLACE INTO email_templates (id, name, button_label, subject, body, updated_at)
             VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
@@ -379,6 +423,35 @@ export function saveEmailTemplate(id, name, button_label, subject, body) {
 
 export function deleteEmailTemplate(id) {
     return new Promise((resolve, reject) => {
+        // If in serverless environment, delete from JSON
+        if (isServerless || !db) {
+            try {
+                const templatesPath = path.join(__dirname, 'email_templates.json');
+                let templates = [];
+                
+                // Read existing templates
+                try {
+                    const data = fs.readFileSync(templatesPath, 'utf-8');
+                    templates = JSON.parse(data);
+                } catch {
+                    templates = [];
+                }
+                
+                // Filter out the template to delete
+                templates = templates.filter(t => t.id !== id);
+                
+                // Save back to JSON
+                fs.writeFileSync(templatesPath, JSON.stringify(templates, null, 2));
+                console.log('✅ Email template deleted from JSON file');
+                resolve();
+            } catch (err) {
+                console.error('❌ Error deleting email template from JSON:', err.message);
+                reject(err);
+            }
+            return;
+        }
+
+        // Otherwise use database
         db.run('DELETE FROM email_templates WHERE id = ?', [id], (err) => {
             if (err) {
                 console.error('❌ Error deleting email template:', err.message);
