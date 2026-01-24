@@ -1976,12 +1976,24 @@ async function sendEmailToStudent(templateId, studentId) {
     body = body.replace(/{paidAmount}/g, student.paidAmount || '0');
     body = body.replace(/{remaining}/g, student.remaining || '0');
 
+    // Validate email address
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const studentEmail = (student.email || '').trim();
+    
+    if (!studentEmail || !emailRegex.test(studentEmail)) {
+        console.error('❌ Invalid email address:', studentEmail);
+        showToast(`Invalid email: "${studentEmail}" - Please verify in student details`, 'error');
+        return;
+    }
+
+    console.log(`📧 Sending email to: ${student.name} <${studentEmail}>`);
+
     try {
         const response = await fetch(`${API_BASE_URL}/api/send-email`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                studentEmail: student.email,
+                studentEmail: studentEmail,
                 studentName: student.name,
                 templateId,
                 subject,
@@ -1989,14 +2001,20 @@ async function sendEmailToStudent(templateId, studentId) {
             })
         });
 
-        if (response.ok) {
-            const result = await response.json();
-            showToast(`Email sent to ${student.name}!`, 'success');
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+            console.log(`✅ Email sent successfully to ${studentEmail}`);
+            showToast(`✅ Email sent to ${student.name}!`, 'success');
             closeStudentContactModal();
+        } else {
+            const errorMsg = result.error || result.message || 'Unknown error';
+            console.error(`❌ Email sending failed:`, errorMsg);
+            showToast(`❌ Failed: ${errorMsg}`, 'error');
         }
     } catch (error) {
-        console.error('Error sending email:', error);
-        showToast('Failed to send email', 'error');
+        console.error('❌ Error sending email:', error);
+        showToast('❌ Failed to send email - check browser console', 'error');
     } finally {
         // Hide loading state
         if (loadingIndicator) loadingIndicator.style.display = 'none';
@@ -2138,16 +2156,25 @@ async function sendBulkEmail(event) {
 
     let successCount = 0;
     let failedEmails = [];
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     for (const student of recipients) {
         try {
+            // Validate email
+            const studentEmail = (student.email || '').trim();
+            if (!studentEmail || !emailRegex.test(studentEmail)) {
+                console.warn(`⚠️ Invalid email for ${student.name}: "${studentEmail}"`);
+                failedEmails.push(`${student.name} (invalid email: ${studentEmail})`);
+                continue;
+            }
+
             // Replace dynamic tags in subject and body
             let subject = template.subject;
             let body = template.body;
 
             const tags = {
                 name: student.name || '',
-                email: student.email || '',
+                email: studentEmail || '',
                 cohort: student.cohort || '',
                 status: student.status || '',
                 location: student.location || '',
@@ -2172,7 +2199,7 @@ async function sendBulkEmail(event) {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    studentEmail: student.email,
+                    studentEmail: studentEmail,
                     studentName: student.name,
                     templateId,
                     subject,
@@ -2180,10 +2207,14 @@ async function sendBulkEmail(event) {
                 })
             });
 
-            if (response.ok) {
+            const result = await response.json();
+            if (response.ok && result.success) {
+                console.log(`✅ Email sent to ${student.name} <${studentEmail}>`);
                 successCount++;
             } else {
-                failedEmails.push(student.name);
+                const errorMsg = result.error || 'Unknown error';
+                console.error(`❌ Email failed for ${student.name}: ${errorMsg}`);
+                failedEmails.push(`${student.name} (${errorMsg})`);
             }
 
             // Add small delay between emails to avoid rate limiting
@@ -2191,7 +2222,7 @@ async function sendBulkEmail(event) {
 
         } catch (error) {
             console.error(`Error sending email to ${student.name}:`, error);
-            failedEmails.push(student.name);
+            failedEmails.push(`${student.name} (network error)`);
         }
     }
 

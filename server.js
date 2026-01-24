@@ -296,10 +296,18 @@ app.post('/api/send-email', async (req, res) => {
         if (!studentEmail || !templateId || !subject || !body) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
+
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const trimmedEmail = studentEmail.trim();
+        if (!emailRegex.test(trimmedEmail)) {
+            console.warn(`⚠️ Invalid email format: "${trimmedEmail}"`);
+            return res.status(400).json({ error: `Invalid email format: "${trimmedEmail}"` });
+        }
         
         // Check if Gmail is configured
         if (!transporter) {
-            console.log(`📧 Email prepared for: ${studentName} <${studentEmail}>`);
+            console.log(`📧 Email prepared for: ${studentName} <${trimmedEmail}>`);
             console.log(`Subject: ${subject}`);
             console.log(`⚠️  Gmail SMTP not configured. Set GMAIL_APP_PASSWORD environment variable.`);
             return res.json({ 
@@ -311,13 +319,13 @@ app.post('/api/send-email', async (req, res) => {
         // Send email via Gmail SMTP
         const mailOptions = {
             from: `"Design Tokens Camp" <${SENDER_EMAIL}>`,
-            to: studentEmail,
+            to: trimmedEmail,
             subject: subject,
             html: `<pre style="font-family: Arial, sans-serif; white-space: pre-wrap; word-wrap: break-word;">${body.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>`
         };
 
         const info = await transporter.sendMail(mailOptions);
-        console.log(`✅ Email sent to ${studentName} <${studentEmail}> (Message ID: ${info.messageId})`);
+        console.log(`✅ Email sent to ${studentName} <${trimmedEmail}> (Message ID: ${info.messageId})`);
         
         res.json({ 
             success: true, 
@@ -326,7 +334,10 @@ app.post('/api/send-email', async (req, res) => {
         });
     } catch (error) {
         console.error('❌ Error sending email:', error.message);
-        res.status(500).json({ error: `Failed to send email: ${error.message}` });
+        res.status(500).json({ 
+            success: false,
+            error: `Failed to send email: ${error.message}` 
+        });
     }
 });
 
