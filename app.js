@@ -1181,47 +1181,30 @@ function saveStudent(event) {
 
     closeStudentModal();
     
-    // If editing and email changed, delete old record from server FIRST by ID
+    // If editing and email changed, log it (server UPSERT on ID will handle the update correctly)
     if (currentEditingId && originalEditingEmail && originalEditingEmail !== newEmail) {
         console.log(`🔄 EMAIL CHANGED: "${originalEditingEmail}" → "${newEmail}"`);
-        console.log(`   - Will delete record by ID ${currentEditingId} first, then save new email`);
-        
-        // Delete by ID (ensures we delete the exact record)
-        deleteStudentById(currentEditingId).then((deleteSuccess) => {
-            if (deleteSuccess) {
-                console.log(`✅ Old record deleted by ID, now saving new student with email: ${newEmail}`);
-            } else {
-                console.warn(`⚠️ Delete may have failed, but proceeding with save anyway`);
-            }
-            
-            // Now save the new record with new email
-            saveToStorage(student).then(() => {
-                loadStudents().then(() => {
-                    renderPage(document.querySelector('.page.active').id);
-                    showToast('Student email updated successfully!', 'success');
-                });
-            });
-        });
-    } else if (currentEditingId && !originalEditingEmail) {
-        // Editing but originalEditingEmail is null (shouldn't happen, but safety check)
-        console.log(`💾 Updating student (email same or not tracked): ${newEmail}`);
-        saveToStorage(student).then(() => {
-            loadStudents().then(() => {
-                renderPage(document.querySelector('.page.active').id);
-                showToast('Student updated successfully!', 'success');
-            });
-        });
-    } else {
-        // Save to storage and refresh UI - pass only the single student
-        console.log(`💾 Saving student to server (${currentEditingId ? 'update' : 'create'}): ${newEmail}`);
-        saveToStorage(student).then(() => {
-            loadStudents().then(() => {
-                renderPage(document.querySelector('.page.active').id);
-                showToast('Student saved successfully!', 'success');
-            });
-        });
+        console.log(`   - Server will update record by ID ${currentEditingId} (UPSERT on ID prevents duplicates)`);
     }
     
+    // Save to storage and refresh UI - pass only the single student
+    // Server UPSERT will:
+    // - Match by ID if record exists (UPDATE) ← This prevents duplicates when email changes!
+    // - Create new if ID doesn't exist (INSERT for new records)
+    const actionType = currentEditingId ? 'update' : 'create';
+    console.log(`💾 Saving student to server (${actionType}): ${newEmail}`);
+    saveToStorage(student).then(() => {
+        loadStudents().then(() => {
+            renderPage(document.querySelector('.page.active').id);
+            if (currentEditingId && originalEditingEmail && originalEditingEmail !== newEmail) {
+                showToast('Student email updated successfully!', 'success');
+            } else if (currentEditingId) {
+                showToast('Student updated successfully!', 'success');
+            } else {
+                showToast('Student created successfully!', 'success');
+            }
+        });
+    });
     // Reset tracking variables
     currentEditingId = null;
     originalEditingEmail = null;

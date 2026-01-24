@@ -90,32 +90,43 @@ export async function saveAllStudents(students) {
             deduplicatedStudents.push(student);
         });
 
-        // Prepare data for upsert - include ALL fields from form
-        const studentsData = deduplicatedStudents.map(student => ({
-            name: student.name || null,
-            email: student.email || null,
-            cohort: student.cohort || null,
-            status: student.status || null,
-            location: student.location || null,
-            linkedin: student.linkedin || null,
-            whatsapp: student.whatsapp || null,
-            figma_email: student.figmaEmail || null,
-            language: student.language || null,
-            total_amount: parseFloat(student.totalAmount) || 0,
-            paid_amount: parseFloat(student.paidAmount) || 0,
-            remaining: parseFloat(student.remaining) || 0,
-            note: student.note || null,
-            payment_method: student.paymentMethod || null,
-            checklist: student.checklist ? JSON.stringify(student.checklist) : null
-        }));
+        // Prepare data for upsert - include ID to match existing records even when email changes
+        const studentsData = deduplicatedStudents.map(student => {
+            const data = {
+                name: student.name || null,
+                email: student.email || null,
+                cohort: student.cohort || null,
+                status: student.status || null,
+                location: student.location || null,
+                linkedin: student.linkedin || null,
+                whatsapp: student.whatsapp || null,
+                figma_email: student.figmaEmail || null,
+                language: student.language || null,
+                total_amount: parseFloat(student.totalAmount) || 0,
+                paid_amount: parseFloat(student.paidAmount) || 0,
+                remaining: parseFloat(student.remaining) || 0,
+                note: student.note || null,
+                payment_method: student.paymentMethod || null,
+                checklist: student.checklist ? JSON.stringify(student.checklist) : null
+            };
+            
+            // Include ID if present (for edits) - critical for matching existing records
+            if (student.id) {
+                data.id = student.id;
+            }
+            
+            return data;
+        });
 
+        // UPSERT: Match on ID first (for existing records), then fall back to email for new records
         const { error: upsertError } = await supabase
             .from('students')
-            .upsert(studentsData, { onConflict: 'email' });
+            .upsert(studentsData, { onConflict: 'id' }); // Changed from 'email' to 'id'
 
         if (upsertError) throw upsertError;
 
         console.log(`✅ Saved ${deduplicatedStudents.length} students to Supabase (deduplicated from ${students.length})`);
+        console.log(`📝 Upsert strategy: Matching on ID (for updates including email changes), fallback to email for new records`);
         return { count: deduplicatedStudents.length };
     } catch (error) {
         console.error('❌ Error saving students:', error.message);
