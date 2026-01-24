@@ -380,7 +380,7 @@ function renderStudentsTable() {
 
     const tbody = document.getElementById('studentsTableBody');
     if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="empty">No students found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="empty">No students found</td></tr>';
         return;
     }
 
@@ -397,6 +397,7 @@ function renderStudentsTable() {
             <td>
                 ${student.whatsapp ? `<a href="https://wa.me/${student.whatsapp.replace(/\D/g, '')}" target="_blank" title="Send WhatsApp message" style="color: #25D366; text-decoration: none; display: flex; align-items: center; gap: 4px;"><i class="fab fa-whatsapp"></i> ${student.whatsapp}</a>` : '-'}
             </td>
+            <td>${student.note || '-'}</td>
             <td>
                 <button class="btn-small btn-edit" data-student-id="${student.id}" title="Edit"><i class="fas fa-pencil-alt"></i></button>
                 <button class="btn-small btn-danger btn-delete" data-student-id="${student.id}" title="Delete"><i class="fas fa-trash"></i></button>
@@ -638,6 +639,7 @@ function renderStatusPage(status) {
                         <th>Language</th>
                         <th>LinkedIn</th>
                         <th>WhatsApp</th>
+                        <th>Notes</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -654,6 +656,7 @@ function renderStatusPage(status) {
                             <td>
                                 ${student.whatsapp ? `<a href="https://wa.me/${student.whatsapp.replace(/\\D/g, '')}" target="_blank" title="Send WhatsApp message" style="color: #25D366; text-decoration: none; display: flex; align-items: center; gap: 4px;"><i class="fab fa-whatsapp"></i> ${student.whatsapp}</a>` : '-'}
                             </td>
+                            <td>${student.note || '-'}</td>
                             <td>
                                 <button class="btn-small btn-edit" data-student-id="${student.id}" title="Edit"><i class="fas fa-pencil-alt"></i></button>
                                 <button class="btn-small btn-danger btn-delete" data-student-id="${student.id}" title="Delete"><i class="fas fa-trash"></i></button>
@@ -679,7 +682,7 @@ function renderStatusPage(status) {
             
             const tbody = document.getElementById(`statusTableBody-${pageId}`);
             if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="empty">No students found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="empty">No students found</td></tr>';
             } else {
                 tbody.innerHTML = filtered.map(student => `
                     <tr>
@@ -693,6 +696,7 @@ function renderStatusPage(status) {
                         <td>
                             ${student.whatsapp ? `<a href="https://wa.me/${student.whatsapp.replace(/\\D/g, '')}" target="_blank" title="Send WhatsApp message" style="color: #25D366; text-decoration: none; display: flex; align-items: center; gap: 4px;"><i class="fab fa-whatsapp"></i> ${student.whatsapp}</a>` : '-'}
                         </td>
+                        <td>${student.note || '-'}</td>
                         <td>
                             <button class="btn-small btn-edit" data-student-id="${student.id}" title="Edit"><i class="fas fa-pencil-alt"></i></button>
                             <button class="btn-small btn-danger btn-delete" data-student-id="${student.id}" title="Delete"><i class="fas fa-trash"></i></button>
