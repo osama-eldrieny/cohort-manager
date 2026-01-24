@@ -21,9 +21,6 @@
     }
   ],
   "env": {
-    "NODE_ENV": "production",
-    "SUPABASE_URL": "@supabase_url",
-    "SUPABASE_KEY": "@supabase_key",
-    "GMAIL_APP_PASSWORD": "@gmail_app_password"
+    "NODE_ENV": "production"
   }
 }
