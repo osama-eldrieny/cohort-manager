@@ -1,262 +1,203 @@
-# Course Dashboard - Setup Guide
+# Cohort Manager - Course Dashboard
 
-## Overview
-This is a simple, clean student management dashboard that connects to Google Sheets for data storage. No login required, no backend server needed.
+A modern, feature-rich student management dashboard built with Node.js, Express, SQLite, and Chart.js. Track students, manage cohorts, monitor revenue, and view comprehensive analytics—all in one beautiful interface.
 
----
+## 🎯 Features
 
-## Quick Start (5 minutes)
+### Core Management
+- **Student Management**: Add, edit, delete, and search students
+- **Multi-Cohort Support**: Manage 5 separate cohorts (Cohort 0, 1-Cradis, 1-Zomra, 2, 3)
+- **Status Tracking**: Waiting list, Can't reach, Next Cohort, Standby, and active cohort statuses
+- **Financial Tracking**: Total amount, paid amount, pending payments with privacy toggle
+- **Contact Information**: Email, WhatsApp (clickable links), LinkedIn profiles, Location, Language
 
-### Step 1: Open the Dashboard
-1. Open `index.html` in your web browser
-2. You'll see sample data pre-loaded (stored in browser's local storage)
-3. Add, edit, or delete students directly
+### Dashboard & Analytics
+- **Overview Page**: 
+  - Quick stats cards with revenue privacy controls
+  - Cohort summaries with student counts and rev
+  - Status Distribution, Revenue Status, and Student Location charts
+  - Analytics section: Revenue by Cohort, Students by Cohort, Language Distribution, Payment Status
 
-### Step 2: Set Up Google Sheets Integration (Optional)
+- **Students Page**: Complete student directory with search and multi-select status filtering
 
-#### Why use Google Sheets?
-- Cloud backup of all data
-- Multiple team members can access
-- Data never lost (even if browser cache clears)
-- Spreadsheet backup in Google Drive
+- **Cohort Pages**: Detailed cohort views with onboarding progress tracking (Cohort 2 & 3)
 
----
+- **Status Pages**: Quick views of students by status
 
-## Step-by-Step Setup: Google Sheets Integration
+### Advanced Features
+- **Onboarding Checklist**: Track 7-item checklist for active cohorts with progress percentage
+- **Revenue Privacy**: Eye toggle icons to hide financial data
+- **Multi-Select Filtering**: Filter students by multiple statuses simultaneously
+- **Real-time Search**: Instant search across student names and emails
+- **Data Export/Import**: Backup and restore student data as JSON
 
-### Part A: Create Google Sheet
+## 🚀 Quick Start
 
-1. Go to [Google Sheets](https://sheets.google.com)
-2. Click **+ New** → **Blank spreadsheet**
-3. Name it `Course Dashboard - Students`
-4. Share with your team (click Share button)
+### Prerequisites
+- Node.js (v14 or higher)
+- npm
 
-### Part B: Set Up Google Apps Script
+### Installation
 
-1. In your Google Sheet, go to **Extensions** → **Apps Script**
-2. Delete any existing code
-3. Copy the entire code from `AppsScript.gs` file
-4. Paste it into the Apps Script editor
-5. Click **Save** (Ctrl+S or Cmd+S)
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/cohort-manager.git
+cd cohort-manager
 
-### Part C: Deploy as Web App
+# Instaldependencies
+npm install
 
-1. In Apps Script, click **Deploy** → **New deployment**
-2. Click the **Select type** dropdown → choose **Web app**
-3. Set up as:
-   - **Execute as:** Your email address
-   - **Who has access:** Anyone
-4. Click **Deploy**
-5. A dialog will appear. Click **Authorize access**
-6. Select your Google account
-7. Accept the permissions
-8. **Copy the deployment URL** (you'll need this)
-
-### Part D: Connect Dashboard to Google Sheets
-
-1. Open `index.html` in a text editor
-2. Find this line (around line 195):
-   ```javascript
-   const SCRIPT_URL = 'https://script.google.com/macros/d/YOUR_SCRIPT_ID/useFunctionName?useCache=true';
-   ```
-
-3. Replace `YOUR_SCRIPT_ID` with your actual Script ID:
-   - In Apps Script, click **Project Settings** (gear icon)
-   - Copy the **Script ID**
-   - Replace it in the URL
-
-4. The final URL should look like:
-   ```javascript
-   const SCRIPT_URL = 'https://script.google.com/macros/d/AKfycbxXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/useFunctionName?useCache=true';
-   ```
-
-5. Save the HTML file
-
-### Part E: Add Sample Data to Google Sheet
-
-1. Go back to Apps Script
-2. Find the `addSampleData()` function
-3. Click the dropdown next to the **Run** button and select `addSampleData`
-4. Click **Run**
-5. Check your Google Sheet - it should now have 2 sample students
-
----
-
-## Features
-
-### Student Information
-- **Name** - Student's full name
-- **Email** - Contact email
-- **WhatsApp** - Mobile number for quick contact
-- **Location** - Country only
-- **Language** - English or Arabic
-- **Status** - Current status in the course:
-  - Waiting list
-  - Can't reach
-  - Next Cohort
-  - Standby
-  - Current Cohort
-  - Graduated
-
-### Financial Tracking
-- **Total Amount** - Course fee
-- **Paid Amount** - Amount already paid
-- **Remaining Amount** - Auto-calculated (Total - Paid)
-
-### Current Cohort Checklist
-When a student status is set to "Current Cohort", a checklist appears:
-- Added to private community ✓
-- Share course agreement and roles ✓
-- Signed course agreement and roles ✓
-- Share Google Drive folder with Student ✓
-- Create specific Figma file and share it ✓
-- Share Master Figma file ✓
-- Figma Educational Account Status:
-  - Not started
-  - Submitted
-  - Approved
-  - Rejected
-
-### Actions
-- **Add Student** - Create new student record
-- **Edit** - Update student info or checklist
-- **Delete** - Remove student from list
-- **Export Data** - Download as JSON file (backup)
-- **Import Data** - Upload JSON file to restore data
-
-### Filters
-- Filter by **Cohort** (dropdown)
-- Filter by **Status** (dropdown)
-- Combine filters for specific views
-
----
-
-## Data Storage Options
-
-### Option 1: Local Storage (Current)
-- **How:** Data stored in your browser
-- **Pros:** No setup needed, works immediately
-- **Cons:** Data lost if cache is cleared
-- **Best for:** Testing, single device
-
-### Option 2: Google Sheets (Recommended)
-- **How:** Data synced to Google Sheet
-- **Pros:** Cloud backup, team access, never lost
-- **Cons:** Requires Google Apps Script setup
-- **Best for:** Production use, team collaboration
-
-### Option 3: Both
-- Uses local storage for quick access
-- Syncs to Google Sheets automatically
-- **Best of both worlds**
-
----
-
-## Troubleshooting
-
-### Data not saving to Google Sheets?
-1. Check if `SCRIPT_URL` is correctly set in `index.html`
-2. Go to Apps Script → **Executions** tab to check for errors
-3. Make sure the script is published as Web App (Deploy → New deployment)
-
-### Can't authorize Google?
-1. Try logging out of Google account
-2. Clear browser cache
-3. Try in Incognito/Private mode
-4. Reload the page
-
-### Checklist not appearing?
-1. Make sure student status is set to **"Current Cohort"**
-2. Save the student record
-3. Edit again - checklist should appear
-
-### Lost all data?
-1. Check `AppsScript.gs` - run `addSampleData()` again
-2. If using local storage, import from backup JSON file
-3. Check browser cache/storage settings
-
----
-
-## Tips & Best Practices
-
-1. **Regular Backups**
-   - Click "Export Data" weekly
-   - Save the JSON file to Google Drive or Dropbox
-
-2. **Organization**
-   - Create separate cohorts: "Cohort 1 - Jan 2024", "Cohort 2 - Feb 2024"
-   - Use cohort filter to view specific groups
-
-3. **Notes**
-   - Use the Notes field for important info
-   - Example: "Needs payment reminder", "Design experience level: Intermediate"
-
-4. **Financial Tracking**
-   - Always enter payment amounts
-   - Remaining amount calculates automatically
-   - Sort by remaining to see who owes payment
-
-5. **Checklist Management**
-   - Check items as they're completed
-   - Use Figma status for educational account requests
-   - Mark checklist items as complete even if not applicable
-
----
-
-## How to Share with Team
-
-### If using Google Sheets:
-1. Click **Share** button on Google Sheet
-2. Add team member emails
-3. Each person can open `index.html` file
-4. Make sure they have access to the same Google Sheet
-5. Data syncs automatically for all users
-
-### If using Local Storage:
-1. Export data as JSON
-2. Share the JSON file via email or Drive
-3. Team members can import it
-4. Note: Changes won't sync (each person has local copy)
-
----
-
-## File Structure
-
-```
-Course Dashboard/
-├── index.html           # Main dashboard (open this in browser)
-├── AppsScript.gs        # Google Apps Script (copy to Google Sheet)
-└── README.md           # This file
+# Start the server
+npm start
 ```
 
+The dashboard will be available at `http://localhost:3002`
+
+## 📋 Configuration
+
+### Database
+- **Type**: SQLite3
+- **File**: `students.db`
+- **Migration**: Automatic migration from `students.json` on first run
+
+### API Endpoints
+
+```
+GET    /api/students          - Load all students
+POST   /api/students          - Save students
+DELETE /api/students/:id      - Delete student by ID
+GET    /api/export            - Export all students as JSON
+GET    /api/health            - Health check endpoint
+```
+
+## 🎨 User Interface
+
+### Pages
+1. **Overview**: Dashboard with stats, charts, and analytics
+2. **Students**: Full student directory with filters
+3. **Cohort 0-3**: Cohort-specific 
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js (v14 or highernrollment
+5. **Can't Reach**: Students unable to contact
+6. **Next Cohort**: Students for upcoming cohort
+7. **Standby**: Students on standby status
+8. **Settings**: Data management and export/import
+
+## 📊 Data Structure
+
+### Student Onpm start
+```
+
+Th
+{
+  id: "unique-id",
+  name: "Student Name",
+  email: "student@example.com",
+  whatsapp: "+1234567890",
+  linkedin: "https://linkedin.com/in/username",
+  location: "Country",
+  language: "English/Arabic",
+  cohort: "Cohort 2",
+  status: "Current Cohort",
+  totalAmount: 1000,
+  paidAmount: 500,
+  remaining: 500,
+  note: "Additional notes",
+  paymentMethod: "Stripe/Instapay"
+}
+```
+
+## 🔧 Development
+
+### Project Structure
+```
+cohort-manager/
+├── index.html              # Main HTML interface
+├── app.js                  # Frontend JavaScript
+├── server.js               # Express server
+├── database.js             # SQLite database handler
+├── style.css               # Styling
+├── package.json            # Dependencies
+└── README.md               # This file
+```
+
+### Key Technologies
+- **Frontend**: HTML5, CSS3, Vanilla JavaScript ES6+
+- **Backend**: Node.js, Express.js
+- **Database**: SQLite3 with atomic transactions
+- **Charts**: Chart.js
+- **Icons**: Font Awesomeess": "^4.18.2",
+  "sqlite3": "^5.1.6",
+  "body-parser": "^1.20.2",
+  "cors": "^2.8.5"
+}
+```
+
+## 🌐 Deployment
+
+### Vercel (Recommended - Full Stack)
+```bash
+npm install -g vercel
+vercel --prod
+```
+
+### Heroku
+```bash
+heroku create cohort-manager
+git push heroku main
+```
+
+### GitHub Pages + Vercel Serverless (Backend)
+Deploy frontend to GitHub Pages and backend to Vercel Functions.
+
+## 🔐 Security Notes
+
+- Data stored securely in SQLite database
+- No authentication required (designed for internal team use)
+- Revenue data can be hidden with privacy toggles
+- All student data remains local
+- Recommend using HTTPS if deployed to production
+
+## 🐛 Troubleshooting
+
+### Server won't start
+```bash
+# Check if port 3002 is in use
+lsof -i :3002
+```
+
+### Database errors
+```bash
+# Reset database (WARNING: deletes all data)
+rm students.db
+npm start
+```
+
+## 📝 Usage Tips
+
+### Bulk Oper- **Database**: SQLite3 with atoment data
+2. Edit the JSON file
+3. Use Import to upload the modified data
+
+### Filtering
+- **Students Page**: Multi-select status filter + text search
+- **Cohort Pages**: Individual cohort view with search
+- **Status Pages**: Quick filter by single status
+
+## 🤝 Contributing
+
+Contributions welcome! Submit issues and pull requests.
+
+## 📄 License
+
+MIT License - free for personal or commercial use.
+
+## 📧 Support
+
+For issues or questions, open an issue on GitHub.
+
 ---
 
-## Browser Compatibility
-
-✅ Chrome
-✅ Firefox  
-✅ Safari
-✅ Edge
-
----
-
-## Need Help?
-
-1. **Check this README first** - most answers are here
-2. **Check browser console** - Ctrl+Shift+J (Windows) or Cmd+Option+J (Mac)
-3. **Verify Google Apps Script** - check Executions tab for errors
-4. **Export and inspect** - use JSON export to verify data structure
-
----
-
-## Version
-v1.0 - January 2024
-
----
-
-## Features Coming Soon
-- Email notifications for payments due
-- Bulk student import from CSV
-- Student progress tracking
-- Attendance tracking
-- Certificate tracking
+**Version**: 2.0 | **Last Updated**: January 24, 2026
