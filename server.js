@@ -242,13 +242,22 @@ app.post('/api/email-templates', async (req, res) => {
         }
         
         console.log(`📝 Saving email template: ${name} (ID: ${id})`);
+        
+        // Check if we're in serverless environment
+        if (process.env.VERCEL) {
+            console.log('⚠️  Serverless environment detected: Email templates are read-only');
+            return res.status(400).json({ 
+                error: 'Email templates cannot be created in production (Vercel). Templates are read-only and must be managed locally.'
+            });
+        }
+        
         await saveEmailTemplate(id, name, button_label, subject, body);
         
-        // Auto-export to JSON after saving (skipped in serverless)
+        // Auto-export to JSON after saving
         try {
             await exportEmailTemplatesToJson();
         } catch (exportError) {
-            console.warn('⚠️  Export to JSON skipped (serverless or file system issue), but template saved');
+            console.warn('⚠️  Export to JSON failed, but template saved to database');
         }
         
         res.json({ success: true, message: 'Email template saved successfully' });
@@ -344,8 +353,12 @@ process.on('SIGINT', () => {
 
 // Start server
 app.listen(PORT, () => {
+    const environment = process.env.VERCEL ? 'Vercel (Serverless)' : 
+                       process.env.AWS_LAMBDA_FUNCTION_NAME ? 'AWS Lambda' : 'Local';
+    
     console.log(`🚀 Course Dashboard Server running on http://localhost:${PORT}`);
-    console.log(`💾 Data storage: SQLite Database (students.db)`);
+    console.log(`🌍 Environment: ${environment}`);
+    console.log(`💾 Data storage: ${process.env.VERCEL ? 'JSON File (Serverless)' : 'SQLite Database'}`);
     console.log(`📊 API Endpoints:`);
     console.log(`   GET  /api/students - Load students`);
     console.log(`   POST /api/students - Save students`);
