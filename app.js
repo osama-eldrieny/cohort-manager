@@ -1798,7 +1798,9 @@ async function deleteEmailTemplate(templateId) {
 let currentContactStudent = null;
 
 function openStudentContactModal(studentId) {
-    const student = students.find(s => s.id === studentId);
+    // Use type-safe comparison for string/int IDs from Supabase
+    const numericId = parseInt(studentId, 10) || studentId;
+    const student = students.find(s => s.id === numericId || String(s.id) === String(studentId));
     if (!student) return;
 
     currentContactStudent = student;
