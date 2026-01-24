@@ -5,6 +5,7 @@
 let students = [];
 let currentEditingId = null;
 let originalEditingEmail = null; // Track original email when editing
+let emailWasChanged = false;
 let charts = {};
 const COHORTS = ['Cohort 0', 'Cohort 1 - Cradis', 'Cohort 1 - Zomra', 'Cohort 2', 'Cohort 3'];
 
@@ -1028,21 +1029,28 @@ function deleteStudent(id) {
 
 // Delete student by email (for handling email changes during edit)
 async function deleteStudentByEmail(email) {
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/students`, {
+    return new Promise((resolve, reject) => {
+        fetch(`${API_BASE_URL}/api/students`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ deleteByEmail: email })
+        })
+        .then(response => {
+            if (!response.ok) {
+                console.warn(`⚠️ Server returned ${response.status} when deleting email: ${email}`);
+                return response.json().then(data => {
+                    throw new Error(data.error || `HTTP ${response.status}`);
+                });
+            }
+            console.log('✅ Successfully deleted old email record:', email);
+            resolve(true);
+        })
+        .catch(error => {
+            console.error('❌ Error deleting old email record:', email, '-', error.message);
+            // Don't reject - allow save to continue even if delete fails
+            resolve(false);
         });
-        
-        if (!response.ok) {
-            console.warn('⚠️ Failed to delete old email record:', email);
-        } else {
-            console.log('✅ Deleted old email record:', email);
-        }
-    } catch (error) {
-        console.warn('⚠️ Error deleting old email record:', error);
-    }
+    });
 }
 
 function calculateRemaining() {
