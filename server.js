@@ -72,8 +72,9 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static(__dirname));
 
-// Initialize database on startup
+// Initialize database on startup (non-blocking for Vercel)
 let dbReady = false;
+let dbInitError = null;
 (async () => {
     try {
         await initializeDatabase();
@@ -81,18 +82,45 @@ let dbReady = false;
         console.log('🔧 Database initialization complete');
     } catch (error) {
         console.error('❌ Failed to initialize database:', error.message);
-        process.exit(1);
+        dbInitError = error;
+        // Don't exit - let the API handle gracefully
     }
 })();
+
+// Add a health check endpoint
+app.get('/api/health', (req, res) => {
+    if (dbReady) {
+        res.json({ status: 'OK', database: 'ready' });
+    } else if (dbInitError) {
+        res.status(503).json({ status: 'ERROR', database: 'failed', error: dbInitError.message });
+    } else {
+        res.json({ status: 'initializing', database: 'pending' });
+    }
+});
 
 // GET /api/students - Load all students
 app.get('/api/students', async (req, res) => {
     try {
+        if (!dbReady) {
+            console.log('⚠️  Database not ready, attempting to read from JSON file');
+            try {
+                const data = fs.readFileSync(DATA_FILE, 'utf8');
+                return res.json(JSON.parse(data));
+            } catch (fileError) {
+                return res.status(503).json({ error: 'Database not ready and cannot read from file' });
+            }
+        }
         const students = await getAllStudents();
         res.json(students);
     } catch (error) {
         console.error('❌ Error fetching students:', error.message);
-        res.status(500).json({ error: 'Failed to fetch students' });
+        // Fallback to JSON file
+        try {
+            const data = fs.readFileSync(DATA_FILE, 'utf8');
+            res.json(JSON.parse(data));
+        } catch {
+            res.status(500).json({ error: 'Failed to fetch students' });
+        }
     }
 });
 
@@ -147,11 +175,28 @@ app.get('/api/export', async (req, res) => {
 // GET /api/email-templates - Get all email templates
 app.get('/api/email-templates', async (req, res) => {
     try {
+        if (!dbReady) {
+            console.log('⚠️  Database not ready, attempting to read from JSON file');
+            try {
+                const templatesPath = path.join(__dirname, 'email_templates.json');
+                const data = fs.readFileSync(templatesPath, 'utf8');
+                return res.json(JSON.parse(data));
+            } catch (fileError) {
+                return res.json([]); // Return empty array if file doesn't exist
+            }
+        }
         const templates = await getAllEmailTemplates();
         res.json(templates);
     } catch (error) {
         console.error('❌ Error fetching email templates:', error.message);
-        res.status(500).json({ error: 'Failed to fetch email templates' });
+        // Fallback to JSON file
+        try {
+            const templatesPath = path.join(__dirname, 'email_templates.json');
+            const data = fs.readFileSync(templatesPath, 'utf8');
+            res.json(JSON.parse(data));
+        } catch {
+            res.json([]); // Return empty array if all else fails
+        }
     }
 });
 
