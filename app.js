@@ -1093,15 +1093,15 @@ function saveStudent(event) {
         students.push(student);
     }
 
-    saveToStorage();
     closeStudentModal();
     
-    // Reload data from server to ensure consistency
-    setTimeout(() => {
+    // Save to storage and refresh UI
+    saveToStorage().then(() => {
         loadStudents().then(() => {
             renderPage(document.querySelector('.page.active').id);
+            showToast('Student saved successfully!', 'success');
         });
-    }, 300);
+    });
 }
 
 // ============================================
@@ -1109,7 +1109,7 @@ function saveStudent(event) {
 // ============================================
 
 async function saveToStorage() {
-    // Save to both server (primary) and localStorage (fallback)
+    // Save to localStorage first (immediate)
     localStorage.setItem('students', JSON.stringify(students));
     
     // Try to save to server
@@ -1123,11 +1123,13 @@ async function saveToStorage() {
         if (response.ok) {
             const result = await response.json();
             console.log('✅ Auto-saved to server:', result.count, 'students');
+            return result;
         } else {
             const errorData = await response.json();
             const errorMsg = errorData.error || 'Server save failed';
             console.warn('⚠️ Server error:', errorMsg);
             showToast(errorMsg, 'error');
+            throw new Error(errorMsg);
         }
     } catch (error) {
         console.warn('⚠️ Cannot reach server (http://localhost:3002), using localStorage only');
