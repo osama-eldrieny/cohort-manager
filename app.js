@@ -2053,7 +2053,16 @@ async function sendBulkEmail(event) {
         return;
     }
 
-    const template = emailTemplates.find(t => t.id === templateId);
+    // Convert to number to match Supabase ID type, or use string comparison
+    const numericId = parseInt(templateId, 10) || templateId;
+    const template = emailTemplates.find(t => t.id === numericId || String(t.id) === String(templateId));
+    
+    if (!template) {
+        console.error('Template not found:', templateId, 'Available templates:', emailTemplates);
+        showToast('Selected template not found', 'error');
+        return;
+    }
+    
     const groupValue = selectedGroup.value;
     const recipients = getStudentsByGroup(groupValue);
 
