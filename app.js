@@ -1117,7 +1117,9 @@ function saveStudent(event) {
     }
 
     if (currentEditingId) {
-        const index = students.findIndex(s => s.id === currentEditingId);
+        // Use type-safe comparison for string/int IDs from Supabase
+        const numericId = parseInt(currentEditingId, 10) || currentEditingId;
+        const index = students.findIndex(s => s.id === numericId || String(s.id) === String(currentEditingId));
         if (index !== -1) {
             students[index] = student;
         }
