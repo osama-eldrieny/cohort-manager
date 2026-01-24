@@ -931,8 +931,14 @@ function closeStudentModal() {
 }
 
 function editStudent(id) {
-    const student = students.find(s => s.id === id);
-    if (!student) return;
+    // Convert to number for comparison with Supabase IDs, but also try string comparison
+    const numericId = parseInt(id, 10) || id;
+    const student = students.find(s => s.id === numericId || String(s.id) === String(id));
+    
+    if (!student) {
+        console.error('Student not found:', id, 'Available IDs:', students.map(s => ({ id: s.id, type: typeof s.id })));
+        return;
+    }
 
     currentEditingId = id;
     document.getElementById('modalTitle').textContent = 'Edit Student';
@@ -984,17 +990,21 @@ function editStudent(id) {
 
 function deleteStudent(id) {
     if (confirm('Are you sure you want to delete this student?')) {
-        const studentName = students.find(s => s.id === id)?.name || id;
-        students = students.filter(s => s.id !== id);
+        // Convert to number for comparison with Supabase IDs, but also try string comparison
+        const numericId = parseInt(id, 10) || id;
+        const studentName = students.find(s => s.id === numericId || String(s.id) === String(id))?.name || id;
+        students = students.filter(s => !(s.id === numericId || String(s.id) === String(id)));
+        
         console.log('🗑️ Deleted student:', studentName);
         saveToStorage();
         
         // Reload data from server to ensure consistency
-        setTimeout(() => {
+        saveToStorage().then(() => {
             loadStudents().then(() => {
                 renderPage(document.querySelector('.page.active').id);
+                showToast('Student deleted successfully', 'success');
             });
-        }, 300);
+        });
     }
 }
 
