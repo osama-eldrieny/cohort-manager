@@ -11,21 +11,38 @@ const DB_PATH = path.join(__dirname, 'students.db');
 const STUDENTS_JSON = path.join(__dirname, 'students.json');
 
 let db = null;
+let isServerless = false; // Flag to track if we're in serverless environment
 
 // Initialize database
 export function initializeDatabase() {
     return new Promise((resolve, reject) => {
-        db = new sqlite3.Database(DB_PATH, (err) => {
-            if (err) {
-                console.error('❌ Error opening database:', err.message);
-                reject(err);
-            } else {
-                console.log('✅ Connected to SQLite database');
-                createTablesIfNotExist()
-                    .then(() => resolve(db))
-                    .catch(reject);
+        try {
+            // Check if we're in a serverless environment (Vercel, etc)
+            // In serverless, we won't have persistent storage for SQLite
+            if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+                isServerless = true;
+                console.log('ℹ️  Serverless environment detected - using JSON file fallback');
+                resolve(null);
+                return;
             }
-        });
+            
+            db = new sqlite3.Database(DB_PATH, (err) => {
+                if (err) {
+                    console.error('❌ Error opening database:', err.message);
+                    reject(err);
+                } else {
+                    console.log('✅ Connected to SQLite database');
+                    createTablesIfNotExist()
+                        .then(() => resolve(db))
+                        .catch(reject);
+                }
+            });
+        } catch (error) {
+            console.error('❌ Error initializing database:', error.message);
+            console.log('⚠️  Falling back to JSON file storage');
+            isServerless = true;
+            resolve(null);
+        }
     });
 }
 
@@ -127,6 +144,24 @@ async function loadFromJsonIfEmpty() {
 // Get all students
 export function getAllStudents() {
     return new Promise((resolve, reject) => {
+        // If in serverless environment, read from JSON
+        if (isServerless) {
+            try {
+                const data = fs.readFileSync(STUDENTS_JSON, 'utf-8');
+                resolve(JSON.parse(data));
+            } catch (err) {
+                console.error('❌ Error reading students from JSON:', err.message);
+                resolve([]); // Return empty array on error
+            }
+            return;
+        }
+
+        // Otherwise use database
+        if (!db) {
+            resolve([]);
+            return;
+        }
+
         db.all('SELECT * FROM students ORDER BY updated_at DESC', (err, rows) => {
             if (err) {
                 console.error('❌ Error fetching students:', err.message);
@@ -294,6 +329,25 @@ export function closeDatabase() {
 // Email template functions
 export function getAllEmailTemplates() {
     return new Promise((resolve, reject) => {
+        // If in serverless environment, read from JSON
+        if (isServerless) {
+            try {
+                const templatesPath = path.join(__dirname, 'email_templates.json');
+                const data = fs.readFileSync(templatesPath, 'utf-8');
+                resolve(JSON.parse(data));
+            } catch (err) {
+                console.log('ℹ️  No email templates file found, returning empty array');
+                resolve([]); // Return empty array on error
+            }
+            return;
+        }
+
+        // Otherwise use database
+        if (!db) {
+            resolve([]);
+            return;
+        }
+
         db.all('SELECT * FROM email_templates ORDER BY created_at ASC', (err, rows) => {
             if (err) {
                 console.error('❌ Error fetching email templates:', err.message);
