@@ -1124,10 +1124,14 @@ async function saveToStorage() {
             const result = await response.json();
             console.log('✅ Auto-saved to server:', result.count, 'students');
         } else {
-            console.warn('⚠️ Server save failed, using localStorage only');
+            const errorData = await response.json();
+            const errorMsg = errorData.error || 'Server save failed';
+            console.warn('⚠️ Server error:', errorMsg);
+            showToast(errorMsg, 'error');
         }
     } catch (error) {
         console.warn('⚠️ Cannot reach server (http://localhost:3002), using localStorage only');
+        console.warn('Note: Changes are saved locally but not synced to server');
     }
     
     logStudentStats();

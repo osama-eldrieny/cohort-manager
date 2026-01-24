@@ -165,6 +165,14 @@ app.post('/api/students', async (req, res) => {
             return res.status(400).json({ error: 'Students must be an array' });
         }
         
+        // Check if we're in serverless environment
+        if (process.env.VERCEL) {
+            console.log('⚠️  Serverless environment detected: Student data is read-only on production');
+            return res.status(400).json({ 
+                error: 'Student data cannot be edited in production (Vercel). Please edit students locally and push to GitHub.'
+            });
+        }
+        
         const result = await saveAllStudents(students);
         console.log(`✅ Auto-saved ${result.count} students to database`);
         res.json({ 
@@ -173,8 +181,8 @@ app.post('/api/students', async (req, res) => {
             message: 'Students saved successfully to database'
         });
     } catch (error) {
-        console.error('❌ Error saving students:', error.message);
-        res.status(500).json({ error: 'Failed to save students' });
+        console.error('❌ Error saving students:', error.message, error.stack);
+        res.status(500).json({ error: 'Failed to save students: ' + error.message });
     }
 });
 
