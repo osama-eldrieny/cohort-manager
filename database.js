@@ -220,6 +220,21 @@ async function insertStudent(student) {
 // Save all students
 export async function saveAllStudents(students) {
     return new Promise((resolve, reject) => {
+        // If in serverless environment, save to JSON file
+        if (isServerless || !db) {
+            try {
+                const studentsPath = path.join(__dirname, 'students.json');
+                fs.writeFileSync(studentsPath, JSON.stringify(students, null, 2));
+                console.log(`✅ Saved ${students.length} students to JSON file`);
+                resolve({ count: students.length });
+            } catch (err) {
+                console.error('❌ Error saving students to JSON:', err.message);
+                reject(err);
+            }
+            return;
+        }
+
+        // Otherwise use database
         db.serialize(() => {
             db.run('BEGIN TRANSACTION', (err) => {
                 if (err) {
@@ -291,6 +306,35 @@ export async function saveAllStudents(students) {
 // Delete student
 export function deleteStudent(id) {
     return new Promise((resolve, reject) => {
+        // If in serverless environment, delete from JSON file
+        if (isServerless || !db) {
+            try {
+                const studentsPath = path.join(__dirname, 'students.json');
+                let students = [];
+                
+                // Read existing students
+                try {
+                    const data = fs.readFileSync(studentsPath, 'utf-8');
+                    students = JSON.parse(data);
+                } catch {
+                    students = [];
+                }
+                
+                // Filter out the student to delete
+                students = students.filter(s => s.id !== id);
+                
+                // Save back to JSON
+                fs.writeFileSync(studentsPath, JSON.stringify(students, null, 2));
+                console.log(`✅ Student ${id} deleted from JSON file`);
+                resolve();
+            } catch (err) {
+                console.error('❌ Error deleting student from JSON:', err.message);
+                reject(err);
+            }
+            return;
+        }
+
+        // Otherwise use database
         db.run('DELETE FROM students WHERE id = ?', [id], (err) => {
             if (err) {
                 console.error('❌ Error deleting student:', err.message);
