@@ -1027,7 +1027,29 @@ function deleteStudent(id) {
     }
 }
 
-// Delete student by email (for handling email changes during edit)
+// Delete student by ID (for handling email changes during edit)
+async function deleteStudentById(id) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/students/${id}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.warn(`⚠️ Server returned ${response.status} when deleting ID ${id}:`, errorData.error);
+            return false;
+        }
+        
+        console.log(`✅ Successfully deleted student record by ID: ${id}`);
+        return true;
+    } catch (error) {
+        console.error('❌ Error deleting student by ID:', id, '-', error.message);
+        return false;
+    }
+}
+
+// Delete student by email (for handling email changes during edit) - DEPRECATED: Use deleteStudentById instead
 async function deleteStudentByEmail(email) {
     return new Promise((resolve, reject) => {
         fetch(`${API_BASE_URL}/api/students`, {
@@ -1159,16 +1181,34 @@ function saveStudent(event) {
 
     closeStudentModal();
     
-    // If editing and email changed, delete old record from server first
+    // If editing and email changed, delete old record from server FIRST by ID
     if (currentEditingId && originalEditingEmail && originalEditingEmail !== newEmail) {
-        console.log(`🔄 Email changed from "${originalEditingEmail}" to "${newEmail}" - will delete old record first`);
-        deleteStudentByEmail(originalEditingEmail).then(() => {
-            console.log(`✅ Old email record deleted, now saving new student with email: ${newEmail}`);
+        console.log(`🔄 EMAIL CHANGED: "${originalEditingEmail}" → "${newEmail}"`);
+        console.log(`   - Will delete record by ID ${currentEditingId} first, then save new email`);
+        
+        // Delete by ID (ensures we delete the exact record)
+        deleteStudentById(currentEditingId).then((deleteSuccess) => {
+            if (deleteSuccess) {
+                console.log(`✅ Old record deleted by ID, now saving new student with email: ${newEmail}`);
+            } else {
+                console.warn(`⚠️ Delete may have failed, but proceeding with save anyway`);
+            }
+            
+            // Now save the new record with new email
             saveToStorage(student).then(() => {
                 loadStudents().then(() => {
                     renderPage(document.querySelector('.page.active').id);
-                    showToast('Student updated successfully!', 'success');
+                    showToast('Student email updated successfully!', 'success');
                 });
+            });
+        });
+    } else if (currentEditingId && !originalEditingEmail) {
+        // Editing but originalEditingEmail is null (shouldn't happen, but safety check)
+        console.log(`💾 Updating student (email same or not tracked): ${newEmail}`);
+        saveToStorage(student).then(() => {
+            loadStudents().then(() => {
+                renderPage(document.querySelector('.page.active').id);
+                showToast('Student updated successfully!', 'success');
             });
         });
     } else {

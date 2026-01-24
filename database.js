@@ -138,19 +138,40 @@ export async function deleteStudent(id) {
                 students = [];
             }
 
-            students = students.filter(s => s.id !== id);
+            // Handle both string and numeric IDs
+            const numericId = parseInt(id, 10);
+            students = students.filter(s => {
+                const studentId = typeof s.id === 'number' ? s.id : parseInt(s.id, 10);
+                const searchId = isNaN(numericId) ? id : numericId;
+                return s.id !== searchId && String(s.id) !== String(id);
+            });
             fs.writeFileSync(studentsPath, JSON.stringify(students, null, 2));
-            console.log(`✅ Student deleted from JSON file (local fallback)`);
+            console.log(`✅ Student deleted from JSON file (local fallback) - ID: ${id}`);
             return;
         }
 
-        const { error } = await supabase
+        // Parse ID to handle both string and number types
+        const numericId = parseInt(id, 10);
+        const finalId = isNaN(numericId) ? id : numericId;
+
+        console.log(`🗑️ Deleting student ID: ${id} (parsed as: ${finalId}, type: ${typeof finalId})`);
+
+        const { data, error } = await supabase
             .from('students')
             .delete()
-            .eq('id', id);
+            .eq('id', finalId)
+            .select(); // Select deleted rows for confirmation
 
-        if (error) throw error;
-        console.log(`✅ Student ${id} deleted from Supabase`);
+        if (error) {
+            console.error('❌ Supabase delete error:', error);
+            throw error;
+        }
+
+        if (data && data.length > 0) {
+            console.log(`✅ Student ${id} deleted from Supabase (${data.length} row(s) deleted)`);
+        } else {
+            console.log(`⚠️ No student found with ID ${id} in Supabase - may have been deleted already`);
+        }
     } catch (error) {
         console.error('❌ Error deleting student:', error.message);
         throw error;
