@@ -1,5 +1,4 @@
-import sqlite3 from 'sqlite3';
-import { promisify } from 'util';
+import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -7,343 +6,135 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const DB_PATH = path.join(__dirname, 'students.db');
+let supabase = null;
 const STUDENTS_JSON = path.join(__dirname, 'students.json');
 
-let db = null;
-let isServerless = false; // Flag to track if we're in serverless environment
-
-// Initialize database
+// Initialize Supabase client
 export function initializeDatabase() {
     return new Promise((resolve, reject) => {
         try {
-            // Check if we're in a serverless environment (Vercel, etc)
-            // In serverless, we won't have persistent storage for SQLite
-            if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
-                isServerless = true;
-                console.log('ℹ️  Serverless environment detected - using JSON file fallback');
+            const supabaseUrl = process.env.SUPABASE_URL;
+            const supabaseKey = process.env.SUPABASE_KEY;
+
+            if (!supabaseUrl || !supabaseKey) {
+                console.log('⚠️  Supabase credentials not found. Using local SQLite fallback.');
                 resolve(null);
                 return;
             }
-            
-            db = new sqlite3.Database(DB_PATH, (err) => {
-                if (err) {
-                    console.error('❌ Error opening database:', err.message);
-                    reject(err);
-                } else {
-                    console.log('✅ Connected to SQLite database');
-                    createTablesIfNotExist()
-                        .then(() => resolve(db))
-                        .catch(reject);
-                }
-            });
+
+            supabase = createClient(supabaseUrl, supabaseKey);
+            console.log('✅ Connected to Supabase PostgreSQL database');
+            resolve(supabase);
         } catch (error) {
-            console.error('❌ Error initializing database:', error.message);
-            console.log('⚠️  Falling back to JSON file storage');
-            isServerless = true;
-            resolve(null);
+            console.error('❌ Error initializing Supabase:', error.message);
+            reject(error);
         }
-    });
-}
-
-// Create tables if they don't exist
-async function createTablesIfNotExist() {
-    return new Promise((resolve, reject) => {
-        db.serialize(() => {
-            // Create students table
-            db.run(
-                `CREATE TABLE IF NOT EXISTS students (
-                    id TEXT PRIMARY KEY,
-                    name TEXT NOT NULL,
-                    email TEXT NOT NULL,
-                    linkedin TEXT,
-                    whatsapp TEXT,
-                    location TEXT,
-                    language TEXT,
-                    status TEXT,
-                    cohort TEXT,
-                    totalAmount REAL DEFAULT 0,
-                    paidAmount REAL DEFAULT 0,
-                    remaining REAL DEFAULT 0,
-                    note TEXT,
-                    paymentMethod TEXT,
-                    checklist JSON,
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                )`,
-                (err) => {
-                    if (err) {
-                        console.error('❌ Error creating students table:', err.message);
-                        reject(err);
-                    } else {
-                        console.log('✅ Students table ready');
-                        
-                        // Check if table is empty, if so load from JSON
-                        loadFromJsonIfEmpty()
-                            .then(() => resolve())
-                            .catch(reject);
-                    }
-                }
-            );
-
-            // Create email templates table
-            db.run(
-                `CREATE TABLE IF NOT EXISTS email_templates (
-                    id TEXT PRIMARY KEY,
-                    name TEXT NOT NULL,
-                    button_label TEXT NOT NULL,
-                    subject TEXT NOT NULL,
-                    body TEXT NOT NULL,
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                )`,
-                (err) => {
-                    if (err) {
-                        console.error('❌ Error creating email_templates table:', err.message);
-                    } else {
-                        console.log('✅ Email templates table ready');
-                    }
-                }
-            );
-        });
-    });
-}
-
-// Load data from JSON if database is empty
-async function loadFromJsonIfEmpty() {
-    return new Promise((resolve, reject) => {
-        db.get('SELECT COUNT(*) as count FROM students', async (err, row) => {
-            if (err) {
-                console.error('❌ Error checking student count:', err.message);
-                reject(err);
-                return;
-            }
-
-            if (row.count === 0 && fs.existsSync(STUDENTS_JSON)) {
-                console.log('📥 Database is empty, loading data from students.json...');
-                try {
-                    const data = JSON.parse(fs.readFileSync(STUDENTS_JSON, 'utf-8'));
-                    if (Array.isArray(data) && data.length > 0) {
-                        for (const student of data) {
-                            await insertStudent(student);
-                        }
-                        console.log(`✅ Loaded ${data.length} students from JSON into database`);
-                    }
-                    resolve();
-                } catch (error) {
-                    console.error('❌ Error loading from JSON:', error.message);
-                    reject(error);
-                }
-            } else {
-                resolve();
-            }
-        });
     });
 }
 
 // Get all students
-export function getAllStudents() {
-    return new Promise((resolve, reject) => {
-        // If in serverless environment, read from JSON
-        if (isServerless) {
+export async function getAllStudents() {
+    try {
+        if (!supabase) {
+            // Fallback to JSON file
             try {
                 const data = fs.readFileSync(STUDENTS_JSON, 'utf-8');
-                resolve(JSON.parse(data));
+                return JSON.parse(data);
             } catch (err) {
-                console.error('❌ Error reading students from JSON:', err.message);
-                resolve([]); // Return empty array on error
+                console.log('ℹ️  No students data found');
+                return [];
             }
-            return;
         }
 
-        // Otherwise use database
-        if (!db) {
-            resolve([]);
-            return;
-        }
+        const { data, error } = await supabase
+            .from('students')
+            .select('*')
+            .order('updated_at', { ascending: false });
 
-        db.all('SELECT * FROM students ORDER BY updated_at DESC', (err, rows) => {
-            if (err) {
-                console.error('❌ Error fetching students:', err.message);
-                reject(err);
-            } else {
-                // Parse checklist JSON strings back to objects
-                const students = rows.map(row => ({
-                    ...row,
-                    checklist: row.checklist ? JSON.parse(row.checklist) : undefined
-                }));
-                resolve(students);
-            }
-        });
-    });
-}
-
-// Insert or update student
-async function insertStudent(student) {
-    return new Promise((resolve, reject) => {
-        const checklistJson = student.checklist ? JSON.stringify(student.checklist) : null;
-        
-        db.run(
-            `INSERT OR REPLACE INTO students 
-            (id, name, email, linkedin, whatsapp, location, language, status, cohort, 
-             totalAmount, paidAmount, remaining, note, paymentMethod, checklist, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-            [
-                student.id,
-                student.name,
-                student.email,
-                student.linkedin || null,
-                student.whatsapp || null,
-                student.location || null,
-                student.language || null,
-                student.status || null,
-                student.cohort || null,
-                student.totalAmount || 0,
-                student.paidAmount || 0,
-                student.remaining || 0,
-                student.note || null,
-                student.paymentMethod || null,
-                checklistJson
-            ],
-            (err) => {
-                if (err) {
-                    console.error('❌ Error inserting student:', err.message);
-                    reject(err);
-                } else {
-                    resolve();
-                }
-            }
-        );
-    });
+        if (error) throw error;
+        return data || [];
+    } catch (error) {
+        console.error('❌ Error fetching students:', error.message);
+        throw error;
+    }
 }
 
 // Save all students
 export async function saveAllStudents(students) {
-    return new Promise((resolve, reject) => {
-        // If in serverless environment, save to JSON file
-        if (isServerless || !db) {
-            try {
-                const studentsPath = path.join(__dirname, 'students.json');
-                fs.writeFileSync(studentsPath, JSON.stringify(students, null, 2));
-                console.log(`✅ Saved ${students.length} students to JSON file`);
-                resolve({ count: students.length });
-            } catch (err) {
-                console.error('❌ Error saving students to JSON:', err.message);
-                reject(err);
-            }
-            return;
+    try {
+        if (!supabase) {
+            // Fallback to JSON file
+            const studentsPath = path.join(__dirname, 'students.json');
+            fs.writeFileSync(studentsPath, JSON.stringify(students, null, 2));
+            console.log(`✅ Saved ${students.length} students to JSON file (local fallback)`);
+            return { count: students.length };
         }
 
-        // Otherwise use database
-        db.serialize(() => {
-            db.run('BEGIN TRANSACTION', (err) => {
-                if (err) {
-                    reject(err);
-                    return;
-                }
+        // Prepare data for insert/update
+        const studentsData = students.map(student => ({
+            name: student.name || null,
+            email: student.email || null,
+            cohort: student.cohort || null,
+            status: student.status || null,
+            location: student.location || null,
+        }));
 
-                let completed = 0;
-                let hasError = false;
+        // Clear existing and insert new
+        const { error: deleteError } = await supabase
+            .from('students')
+            .delete()
+            .neq('id', -1); // Delete all
 
-                students.forEach((student, index) => {
-                    if (hasError) return;
+        if (deleteError && deleteError.code !== 'PGRST116') {
+            throw deleteError;
+        }
 
-                    const checklistJson = student.checklist ? JSON.stringify(student.checklist) : null;
-                    
-                    db.run(
-                        `INSERT OR REPLACE INTO students 
-                        (id, name, email, linkedin, whatsapp, location, language, status, cohort, 
-                         totalAmount, paidAmount, remaining, note, paymentMethod, checklist, updated_at)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-                        [
-                            student.id,
-                            student.name,
-                            student.email,
-                            student.linkedin || null,
-                            student.whatsapp || null,
-                            student.location || null,
-                            student.language || null,
-                            student.status || null,
-                            student.cohort || null,
-                            student.totalAmount || 0,
-                            student.paidAmount || 0,
-                            student.remaining || 0,
-                            student.note || null,
-                            student.paymentMethod || null,
-                            checklistJson
-                        ],
-                        (err) => {
-                            if (err) {
-                                hasError = true;
-                                reject(err);
-                            } else {
-                                completed++;
-                                if (completed === students.length) {
-                                    db.run('COMMIT', (err) => {
-                                        if (err) {
-                                            reject(err);
-                                        } else {
-                                            resolve({ count: students.length });
-                                        }
-                                    });
-                                }
-                            }
-                        }
-                    );
-                });
+        const { error: insertError } = await supabase
+            .from('students')
+            .insert(studentsData);
 
-                if (students.length === 0) {
-                    db.run('COMMIT', (err) => {
-                        if (err) reject(err);
-                        else resolve({ count: 0 });
-                    });
-                }
-            });
-        });
-    });
+        if (insertError) throw insertError;
+
+        console.log(`✅ Saved ${students.length} students to Supabase`);
+        return { count: students.length };
+    } catch (error) {
+        console.error('❌ Error saving students:', error.message);
+        throw error;
+    }
 }
 
 // Delete student
-export function deleteStudent(id) {
-    return new Promise((resolve, reject) => {
-        // If in serverless environment, delete from JSON file
-        if (isServerless || !db) {
+export async function deleteStudent(id) {
+    try {
+        if (!supabase) {
+            // Fallback to JSON file
+            const studentsPath = path.join(__dirname, 'students.json');
+            let students = [];
+
             try {
-                const studentsPath = path.join(__dirname, 'students.json');
-                let students = [];
-                
-                // Read existing students
-                try {
-                    const data = fs.readFileSync(studentsPath, 'utf-8');
-                    students = JSON.parse(data);
-                } catch {
-                    students = [];
-                }
-                
-                // Filter out the student to delete
-                students = students.filter(s => s.id !== id);
-                
-                // Save back to JSON
-                fs.writeFileSync(studentsPath, JSON.stringify(students, null, 2));
-                console.log(`✅ Student ${id} deleted from JSON file`);
-                resolve();
-            } catch (err) {
-                console.error('❌ Error deleting student from JSON:', err.message);
-                reject(err);
+                const data = fs.readFileSync(studentsPath, 'utf-8');
+                students = JSON.parse(data);
+            } catch {
+                students = [];
             }
+
+            students = students.filter(s => s.id !== id);
+            fs.writeFileSync(studentsPath, JSON.stringify(students, null, 2));
+            console.log(`✅ Student deleted from JSON file (local fallback)`);
             return;
         }
 
-        // Otherwise use database
-        db.run('DELETE FROM students WHERE id = ?', [id], (err) => {
-            if (err) {
-                console.error('❌ Error deleting student:', err.message);
-                reject(err);
-            } else {
-                resolve();
-            }
-        });
-    });
+        const { error } = await supabase
+            .from('students')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        console.log(`✅ Student ${id} deleted from Supabase`);
+    } catch (error) {
+        console.error('❌ Error deleting student:', error.message);
+        throw error;
+    }
 }
 
 // Export data
@@ -357,173 +148,139 @@ export async function exportData() {
     }
 }
 
-// Close database connection
-export function closeDatabase() {
-    if (db) {
-        db.close((err) => {
-            if (err) {
-                console.error('❌ Error closing database:', err.message);
-            } else {
-                console.log('✅ Database connection closed');
-            }
-        });
-    }
-}
-
-// Email template functions
-export function getAllEmailTemplates() {
-    return new Promise((resolve, reject) => {
-        // If in serverless environment, read from JSON
-        if (isServerless) {
+// Get all email templates
+export async function getAllEmailTemplates() {
+    try {
+        if (!supabase) {
+            // Fallback to JSON file
             try {
                 const templatesPath = path.join(__dirname, 'email_templates.json');
                 const data = fs.readFileSync(templatesPath, 'utf-8');
-                resolve(JSON.parse(data));
+                return JSON.parse(data);
             } catch (err) {
-                console.log('ℹ️  No email templates file found, returning empty array');
-                resolve([]); // Return empty array on error
+                console.log('ℹ️  No email templates found');
+                return [];
             }
-            return;
         }
 
-        // Otherwise use database
-        if (!db) {
-            resolve([]);
-            return;
-        }
+        const { data, error } = await supabase
+            .from('email_templates')
+            .select('*')
+            .order('created_at', { ascending: true });
 
-        db.all('SELECT * FROM email_templates ORDER BY created_at ASC', (err, rows) => {
-            if (err) {
-                console.error('❌ Error fetching email templates:', err.message);
-                reject(err);
-            } else {
-                resolve(rows || []);
-            }
-        });
-    });
+        if (error) throw error;
+        return data || [];
+    } catch (error) {
+        console.error('❌ Error fetching email templates:', error.message);
+        throw error;
+    }
 }
 
-export function saveEmailTemplate(id, name, button_label, subject, body) {
-    return new Promise((resolve, reject) => {
-        // If in serverless environment, save to JSON
-        if (isServerless || !db) {
+// Save email template
+export async function saveEmailTemplate(id, name, button_label, subject, body) {
+    try {
+        if (!supabase) {
+            // Fallback to JSON file
+            const templatesPath = path.join(__dirname, 'email_templates.json');
+            let templates = [];
+
             try {
-                const templatesPath = path.join(__dirname, 'email_templates.json');
-                let templates = [];
-                
-                // Read existing templates
-                try {
-                    const data = fs.readFileSync(templatesPath, 'utf-8');
-                    templates = JSON.parse(data);
-                } catch {
-                    templates = [];
-                }
-                
-                // Find and update or add new template
-                const existingIndex = templates.findIndex(t => t.id === id);
-                const newTemplate = {
-                    id,
-                    name,
-                    button_label,
-                    subject,
-                    body,
-                    updated_at: new Date().toISOString(),
-                    created_at: existingIndex >= 0 ? templates[existingIndex].created_at : new Date().toISOString()
-                };
-                
-                if (existingIndex >= 0) {
-                    templates[existingIndex] = newTemplate;
-                } else {
-                    templates.push(newTemplate);
-                }
-                
-                // Save back to JSON
-                fs.writeFileSync(templatesPath, JSON.stringify(templates, null, 2));
-                console.log('✅ Email template saved to JSON file');
-                resolve();
-            } catch (err) {
-                console.error('❌ Error saving email template to JSON:', err.message);
-                reject(err);
+                const data = fs.readFileSync(templatesPath, 'utf-8');
+                templates = JSON.parse(data);
+            } catch {
+                templates = [];
             }
-            return;
-        }
 
-        // Otherwise use database
-        db.run(
-            `INSERT OR REPLACE INTO email_templates (id, name, button_label, subject, body, updated_at)
-            VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-            [id, name, button_label, subject, body],
-            (err) => {
-                if (err) {
-                    console.error('❌ Error saving email template:', err.message);
-                    reject(err);
-                } else {
-                    resolve();
-                }
-            }
-        );
-    });
-}
+            const existingIndex = templates.findIndex(t => t.id === id);
+            const newTemplate = {
+                id,
+                name,
+                button_label,
+                subject,
+                body,
+                updated_at: new Date().toISOString(),
+                created_at: existingIndex >= 0 ? templates[existingIndex].created_at : new Date().toISOString()
+            };
 
-export function deleteEmailTemplate(id) {
-    return new Promise((resolve, reject) => {
-        // If in serverless environment, delete from JSON
-        if (isServerless || !db) {
-            try {
-                const templatesPath = path.join(__dirname, 'email_templates.json');
-                let templates = [];
-                
-                // Read existing templates
-                try {
-                    const data = fs.readFileSync(templatesPath, 'utf-8');
-                    templates = JSON.parse(data);
-                } catch {
-                    templates = [];
-                }
-                
-                // Filter out the template to delete
-                templates = templates.filter(t => t.id !== id);
-                
-                // Save back to JSON
-                fs.writeFileSync(templatesPath, JSON.stringify(templates, null, 2));
-                console.log('✅ Email template deleted from JSON file');
-                resolve();
-            } catch (err) {
-                console.error('❌ Error deleting email template from JSON:', err.message);
-                reject(err);
-            }
-            return;
-        }
-
-        // Otherwise use database
-        db.run('DELETE FROM email_templates WHERE id = ?', [id], (err) => {
-            if (err) {
-                console.error('❌ Error deleting email template:', err.message);
-                reject(err);
+            if (existingIndex >= 0) {
+                templates[existingIndex] = newTemplate;
             } else {
-                resolve();
+                templates.push(newTemplate);
             }
-        });
-    });
+
+            fs.writeFileSync(templatesPath, JSON.stringify(templates, null, 2));
+            console.log('✅ Email template saved to JSON file (local fallback)');
+            return;
+        }
+
+        const { error } = await supabase
+            .from('email_templates')
+            .upsert({
+                name,
+                subject,
+                body
+            }, {
+                onConflict: 'name'
+            });
+
+        if (error) throw error;
+        console.log(`✅ Email template "${name}" saved to Supabase`);
+    } catch (error) {
+        console.error('❌ Error saving email template:', error.message);
+        throw error;
+    }
 }
 
-// Export email templates to JSON file
+// Delete email template
+export async function deleteEmailTemplate(id) {
+    try {
+        if (!supabase) {
+            // Fallback to JSON file
+            const templatesPath = path.join(__dirname, 'email_templates.json');
+            let templates = [];
+
+            try {
+                const data = fs.readFileSync(templatesPath, 'utf-8');
+                templates = JSON.parse(data);
+            } catch {
+                templates = [];
+            }
+
+            templates = templates.filter(t => t.id !== id);
+            fs.writeFileSync(templatesPath, JSON.stringify(templates, null, 2));
+            console.log('✅ Email template deleted from JSON file (local fallback)');
+            return;
+        }
+
+        const { error } = await supabase
+            .from('email_templates')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        console.log(`✅ Email template deleted from Supabase`);
+    } catch (error) {
+        console.error('❌ Error deleting email template:', error.message);
+        throw error;
+    }
+}
+
+// Export email templates to JSON
 export async function exportEmailTemplatesToJson() {
     try {
-        // In serverless environment, skip file export (data is already in JSON file)
-        if (isServerless) {
-            console.log('ℹ️  Serverless mode - skipping file export (data saved to JSON)');
-            const templates = await getAllEmailTemplates();
-            return templates;
-        }
-
         const templates = await getAllEmailTemplates();
         const templatesPath = path.join(__dirname, 'email_templates.json');
         fs.writeFileSync(templatesPath, JSON.stringify(templates, null, 2));
-        console.log('✅ Email templates exported to email_templates.json');
+        console.log('✅ Email templates exported to JSON');
         return templates;
     } catch (error) {
         console.error('❌ Error exporting email templates:', error.message);
         throw error;
     }
+}
+
+// Close database connection
+export function closeDatabase() {
+    // Supabase client doesn't need explicit closing
+    console.log('✅ Supabase connection closed');
 }

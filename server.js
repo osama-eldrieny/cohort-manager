@@ -165,14 +165,6 @@ app.post('/api/students', async (req, res) => {
             return res.status(400).json({ error: 'Students must be an array' });
         }
         
-        // Check if we're in serverless environment
-        if (process.env.VERCEL) {
-            console.log('⚠️  Serverless environment detected: Student data is read-only on production');
-            return res.status(400).json({ 
-                error: 'Student data cannot be edited in production (Vercel). Please edit students locally and push to GitHub.'
-            });
-        }
-        
         const result = await saveAllStudents(students);
         console.log(`✅ Auto-saved ${result.count} students to database`);
         res.json({ 
@@ -250,14 +242,6 @@ app.post('/api/email-templates', async (req, res) => {
         }
         
         console.log(`📝 Saving email template: ${name} (ID: ${id})`);
-        
-        // Check if we're in serverless environment
-        if (process.env.VERCEL) {
-            console.log('⚠️  Serverless environment detected: Email templates are read-only');
-            return res.status(400).json({ 
-                error: 'Email templates cannot be created in production (Vercel). Templates are read-only and must be managed locally.'
-            });
-        }
         
         await saveEmailTemplate(id, name, button_label, subject, body);
         
