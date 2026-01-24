@@ -1686,10 +1686,14 @@ async function saveEmailTemplate(event) {
             await loadEmailTemplates();
             closeEmailTemplateModal();
             showToast(`Template "${name}" saved successfully!`, 'success');
+        } else {
+            const errorData = await response.json();
+            showToast(errorData.error || 'Failed to save email template', 'error');
+            console.error('Server error:', errorData);
         }
     } catch (error) {
         console.error('Error saving email template:', error);
-        alert('Failed to save email template');
+        showToast('Failed to save email template: ' + error.message, 'error');
     }
 }
 
@@ -1710,10 +1714,14 @@ async function deleteEmailTemplate(templateId) {
         if (response.ok) {
             await loadEmailTemplates();
             showToast('Email template deleted successfully', 'success');
+        } else {
+            const errorData = await response.json();
+            showToast(errorData.error || 'Failed to delete email template', 'error');
+            console.error('Server error:', errorData);
         }
     } catch (error) {
         console.error('Error deleting email template:', error);
-        alert('Failed to delete email template');
+        showToast('Failed to delete email template: ' + error.message, 'error');
     }
 }
 
