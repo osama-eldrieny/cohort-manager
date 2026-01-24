@@ -1134,7 +1134,7 @@ function saveStudent(event) {
     if (currentEditingId && originalEditingEmail && originalEditingEmail !== newEmail) {
         console.log(`📝 Email changed from "${originalEditingEmail}" to "${newEmail}" - removing old record`);
         deleteStudentByEmail(originalEditingEmail).then(() => {
-            saveToStorage().then(() => {
+            saveToStorage(student).then(() => {
                 loadStudents().then(() => {
                     renderPage(document.querySelector('.page.active').id);
                     showToast('Student updated successfully!', 'success');
@@ -1142,8 +1142,8 @@ function saveStudent(event) {
             });
         });
     } else {
-        // Save to storage and refresh UI
-        saveToStorage().then(() => {
+        // Save to storage and refresh UI - pass only the single student
+        saveToStorage(student).then(() => {
             loadStudents().then(() => {
                 renderPage(document.querySelector('.page.active').id);
                 showToast('Student saved successfully!', 'success');
@@ -1160,15 +1160,16 @@ function saveStudent(event) {
 // DATA MANAGEMENT
 // ============================================
 
-async function saveToStorage() {
-    // Skip localStorage - it has a size limit. Use Supabase only
+async function saveToStorage(studentToSave = null) {
+    // If a specific student is provided, save only that one. Otherwise save all (for initial load)
+    const dataToSend = studentToSave || students;
     
     // Save to server
     try {
         const response = await fetch(`${API_BASE_URL}/api/students`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(students)
+            body: JSON.stringify(Array.isArray(dataToSend) ? dataToSend : [dataToSend])
         });
         
         if (response.ok) {
@@ -1183,7 +1184,7 @@ async function saveToStorage() {
             throw new Error(errorMsg);
         }
     } catch (error) {
-        console.warn('⚠️ Cannot reach server (http://localhost:3002), using localStorage only');
+        console.warn('⚠️ Cannot reach server:', error.message);
         console.warn('Note: Changes are saved locally but not synced to server');
     }
     

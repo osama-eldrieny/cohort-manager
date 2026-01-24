@@ -51,12 +51,16 @@ app.use((req, res, next) => {
     const allowedOrigins = [
         'https://osama-eldrieny.github.io',
         'http://localhost:3000',
+        'http://localhost:3002',
         'http://localhost:8000',
         'http://localhost:5173'
     ];
     
+    // Always allow the origin if it's in our list
     if (!origin || allowedOrigins.includes(origin)) {
         res.header('Access-Control-Allow-Origin', origin || '*');
+    } else {
+        res.header('Access-Control-Allow-Origin', origin);
     }
     
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
