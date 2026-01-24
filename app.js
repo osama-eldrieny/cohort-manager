@@ -951,6 +951,7 @@ function calculateRemaining() {
 function calculateChecklistProgress(student) {
     if (!student.checklist) return 0;
     
+    // Only count onboarding items, NOT post-course items
     const checklistItems = [
         'addedCommunity',
         'sharedAgreement',
@@ -958,10 +959,7 @@ function calculateChecklistProgress(student) {
         'sharedDrive',
         'createdFigma',
         'sharedMasterFigma',
-        'figmaStatus',
-        'sharedFeedbackForm',
-        'submittedCourseFeedback',
-        'issuedCertificate'
+        'figmaStatus'
     ];
     
     const completedItems = checklistItems.filter(item => {
