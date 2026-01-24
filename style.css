@@ -1351,3 +1351,34 @@ button {
         padding: 8px;
     }
 }
+
+/* Email Copy Functionality */
+.copy-email {
+    cursor: pointer;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    min-width: 180px;
+}
+
+.copy-email:hover {
+    background-color: #e8f4f8;
+    color: #0066cc;
+}
+
+.copy-email::after {
+    content: '\f0c5';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 400;
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.copy-email:hover::after {
+    opacity: 1;
+}

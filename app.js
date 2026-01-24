@@ -123,6 +123,28 @@ function setupEventListeners() {
     });
 }
 
+// Copy email to clipboard
+function copyEmailToClipboard(email) {
+    navigator.clipboard.writeText(email).then(() => {
+        // Visual feedback
+        const copyToast = document.createElement('div');
+        copyToast.textContent = `Copied: ${email}`;
+        copyToast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background-color: #34a853; color: white; padding: 12px 16px; border-radius: 4px; font-size: 14px; z-index: 10000; box-shadow: 0 2px 5px rgba(0,0,0,0.2);';
+        document.body.appendChild(copyToast);
+        setTimeout(() => copyToast.remove(), 2000);
+    }).catch(() => {
+        alert('Failed to copy email');
+    });
+}
+
+// Add event listener for email copying (event delegation)
+document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('copy-email')) {
+        const email = e.target.textContent.trim();
+        copyEmailToClipboard(email);
+    }
+});
+
 // Navigation
 function navigatePage(pageId) {
     // Use hash for navigation (compatible with all static servers)
@@ -391,7 +413,7 @@ function renderStudentsTable() {
         return `
         <tr>
             <td><strong>${student.name}</strong></td>
-            <td>${student.email}</td>
+            <td><span class="copy-email" title="Click to copy">${student.email}</span></td>
             <td><span class="status-badge status-${student.status.toLowerCase().replace(/\s+/g, '-')}">${student.status}</span></td>
             <td>${student.location}</td>
             <td>${student.language || 'Not specified'}</td>
@@ -498,6 +520,7 @@ function renderCohortPage(cohortId) {
                     <tr>
                         <th>Name</th>
                         <th>Email</th>
+                        <th>Figma Email</th>
                         <th>Location</th>
                         <th>Language</th>
                         <th>LinkedIn</th>
@@ -514,7 +537,8 @@ function renderCohortPage(cohortId) {
                         return `
                         <tr>
                             <td><strong>${student.name}</strong></td>
-                            <td>${student.email}</td>
+                            <td><span class="copy-email" title="Click to copy">${student.email}</span></td>
+                            <td>${student.figmaEmail ? `<span class="copy-email" title="Click to copy">${student.figmaEmail}</span>` : '-'}</td>
                             <td>${student.location}</td>
                             <td>${student.language || 'Not specified'}</td>
                             <td>
@@ -560,7 +584,8 @@ function renderCohortPage(cohortId) {
                     return `
                     <tr>
                         <td><strong>${student.name}</strong></td>
-                        <td>${student.email}</td>
+                        <td><span class="copy-email" title="Click to copy">${student.email}</span></td>
+                        <td>${student.figmaEmail ? `<span class="copy-email" title="Click to copy">${student.figmaEmail}</span>` : '-'}</td>
                         <td>${student.location}</td>
                         <td>${student.language || 'Not specified'}</td>
                         <td>
@@ -670,7 +695,7 @@ function renderStatusPage(status) {
                         return `
                         <tr>
                             <td><strong>${student.name}</strong></td>
-                            <td>${student.email}</td>
+                            <td><span class="copy-email" title="Click to copy">${student.email}</span></td>
                             <td>${student.location}</td>
                             <td>${student.language || 'Not specified'}</td>
                             <td>
@@ -716,7 +741,7 @@ function renderStatusPage(status) {
                     return `
                     <tr>
                         <td><strong>${student.name}</strong></td>
-                        <td>${student.email}</td>
+                        <td><span class="copy-email" title="Click to copy">${student.email}</span></td>
                         <td>${student.location}</td>
                         <td>${student.language || 'Not specified'}</td>
                         <td>
@@ -892,6 +917,7 @@ function editStudent(id) {
     document.getElementById('email').value = student.email || '';
     document.getElementById('linkedin').value = student.linkedin || '';
     document.getElementById('whatsapp').value = student.whatsapp || '';
+    document.getElementById('figmaEmail').value = student.figmaEmail || '';
     document.getElementById('location').value = student.location || '';
     document.getElementById('language').value = student.language || '';
     document.getElementById('status').value = student.status || '';
@@ -997,6 +1023,7 @@ function saveStudent(event) {
         email: document.getElementById('email').value,
         linkedin: document.getElementById('linkedin').value,
         whatsapp: document.getElementById('whatsapp').value,
+        figmaEmail: document.getElementById('figmaEmail').value,
         location: document.getElementById('location').value,
         language: document.getElementById('language').value,
         status: statusValue,
