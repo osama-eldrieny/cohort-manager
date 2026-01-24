@@ -45,7 +45,33 @@ if (SENDER_APP_PASSWORD) {
     console.log('📝 To enable email sending, set the GMAIL_APP_PASSWORD environment variable.');
 }
 
-// Middleware
+// Middleware - Enable CORS for all origins (important for Vercel)
+app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    const allowedOrigins = [
+        'https://osama-eldrieny.github.io',
+        'http://localhost:3000',
+        'http://localhost:8000',
+        'http://localhost:5173'
+    ];
+    
+    if (!origin || allowedOrigins.includes(origin)) {
+        res.header('Access-Control-Allow-Origin', origin || '*');
+    }
+    
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+    }
+    
+    next();
+});
+
+// Also use cors middleware as backup
 const corsOptions = {
     origin: (origin, callback) => {
         const allowedOrigins = [
@@ -86,6 +112,11 @@ let dbInitError = null;
         // Don't exit - let the API handle gracefully
     }
 })();
+
+// Root route
+app.get('/', (req, res) => {
+    res.json({ message: 'Course Dashboard API Server', status: 'running' });
+});
 
 // Add a health check endpoint
 app.get('/api/health', (req, res) => {
