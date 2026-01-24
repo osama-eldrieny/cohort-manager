@@ -37,6 +37,30 @@ export function initializeDatabase() {
 }
 
 // Get all students
+// Convert snake_case database columns to camelCase for frontend
+function convertStudentFromDatabase(student) {
+    return {
+        id: student.id,
+        name: student.name,
+        email: student.email,
+        cohort: student.cohort,
+        status: student.status,
+        location: student.location,
+        linkedin: student.linkedin,
+        whatsapp: student.whatsapp,
+        figmaEmail: student.figma_email,  // ← Convert snake_case to camelCase
+        language: student.language,
+        totalAmount: student.total_amount,  // ← Convert snake_case to camelCase
+        paidAmount: student.paid_amount,  // ← Convert snake_case to camelCase
+        remaining: student.remaining,
+        note: student.note,
+        paymentMethod: student.payment_method,  // ← Convert snake_case to camelCase
+        checklist: student.checklist ? (typeof student.checklist === 'string' ? JSON.parse(student.checklist) : student.checklist) : null,
+        created_at: student.created_at,
+        updated_at: student.updated_at
+    };
+}
+
 export async function getAllStudents() {
     try {
         if (!supabase) {
@@ -56,7 +80,8 @@ export async function getAllStudents() {
             .order('updated_at', { ascending: false });
 
         if (error) throw error;
-        return data || [];
+        // Convert all students from snake_case to camelCase
+        return (data || []).map(convertStudentFromDatabase);
     } catch (error) {
         console.error('❌ Error fetching students:', error.message);
         throw error;
