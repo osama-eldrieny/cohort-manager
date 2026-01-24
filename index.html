@@ -33,6 +33,9 @@
                 </ul>
             </li>
             <li class="sidebar-settings-divider">
+                <a data-page="emailtemplates" class="nav-link"><i class="fas fa-envelope"></i> Email Templates</a>
+            </li>
+            <li class="sidebar-settings-divider">
                 <a data-page="settings" class="nav-link"><i class="fas fa-cog"></i> Settings</a>
             </li>
         </ul>
@@ -295,32 +298,33 @@
             <div id="standby" class="page status-page"></div>
             <div id="graduated" class="page status-page"></div>
 
+            <!-- EMAIL TEMPLATES PAGE -->
+            <div id="emailtemplates" class="page">
+                <h2 class="page-title-with-button">
+                    <span><i class="fas fa-envelope"></i> Email Templates</span>
+                    <button onclick="openEmailTemplateModal()" class="btn-primary"><i class="fas fa-plus"></i> Create New Template</button>
+                </h2>
+                
+                <div id="emailTemplatesList" class="students-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Template Name</th>
+                                <th>Button Label</th>
+                                <th>Subject</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="emailTemplatesBody">
+                            <tr><td colspan="4" class="empty-templates-cell">No templates yet</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- SETTINGS PAGE -->
             <div id="settings" class="page">
                 <h2 class="settings-title"><i class="fas fa-cog"></i> Settings</h2>
-                
-                <!-- Email Templates Section -->
-                <div class="email-templates-section">
-                    <h3 class="email-templates-title"><i class="fas fa-envelope"></i> Email Templates</h3>
-                    <button onclick="openEmailTemplateModal()" class="btn-primary btn-primary-margin-bottom"><i class="fas fa-plus"></i> Create New Template</button>
-                    <div id="emailTemplatesList" class="students-table">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Template Name</th>
-                                    <th>Button Label</th>
-                                    <th>Subject</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="emailTemplatesBody">
-                                <tr><td colspan="4" class="empty-templates-cell">No templates yet</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                
-                <hr class="hr-divider">
                 
                 <div class="students-table">
                     <table>
@@ -565,6 +569,47 @@
                     <button type="submit" class="btn-primary">Save Template</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Bulk Email Modal -->
+    <div id="bulkEmailModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeBulkEmailModal()"><i class="fas fa-times"></i></span>
+            <div class="modal-header"><i class="fas fa-envelope modal-header-icon"></i> Send Bulk Email</div>
+            
+            <form id="bulkEmailForm" onsubmit="sendBulkEmail(event)">
+                <div class="form-group">
+                    <label for="bulkTemplate">Select Template *</label>
+                    <select id="bulkTemplate" required onchange="updateBulkRecipientCount()">
+                        <option value="">-- Choose a template --</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Select Group *</strong></label>
+                    <div id="bulkGroupOptions" class="bulk-group-options">
+                        <!-- Radio buttons will be populated here -->
+                    </div>
+                </div>
+
+                <div class="bulk-recipient-preview">
+                    <div class="preview-card">
+                        <i class="fas fa-users"></i>
+                        <div>
+                            <div class="preview-label">Recipients</div>
+                            <div class="preview-count" id="bulkRecipientCount">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="button" onclick="closeBulkEmailModal()" class="btn-secondary">Cancel</button>
+                    <button type="submit" class="btn-primary"><i class="fas fa-paper-plane"></i> Send to Group</button>
+                </div>
+            </form>
+
+            <div id="bulkEmailStatus" class="bulk-email-status"></div>
         </div>
     </div>
 

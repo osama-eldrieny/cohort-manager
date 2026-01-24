@@ -189,6 +189,7 @@ function renderPage(pageId) {
         'nextcohort': { title: 'Next Cohort', subtitle: 'Students in next cohort' },
         'standby': { title: 'Standby', subtitle: 'Students on standby' },
         'graduated': { title: 'Graduated', subtitle: 'Graduated students' },
+        'emailtemplates': { title: 'Email Templates', subtitle: 'Manage email templates' },
         'settings': { title: 'Settings', subtitle: 'Application settings' }
     };
 
@@ -212,6 +213,8 @@ function renderPage(pageId) {
         renderStatusPage('Standby');
     } else if (pageId === 'graduated') {
         renderStatusPage('Graduated');
+    } else if (pageId === 'emailtemplates') {
+        renderEmailTemplatesList();
     }
 }
 
@@ -1627,6 +1630,7 @@ function renderEmailTemplatesList() {
             <td>${template.button_label}</td>
             <td>${template.subject.substring(0, 50)}${template.subject.length > 50 ? '...' : ''}</td>
             <td>
+                <button class="btn-small btn-primary" onclick="openBulkEmailModal('${template.id}')" title="Send to Group"><i class="fas fa-paper-plane"></i></button>
                 <button class="btn-small btn-edit" onclick="editEmailTemplate('${template.id}')" title="Edit"><i class="fas fa-pencil-alt"></i></button>
                 <button class="btn-small btn-danger" onclick="deleteEmailTemplate('${template.id}')" title="Delete"><i class="fas fa-trash"></i></button>
             </td>
@@ -1929,4 +1933,190 @@ function showToast(message, type = 'info') {
     toast.style.cssText = `position: fixed; bottom: 20px; right: 20px; background-color: ${bgColor}; color: white; padding: 12px 16px; border-radius: 4px; font-size: 14px; z-index: 10001; box-shadow: 0 2px 5px rgba(0,0,0,0.2);`;
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
+}
+
+// ============================================
+// BULK EMAIL SENDING
+// ============================================
+
+const BULK_GROUP_OPTIONS = [
+    'Cohort 0',
+    'Cohort 1 - Cradis',
+    'Cohort 1 - Zomra',
+    'Cohort 2',
+    'Cohort 3',
+    'Waiting list',
+    "Can't reach",
+    'Next Cohort',
+    'Standby'
+];
+
+function openBulkEmailModal(templateId) {
+    const modal = document.getElementById('bulkEmailModal');
+    const templateSelect = document.getElementById('bulkTemplate');
+    const groupOptions = document.getElementById('bulkGroupOptions');
+
+    // Populate template dropdown
+    templateSelect.innerHTML = '<option value="">-- Choose a template --</option>';
+    emailTemplates.forEach(template => {
+        const option = document.createElement('option');
+        option.value = template.id;
+        option.textContent = template.name;
+        if (template.id === templateId) {
+            option.selected = true;
+        }
+        templateSelect.appendChild(option);
+    });
+
+    // Populate group radio buttons
+    groupOptions.innerHTML = '';
+    BULK_GROUP_OPTIONS.forEach(group => {
+        const radioId = `group-${group.replace(/\s+/g, '-').toLowerCase()}`;
+        const label = document.createElement('label');
+        label.className = 'bulk-group-option';
+        
+        const radioInput = document.createElement('input');
+        radioInput.type = 'radio';
+        radioInput.name = 'bulkGroup';
+        radioInput.value = group;
+        radioInput.id = radioId;
+        radioInput.required = true;
+        radioInput.addEventListener('change', updateBulkRecipientCount);
+        
+        const labelSpan = document.createElement('label');
+        labelSpan.htmlFor = radioId;
+        labelSpan.textContent = group;
+        
+        label.appendChild(radioInput);
+        label.appendChild(labelSpan);
+        groupOptions.appendChild(label);
+    });
+
+    modal.style.display = 'block';
+    updateBulkRecipientCount();
+}
+
+function closeBulkEmailModal() {
+    document.getElementById('bulkEmailModal').style.display = 'none';
+    document.getElementById('bulkEmailStatus').innerHTML = '';
+    document.getElementById('bulkEmailStatus').className = 'bulk-email-status';
+}
+
+function getStudentsByGroup(groupValue) {
+    return students.filter(student => 
+        student.status === groupValue || student.cohort === groupValue
+    );
+}
+
+function updateBulkRecipientCount() {
+    const selectedGroup = document.querySelector('input[name="bulkGroup"]:checked');
+    let count = 0;
+
+    if (selectedGroup) {
+        const recipients = getStudentsByGroup(selectedGroup.value);
+        count = recipients.length;
+    }
+
+    document.getElementById('bulkRecipientCount').textContent = count;
+}
+
+async function sendBulkEmail(event) {
+    event.preventDefault();
+
+    const templateId = document.getElementById('bulkTemplate').value;
+    const selectedGroup = document.querySelector('input[name="bulkGroup"]:checked');
+
+    if (!templateId || !selectedGroup) {
+        showToast('Please select both a template and a group', 'error');
+        return;
+    }
+
+    const template = emailTemplates.find(t => t.id === templateId);
+    const groupValue = selectedGroup.value;
+    const recipients = getStudentsByGroup(groupValue);
+
+    if (recipients.length === 0) {
+        showToast('No students found in this group', 'error');
+        return;
+    }
+
+    const statusDiv = document.getElementById('bulkEmailStatus');
+    statusDiv.className = 'bulk-email-status loading';
+    statusDiv.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Sending emails to ${recipients.length} students...`;
+    
+    document.querySelector('#bulkEmailForm button[type="submit"]').disabled = true;
+
+    let successCount = 0;
+    let failedEmails = [];
+
+    for (const student of recipients) {
+        try {
+            // Replace dynamic tags in subject and body
+            let subject = template.subject;
+            let body = template.body;
+
+            const tags = {
+                name: student.name || '',
+                email: student.email || '',
+                cohort: student.cohort || '',
+                status: student.status || '',
+                location: student.location || '',
+                language: student.language || '',
+                linkedin: student.linkedin || '',
+                whatsapp: student.whatsapp || '',
+                figmaEmail: student.figmaEmail || '',
+                paymentMethod: student.paymentMethod || '',
+                totalAmount: student.totalAmount || '0',
+                paidAmount: student.paidAmount || '0',
+                remaining: student.remaining || '0',
+                note: student.note || ''
+            };
+
+            Object.keys(tags).forEach(key => {
+                const regex = new RegExp(`{${key}}`, 'g');
+                subject = subject.replace(regex, tags[key]);
+                body = body.replace(regex, tags[key]);
+            });
+
+            const response = await fetch(`${API_BASE_URL}/api/send-email`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    studentEmail: student.email,
+                    studentName: student.name,
+                    templateId,
+                    subject,
+                    body
+                })
+            });
+
+            if (response.ok) {
+                successCount++;
+            } else {
+                failedEmails.push(student.name);
+            }
+
+            // Add small delay between emails to avoid rate limiting
+            await new Promise(resolve => setTimeout(resolve, 200));
+
+        } catch (error) {
+            console.error(`Error sending email to ${student.name}:`, error);
+            failedEmails.push(student.name);
+        }
+    }
+
+    // Show results
+    statusDiv.className = 'bulk-email-status ' + (failedEmails.length === 0 ? 'success' : 'error');
+    if (failedEmails.length === 0) {
+        statusDiv.innerHTML = `<i class="fas fa-check-circle"></i> ✅ Successfully sent ${successCount} emails!`;
+        showToast(`Sent ${successCount} emails to ${groupValue}`, 'success');
+        setTimeout(() => {
+            closeBulkEmailModal();
+        }, 2000);
+    } else {
+        statusDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ⚠️ Sent ${successCount} emails. Failed: ${failedEmails.join(', ')}`;
+        showToast(`Sent ${successCount}/${recipients.length} emails`, 'error');
+    }
+
+    document.querySelector('#bulkEmailForm button[type="submit"]').disabled = false;
 }
