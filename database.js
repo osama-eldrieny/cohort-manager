@@ -74,9 +74,24 @@ export async function saveAllStudents(students) {
             return { count: students.length };
         }
 
-        // Use UPSERT to handle both new and existing students
-        // Match by email to update existing students
-        const studentsData = students.map(student => ({
+        // Deduplicate by email - keep the last occurrence
+        const seen = new Map();
+        const deduplicatedStudents = [];
+        
+        for (const student of students) {
+            if (student.email) {
+                seen.set(student.email, student);
+            } else {
+                deduplicatedStudents.push(student);
+            }
+        }
+        
+        seen.forEach(student => {
+            deduplicatedStudents.push(student);
+        });
+
+        // Prepare data for upsert
+        const studentsData = deduplicatedStudents.map(student => ({
             name: student.name || null,
             email: student.email || null,
             cohort: student.cohort || null,
@@ -90,8 +105,8 @@ export async function saveAllStudents(students) {
 
         if (upsertError) throw upsertError;
 
-        console.log(`✅ Saved ${students.length} students to Supabase`);
-        return { count: students.length };
+        console.log(`✅ Saved ${deduplicatedStudents.length} students to Supabase (deduplicated from ${students.length})`);
+        return { count: deduplicatedStudents.length };
     } catch (error) {
         console.error('❌ Error saving students:', error.message);
         throw error;
