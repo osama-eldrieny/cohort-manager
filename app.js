@@ -1648,7 +1648,16 @@ function openEmailTemplateModal(templateId = null) {
     const title = document.getElementById('emailModalTitle');
     
     if (templateId) {
-        const template = emailTemplates.find(t => t.id === templateId);
+        // Convert to number to match Supabase ID type
+        const numericId = parseInt(templateId, 10) || templateId;
+        const template = emailTemplates.find(t => t.id === numericId || String(t.id) === String(templateId));
+        
+        if (!template) {
+            console.error('Template not found:', templateId, 'Available templates:', emailTemplates);
+            showToast('Template not found', 'error');
+            return;
+        }
+        
         title.textContent = 'Edit Email Template';
         document.getElementById('templateName').value = template.name;
         document.getElementById('buttonLabel').value = template.button_label;
@@ -1974,7 +1983,8 @@ function openBulkEmailModal(templateId) {
         const option = document.createElement('option');
         option.value = template.id;
         option.textContent = template.name;
-        if (template.id === templateId) {
+        // Convert both to strings for comparison to handle mixed int/string IDs
+        if (String(template.id) === String(templateId)) {
             option.selected = true;
         }
         templateSelect.appendChild(option);
