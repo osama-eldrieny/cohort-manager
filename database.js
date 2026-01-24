@@ -16,6 +16,10 @@ export function initializeDatabase() {
             const supabaseUrl = process.env.SUPABASE_URL;
             const supabaseKey = process.env.SUPABASE_KEY;
 
+            console.log('🔍 Checking environment variables:');
+            console.log('   SUPABASE_URL:', supabaseUrl ? '✓ set' : '✗ missing');
+            console.log('   SUPABASE_KEY:', supabaseKey ? '✓ set' : '✗ missing');
+
             if (!supabaseUrl || !supabaseKey) {
                 console.log('⚠️  Supabase credentials not found. Using local SQLite fallback.');
                 resolve(null);
