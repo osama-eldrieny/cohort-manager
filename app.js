@@ -2486,8 +2486,8 @@ async function sendBulkEmail(event) {
                 failedEmails.push(`${student.name} (${errorMsg})`);
             }
 
-            // Add small delay between emails to avoid rate limiting
-            await new Promise(resolve => setTimeout(resolve, 200));
+            // Add 2 second delay between emails to avoid Google's rate limiting (454-4.7.0 error)
+            await new Promise(resolve => setTimeout(resolve, 2000));
 
         } catch (error) {
             console.error(`Error sending email to ${student.name}:`, error);
