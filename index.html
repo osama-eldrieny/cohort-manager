@@ -9,9 +9,24 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+    <!-- Hamburger Menu Button -->
+    <button class="hamburger-menu" id="hamburgerBtn" title="Toggle Menu">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+    
+    <!-- Mobile Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
     <!-- Sidebar Navigation -->
-    <nav class="sidebar">
-        <div class="sidebar-logo"><i class="fas fa-book"></i> <span>Dashboard</span></div>
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <button class="close-sidebar" id="closeSidebarBtn" title="Close Menu">
+                <i class="fas fa-times"></i>
+            </button>
+            <span><i class="fas fa-book"></i> <span>Dashboard</span></span>
+        </div>
         <ul class="sidebar-nav">
             <li><a data-page="overview" class="nav-link active"><i class="fas fa-chart-pie"></i> Overview</a></li>
             <li><a data-page="students" class="nav-link"><i class="fas fa-users"></i> Students</a></li>
@@ -45,7 +60,12 @@
     <div class="main-container">
         <!-- Top Header Bar -->
         <div class="header-bar">
-            <h1 class="page-title">Overview</h1>
+            <div class="header-left">
+                <button class="hamburger-menu-header" id="hamburgerBtnHeader" title="Toggle Menu">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1 class="page-title">Overview</h1>
+            </div>
             <div class="header-buttons">
                 <button onclick="openAddModal()" class="btn-primary"><i class="fas fa-plus"></i> Add Student</button>
             </div>
@@ -271,13 +291,11 @@
                                 <th>LinkedIn</th>
                                 <th>WhatsApp</th>
                                 <th>Notes</th>
-                                <th>Onboarding</th>
-                                <th>Post-Course</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="studentsTableBody">
-                            <tr><td colspan="11" class="empty-tbody-cell">Loading students...</td></tr>
+                            <tr><td colspan="9" class="empty-tbody-cell">Loading students...</td></tr>
                         </tbody>
                     </table>
                 </div>

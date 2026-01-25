@@ -62,6 +62,48 @@ function handleRouteChange() {
 
 // Setup Event Listeners
 function setupEventListeners() {
+    // Mobile Menu Toggle
+    const hamburgerBtn = document.getElementById('hamburgerBtn');
+    const hamburgerBtnHeader = document.getElementById('hamburgerBtnHeader');
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+    const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+    
+    function toggleSidebar() {
+        sidebar.classList.toggle('active');
+        hamburgerBtn.classList.toggle('active');
+        sidebarOverlay.classList.toggle('active');
+    }
+    
+    function closeSidebar() {
+        sidebar.classList.remove('active');
+        hamburgerBtn.classList.remove('active');
+        sidebarOverlay.classList.remove('active');
+    }
+    
+    if (hamburgerBtn) {
+        hamburgerBtn.addEventListener('click', toggleSidebar);
+    }
+    
+    if (hamburgerBtnHeader) {
+        hamburgerBtnHeader.addEventListener('click', toggleSidebar);
+    }
+    
+    if (closeSidebarBtn) {
+        closeSidebarBtn.addEventListener('click', closeSidebar);
+    }
+    
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', closeSidebar);
+    }
+    
+    // Close sidebar when a nav link is clicked
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+            closeSidebar();
+        });
+    });
+    
     // Navigation
     document.querySelectorAll('.nav-link').forEach(link => {
         link.addEventListener('click', (e) => {
@@ -422,14 +464,11 @@ function renderStudentsTable() {
 
     const tbody = document.getElementById('studentsTableBody');
     if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="11" class="empty">No students found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="empty">No students found</td></tr>';
         return;
     }
 
     tbody.innerHTML = filtered.map(student => {
-        const onboardingPct = (student.status.startsWith('Cohort') || student.status === 'Next Cohort') ? calculateChecklistProgress(student) : '-';
-        const postCourseItems = student.checklist ? [student.checklist.sharedFeedbackForm, student.checklist.submittedCourseFeedback, student.checklist.issuedCertificate].filter(Boolean).length : 0;
-        const postCoursePct = (student.status.startsWith('Cohort') || student.status === 'Next Cohort') ? Math.round((postCourseItems / 3) * 100) + '%' : '-';
         return `
         <tr>
             <td><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" onclick="openStudentContactModal('${student.id}')" title="Click to view details">${student.name}</strong></td>
@@ -444,8 +483,6 @@ function renderStudentsTable() {
                 ${student.whatsapp ? `<a href="https://wa.me/${student.whatsapp.replace(/\D/g, '')}" target="_blank" title="Send WhatsApp message" style="color: #25D366; text-decoration: none; display: flex; align-items: center; gap: 4px;"><i class="fab fa-whatsapp"></i> ${student.whatsapp}</a>` : '-'}
             </td>
             <td>${student.note || '-'}</td>
-            <td>${onboardingPct === '-' ? '-' : onboardingPct + '%'}</td>
-            <td>${postCoursePct}</td>
             <td>
                 <button class="btn-small btn-edit" data-student-id="${student.id}" title="Edit"><i class="fas fa-pencil-alt"></i></button>
                 <button class="btn-small btn-danger btn-delete" data-student-id="${student.id}" title="Delete"><i class="fas fa-trash"></i></button>

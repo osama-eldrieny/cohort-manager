@@ -123,6 +123,25 @@ body {
     overflow-y: auto;
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
     z-index: 100;
+    transition: transform 0.3s ease;
+}
+
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 99;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.active {
+    display: block;
+    opacity: 1;
 }
 
 .sidebar-logo {
@@ -133,6 +152,25 @@ body {
     border-bottom: 2px solid var(--border-light);
     margin-bottom: 20px;
     letter-spacing: 0.5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.close-sidebar {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: var(--text-light);
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    transition: color 0.3s;
+}
+
+.close-sidebar:hover {
+    color: var(--primary-color);
 }
 
 .sidebar-logo span {
@@ -198,6 +236,28 @@ body {
     justify-content: space-between;
     align-items: center;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.hamburger-menu-header {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: var(--text-light);
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    transition: color 0.3s;
+}
+
+.hamburger-menu-header:hover {
+    color: var(--primary-color);
 }
 
 .page-title {
@@ -379,6 +439,44 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+/* ============================================
+   HAMBURGER MENU BUTTON
+   ============================================ */
+
+.hamburger-menu {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 101;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.hamburger-menu span {
+    width: 25px;
+    height: 3px;
+    background-color: var(--text-light);
+    transition: all 0.3s ease;
+    display: block;
+}
+
+.hamburger-menu.active span:nth-child(1) {
+    transform: rotate(45deg) translate(10px, 10px);
+}
+
+.hamburger-menu.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.hamburger-menu.active span:nth-child(3) {
+    transform: rotate(-45deg) translate(7px, -7px);
 }
 
 /* ============================================
@@ -570,6 +668,15 @@ tbody tr:hover {
 th:last-child,
 td:last-child {
     min-width: 120px;
+}
+
+/* Make Notes column narrower on students page */
+#students table th:nth-child(8),
+#students table td:nth-child(8) {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .btn-edit {
@@ -853,8 +960,8 @@ input:focus, select:focus, textarea:focus {
 }
 
 .status-cant-reach {
-    background-color: #f8d7da;
-    color: #721c24;
+    background-color: #e8e8e8;
+    color: #555555;
 }
 
 .status-next-cohort {
@@ -1090,6 +1197,7 @@ button {
 .table-container {
     overflow-x: auto;
     border-radius: 12px;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* ============================================
@@ -1244,13 +1352,55 @@ button {
 }
 
 @media (max-width: 768px) {
-    .sidebar {
-        width: 200px;
-        padding: 20px 0;
+    .hamburger-menu {
+        display: flex;
     }
 
-    :root {
-        --sidebar-width: 200px;
+    .hamburger-menu-header {
+        display: none !important;
+    }
+
+    .sidebar {
+        width: 100%;
+        height: 100vh;
+        position: fixed;
+        left: 0;
+        top: 0;
+        transform: translateX(-100%);
+        z-index: 102;
+        padding: 0;
+        overflow-y: auto;
+        border-right: 1px solid var(--border-light);
+    }
+
+    .sidebar.active {
+        transform: translateX(0);
+    }
+
+    .close-sidebar {
+        display: block;
+    }
+
+    .sidebar-logo {
+        padding: 20px;
+        border-bottom: 1px solid var(--border-light);
+        margin-bottom: 0;
+    }
+
+    .sidebar-nav {
+        padding: 0;
+    }
+
+    .sidebar-nav a {
+        padding: 14px 20px;
+    }
+
+    .main-container {
+        margin-left: 0;
+    }
+
+    .header-left {
+        gap: 12px;
     }
 
     .content-wrapper {
@@ -1259,17 +1409,9 @@ button {
 
     .header-bar {
         padding: 15px 20px;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-    }
-
-    .header-buttons {
-        width: 100%;
-    }
-
-    .header-buttons button {
-        flex: 1;
+        flex-direction: row;
+        align-items: center;
+        gap: 0;
     }
 
     .page-title {
@@ -1303,23 +1445,60 @@ button {
         font-size: 13px;
     }
 
-    .sidebar-nav a {
-        padding: 10px 15px;
-        font-size: 13px;
+    .header-buttons {
+        width: auto;
+    }
+
+    .header-buttons button {
+        flex: none;
+    }
+
+    .students-controls {
+        flex-direction: column;
+    }
+
+    .search-input {
+        min-width: 100%;
+    }
+
+    /* Mobile table scrolling - keep same style, just add scroll */
+    .students-table {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+        min-width: 100%;
+    }
+
+    /* Make name column wider on mobile */
+    tbody tr td:first-child,
+    thead tr th:first-child {
+        min-width: 150px;
+    }
+
+    /* Keep Status and Notes column widths same as desktop */
+    th:nth-child(3), td:nth-child(3) {
+        min-width: 140px;
+    }
+
+    th:nth-child(8), td:nth-child(8) {
+        min-width: 180px;
     }
 }
 
 @media (max-width: 480px) {
-    .sidebar {
-        width: 180px;
+    .hamburger-menu {
+        top: 15px;
+        left: 15px;
     }
 
-    :root {
-        --sidebar-width: 180px;
+    .sidebar {
+        width: 60%;
     }
 
     .main-container {
-        margin-left: var(--sidebar-width);
+        margin-left: 0;
     }
 
     .content-wrapper {
@@ -1328,10 +1507,16 @@ button {
 
     .header-bar {
         padding: 12px 15px;
+        padding-left: 60px;
+        gap: 150px;
     }
 
     .page-title {
         font-size: 16px;
+    }
+
+    .header-left {
+        gap: 10px;
     }
 
     .stat-card {
@@ -1372,12 +1557,12 @@ button {
 
     .sidebar-logo {
         font-size: 16px;
-        padding: 0 15px 20px;
+        padding: 15px;
     }
 
     .sidebar-nav a {
-        padding: 8px 12px;
-        font-size: 12px;
+        padding: 12px 15px;
+        font-size: 13px;
     }
 
     table {
@@ -1386,6 +1571,46 @@ button {
 
     th, td {
         padding: 8px;
+    }
+
+    .btn-primary {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+
+    .header-buttons {
+        width: 100%;
+        margin-top: 8px;
+    }
+
+    .header-buttons button {
+        flex: 1;
+        max-width: 130px;
+    }
+
+    /* Mobile table scrolling - keep same style, just add scroll */
+    .students-table {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+        min-width: 100%;
+    }
+
+    /* Make name column wider on mobile */
+    tbody tr td:first-child,
+    thead tr th:first-child {
+        min-width: 210px;
+    }
+
+    /* Keep Status and Notes column widths same as desktop */
+    th:nth-child(3), td:nth-child(3) {
+        min-width: 158px;
+    }
+
+    th:nth-child(8), td:nth-child(8) {
+        min-width: 180px;
     }
 }
 
