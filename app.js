@@ -1949,7 +1949,8 @@ async function saveEmailTemplate(event) {
     event.preventDefault();
     
     const form = document.getElementById('emailTemplateForm');
-    const id = form.dataset.templateId || `template_${Date.now()}`;
+    // Convert template ID to integer - use timestamp as numeric ID
+    const id = form.dataset.templateId ? parseInt(form.dataset.templateId, 10) : Math.floor(Date.now() / 1000);
     const name = document.getElementById('templateName').value;
     const button_label = document.getElementById('buttonLabel').value;
     const subject = document.getElementById('emailSubject').value;
