@@ -587,7 +587,7 @@ function renderStudentsTable() {
         <tr>
             <td><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" onclick="openStudentContactModal('${student.id}')" title="Click to view details">${student.name}</strong></td>
             <td><span class="copy-email" title="Click to copy">${student.email}</span></td>
-            <td><span class="status-badge status-${student.status.toLowerCase().replace(/\s+/g, '-')}">${student.status}</span></td>
+            <td><span class="status-badge status-${(student.status || 'unknown').toLowerCase().replace(/\s+/g, '-')}">${student.status || 'Unknown'}</span></td>
             <td>${student.location}</td>
             <td>${student.language || 'Not specified'}</td>
             <td>
@@ -1277,7 +1277,7 @@ function saveStudent(event) {
     const newEmail = document.getElementById('email').value;
     
     const student = {
-        id: currentEditingId || Date.now().toString(),
+        id: currentEditingId || Math.floor(Date.now() / 1000),
         name: document.getElementById('name').value,
         email: newEmail,
         linkedin: document.getElementById('linkedin').value,
