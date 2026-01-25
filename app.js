@@ -756,7 +756,7 @@ function renderCohortPage(cohortId) {
                     const postCoursePct = Math.round((postCourseItems / 3) * 100) + '%';
                     return `
                     <tr>
-                        <td><strong>${student.name}</strong></td>
+                        <td><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" onclick="openStudentContactModal('${student.id}')" title="Click to view details">${student.name}</strong></td>
                         <td><span class="copy-email" title="Click to copy">${student.email}</span></td>
                         <td>${student.figmaEmail ? `<span class="copy-email" title="Click to copy">${student.figmaEmail}</span>` : '-'}</td>
                         <td>${student.location}</td>
@@ -2111,20 +2111,74 @@ function openStudentContactModal(studentId) {
         checklistDiv.innerHTML = '';
     }
 
-    // Render template buttons
+    // Render template buttons grouped by category
     const templatesDiv = document.getElementById('studentEmailTemplates');
     if (emailTemplates.length === 0) {
         templatesDiv.innerHTML = '<p style="color: #999; text-align: center;">No email templates available. Create one in Settings.</p>';
     } else {
-        templatesDiv.innerHTML = emailTemplates.map(template => `
-            <button 
-                type="button" 
-                class="btn-primary" 
-                onclick="sendEmailToStudent('${template.id}', '${student.id}')" 
-                style="text-align: left;">
-                <i class="fas fa-paper-plane"></i> ${template.button_label}
-            </button>
-        `).join('');
+        // Group templates by keywords
+        const group1Keywords = ['waiting', 'roles', 'cohort grouping', 'community', 'drive', 'figma file'];
+        const group2Keywords = ['payment', 'payment link'];
+        const group3Keywords = ['feedback'];
+        
+        const group1 = emailTemplates.filter(t => group1Keywords.some(kw => t.button_label?.toLowerCase().includes(kw)));
+        const group2 = emailTemplates.filter(t => group2Keywords.some(kw => t.button_label?.toLowerCase().includes(kw)));
+        const group3 = emailTemplates.filter(t => group3Keywords.some(kw => t.button_label?.toLowerCase().includes(kw)));
+        const other = emailTemplates.filter(t => !group1.includes(t) && !group2.includes(t) && !group3.includes(t));
+
+        let groupHTML = '';
+        
+        // Helper function to render group with grid layout
+        const renderGroup = (templates, title) => {
+            if (templates.length === 0) return '';
+            return `
+                <div style="margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #e0e0e0;">
+                    <div style="font-size: 12px; font-weight: 700; color: #667eea; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">${title}</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        ${templates.map(template => `
+                            <button 
+                                type="button" 
+                                class="btn-primary" 
+                                onclick="sendEmailToStudent('${template.id}', '${student.id}')" 
+                                style="text-align: left; margin: 0;">
+                                <i class="fas fa-paper-plane"></i> ${template.button_label}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        };
+        
+        // Group 1: Pre-course/Onboarding
+        groupHTML += renderGroup(group1, 'Onboarding & Pre-Course');
+        
+        // Group 2: Payment
+        groupHTML += renderGroup(group2, 'Payment Options');
+        
+        // Group 3: Post-course
+        groupHTML += renderGroup(group3, 'Post-Course');
+        
+        // Other (ungrouped)
+        if (other.length > 0) {
+            groupHTML += `
+                <div style="margin-bottom: 20px;">
+                    <div style="font-size: 12px; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">Other</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        ${other.map(template => `
+                            <button 
+                                type="button" 
+                                class="btn-primary" 
+                                onclick="sendEmailToStudent('${template.id}', '${student.id}')" 
+                                style="text-align: left; margin: 0;">
+                                <i class="fas fa-paper-plane"></i> ${template.button_label}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        templatesDiv.innerHTML = groupHTML;
     }
 
     modal.style.display = 'block';
