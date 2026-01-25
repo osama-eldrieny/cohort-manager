@@ -972,6 +972,11 @@ input:focus, select:focus, textarea:focus {
     color: #555555;
 }
 
+.status-can\'t-reach {
+    background-color: #e8e8e8;
+    color: #555555;
+}
+
 .status-next-cohort {
     background-color: #d1ecf1;
     color: #0c5460;
