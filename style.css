@@ -336,7 +336,7 @@ body {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     border-left: 4px solid #667eea;
     transition: transform 0.3s, box-shadow 0.3s;
-    border: 1px solid var(--border);
+    /* border: 1px solid var(--border); */
 }
 
 .stat-card:hover {
