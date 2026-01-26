@@ -404,11 +404,10 @@ function renderCharts() {
     const ctx3 = document.getElementById('locationsChart');
     if (charts.locations) charts.locations.destroy();
     charts.locations = new Chart(ctx3, {
-        type: 'bar',
+        type: 'doughnut',
         data: {
             labels: sortedLocations.map(l => l[0]),
             datasets: [{
-                label: 'Number of Students',
                 data: sortedLocations.map(l => l[1]),
                 backgroundColor: [
                     '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
@@ -416,20 +415,24 @@ function renderCharts() {
                     '#F5B041', '#D7BDE2', '#76D7C4', '#FAD7A0', '#85A5FF'
                 ],
                 borderColor: '#fff',
-                borderWidth: 1
+                borderWidth: 2
             }]
         },
         options: {
-            indexAxis: 'y',
             responsive: true,
             maintainAspectRatio: true,
             plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                x: {
-                    beginAtZero: true,
-                    ticks: { stepSize: 1 }
+                legend: { position: 'bottom', labels: { boxWidth: 14, boxHeight: 14 } },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const total = Object.values(locationCounts).reduce((a, b) => a + b, 0);
+                            const percentage = ((value / total) * 100).toFixed(1);
+                            return label + ': ' + value + ' (' + percentage + '%)';
+                        }
+                    }
                 }
             }
         }
