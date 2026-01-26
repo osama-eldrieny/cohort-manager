@@ -9,6 +9,32 @@ let emailWasChanged = false;
 let charts = {};
 const COHORTS = ['Cohort 0', 'Cohort 1 - Cradis', 'Cohort 1 - Zomra', 'Cohort 2', 'Cohort 3'];
 
+// Global color palette for consistent colors across all charts
+const COLOR_PALETTE = [
+    '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
+    '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B88B', '#ABEBC6',
+    '#F5B041', '#D7BDE2', '#76D7C4', '#FAD7A0', '#85A5FF',
+    '#F39C12', '#9B59B6', '#3498DB', '#E74C3C', '#1ABC9C',
+    '#34495E', '#16A085', '#27AE60', '#8E44AD', '#C0392B',
+    '#E67E22', '#16A085', '#8E44AD', '#27AE60', '#C0392B'
+];
+
+const colorMap = {};
+let colorIndex = 0;
+
+function getColor(label) {
+    if (!colorMap[label]) {
+        if (colorIndex < COLOR_PALETTE.length) {
+            colorMap[label] = COLOR_PALETTE[colorIndex];
+        } else {
+            // Generate random color if we run out
+            colorMap[label] = '#' + Math.floor(Math.random()*16777215).toString(16);
+        }
+        colorIndex++;
+    }
+    return colorMap[label];
+}
+
 // API Server Configuration
 // Determine API base URL based on environment
 const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
@@ -966,33 +992,6 @@ function attachStatusButtonListeners(page) {
 // ============================================
 
 function renderAnalyticsCharts() {
-    // Global color palette for consistent colors across all charts
-    const colorPalette = [
-        '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
-        '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B88B', '#ABEBC6',
-        '#F5B041', '#D7BDE2', '#76D7C4', '#FAD7A0', '#85A5FF',
-        '#F39C12', '#9B59B6', '#3498DB', '#E74C3C', '#1ABC9C',
-        '#34495E', '#16A085', '#27AE60', '#8E44AD', '#C0392B',
-        '#E67E22', '#16A085', '#8E44AD', '#27AE60', '#C0392B'
-    ];
-    
-    // Create a color map for all unique values (locations, languages, cohorts, etc.)
-    const colorMap = {};
-    let colorIndex = 0;
-    
-    function getColor(label) {
-        if (!colorMap[label]) {
-            if (colorIndex < colorPalette.length) {
-                colorMap[label] = colorPalette[colorIndex];
-            } else {
-                // Generate random color if we run out
-                colorMap[label] = '#' + Math.floor(Math.random()*16777215).toString(16);
-            }
-            colorIndex++;
-        }
-        return colorMap[label];
-    }
-
     // Revenue by Cohort
     const cohortRevenue = {};
     COHORTS.forEach(cohort => {
