@@ -1175,18 +1175,6 @@ button {
     opacity: 1;
 }
 
-.btn-small.btn-primary {
-    background-color: rgba(91, 95, 199, 0.1);
-    color: var(--primary-color);
-    border: none;
-    box-shadow: none;
-}
-
-.btn-small.btn-primary:hover {
-    background-color: rgba(91, 95, 199, 0.15);
-    box-shadow: 0 2px 8px rgba(91, 95, 199, 0.15);
-}
-
 /* PRIMARY BUTTON */
 .btn-primary {
     padding: 10px 15px;
@@ -1212,6 +1200,20 @@ button {
 
 .btn-primary:active {
     transform: translateY(0);
+}
+
+/* Small button with primary color - light background exception */
+.btn-small.btn-primary {
+    background-color: rgba(91, 95, 199, 0.1) !important;
+    color: var(--primary-color) !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.btn-small.btn-primary:hover {
+    background-color: rgba(91, 95, 199, 0.15) !important;
+    box-shadow: 0 2px 8px rgba(91, 95, 199, 0.15) !important;
+    transform: none !important;
 }
 
 /* SECONDARY BUTTON */
