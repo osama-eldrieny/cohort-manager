@@ -572,6 +572,13 @@
                     </div>
                 </div>
 
+                <!-- Email Templates Section -->
+                <div id="emailTemplatesSection" class="email-templates-section" style="display: none;">
+                    <h3>📧 Send Email Templates</h3>
+                    <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Select templates to send when saving this student</p>
+                    <div id="emailTemplatesCheckboxList"></div>
+                </div>
+
                 <div class="modal-buttons">
                     <button type="button" onclick="closeStudentModal()" class="btn-secondary">Cancel</button>
                     <button type="submit" class="btn-primary">Save Student</button>
@@ -666,6 +673,14 @@
             <div id="studentContactInfo" class="contact-info-background">
                 <div id="allContactDetails" class="contact-info-grid"></div>
                 <div id="checklistContactInfo"></div>
+            </div>
+
+            <!-- Email History Section -->
+            <div id="emailHistorySection" class="email-history-section">
+                <h4>📧 Email History</h4>
+                <div id="emailHistoryList" class="email-history-list">
+                    <p style="color: #999; font-size: 13px; margin: 0;">No emails sent yet</p>
+                </div>
             </div>
 
             <h3 class="contact-modal-title">Send Email</h3>

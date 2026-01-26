@@ -1226,6 +1226,10 @@ function editStudent(id) {
     }
 
     calculateRemaining();
+    
+    // Populate email templates checkboxes
+    populateEmailTemplatesCheckboxes(student);
+    
     document.getElementById('studentModal').style.display = 'block';
 }
 
@@ -1357,6 +1361,47 @@ function toggleChecklistSection() {
     checklistSection.style.display = isCohortStatus ? 'block' : 'none';
 }
 
+function populateEmailTemplatesCheckboxes(student) {
+    const container = document.getElementById('emailTemplatesCheckboxList');
+    const section = document.getElementById('emailTemplatesSection');
+    
+    if (!container || !section) return;
+    
+    container.innerHTML = '';
+    
+    // Show section only if there are email templates
+    if (!emailTemplates || emailTemplates.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+    
+    section.style.display = 'block';
+    
+    // Create checkboxes for each email template
+    emailTemplates.forEach(template => {
+        const div = document.createElement('div');
+        div.className = 'email-template-checkbox-item';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = `emailTemplate_${template.id}`;
+        checkbox.value = template.id;
+        checkbox.className = 'email-template-checkbox';
+        
+        // Check if this template was previously selected (from email_logs)
+        const wasSelected = student.email_logs?.some(log => log.template_id === template.id && log.status !== 'failed');
+        checkbox.checked = wasSelected;
+        
+        const label = document.createElement('label');
+        label.htmlFor = `emailTemplate_${template.id}`;
+        label.textContent = template.name || template.button_label;
+        
+        div.appendChild(checkbox);
+        div.appendChild(label);
+        container.appendChild(div);
+    });
+}
+
 function saveStudent(event) {
     event.preventDefault();
 
@@ -1425,6 +1470,16 @@ function saveStudent(event) {
         console.log(`   - Server will update record by ID ${currentEditingId} (UPSERT on ID prevents duplicates)`);
     }
     
+    // Collect selected email templates
+    const selectedTemplateCheckboxes = document.querySelectorAll('.email-template-checkbox:checked');
+    const selectedTemplateIds = Array.from(selectedTemplateCheckboxes).map(cb => parseInt(cb.value));
+    const selectedTemplates = emailTemplates.filter(t => selectedTemplateIds.includes(t.id));
+    
+    if (selectedTemplates.length > 0) {
+        console.log(`📧 Selected ${selectedTemplates.length} email template(s) to send:`);
+        selectedTemplates.forEach(t => console.log(`   - ${t.name}`));
+    }
+    
     // Save to storage and refresh UI - pass only the single student
     // Server UPSERT will:
     // - Match by ID if record exists (UPDATE) ← This prevents duplicates when email changes!
@@ -1441,11 +1496,61 @@ function saveStudent(event) {
             } else {
                 showToast('Student created successfully!', 'success');
             }
+            
+            // Send selected email templates with delay
+            if (selectedTemplates.length > 0) {
+                sendEmailTemplatesWithDelay(student, selectedTemplates);
+            }
         });
     });
     // Reset tracking variables
     currentEditingId = null;
     originalEditingEmail = null;
+}
+
+async function sendEmailTemplatesWithDelay(student, templates) {
+    console.log(`⏳ Queuing ${templates.length} email(s) to send to ${student.email} with 4-second delays...`);
+    
+    for (let i = 0; i < templates.length; i++) {
+        const template = templates[i];
+        
+        // Wait 4 seconds before each email (including the first one)
+        if (i > 0) {
+            await new Promise(resolve => setTimeout(resolve, 4000));
+        }
+        
+        try {
+            // Replace placeholders in template
+            const subject = template.subject.replace(/{name}/g, student.name);
+            const body = template.body.replace(/{name}/g, student.name);
+            
+            console.log(`📧 Sending email ${i + 1}/${templates.length}: "${template.name}" to ${student.email}`);
+            
+            const response = await fetch(`${API_BASE_URL}/api/send-email`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    studentId: student.id,
+                    studentEmail: student.email,
+                    studentName: student.name,
+                    templateId: template.id,
+                    templateName: template.name,
+                    subject: subject,
+                    body: body,
+                    type: 'manual'
+                })
+            });
+            
+            if (response.ok) {
+                console.log(`✅ Email sent: ${template.name}`);
+            } else {
+                const errorData = await response.json();
+                console.error(`❌ Failed to send email: ${errorData.error || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error(`❌ Error sending email: ${error.message}`);
+        }
+    }
 }
 
 // ============================================
@@ -2107,6 +2212,49 @@ async function deleteEmailTemplate(templateId) {
 
 let currentContactStudent = null;
 
+
+function populateEmailHistory(student) {
+    const section = document.getElementById('emailHistorySection');
+    const listDiv = document.getElementById('emailHistoryList');
+    
+    if (!section || !listDiv) return;
+    
+    // Load email history from server
+    fetch(`${API_BASE_URL}/api/email-logs/${student.id}`)
+        .then(response => response.json())
+        .then(logs => {
+            if (!logs || logs.length === 0) {
+                listDiv.innerHTML = '<p style="color: #999; font-size: 13px; margin: 0;">No emails sent yet</p>';
+                return;
+            }
+            
+            // Sort by most recent first
+            const sortedLogs = [...logs].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            
+            listDiv.innerHTML = sortedLogs.map(log => {
+                const template = emailTemplates.find(t => t.id == log.template_id);
+                const templateName = template?.name || template?.button_label || `Template ${log.template_id}`;
+                const statusClass = log.status === 'sent' ? 'sent' : 'failed';
+                const statusLabel = log.status === 'sent' ? '✓ Sent' : '✗ Failed';
+                const timestamp = new Date(log.created_at).toLocaleString();
+                
+                return `
+                    <div class="email-history-item ${statusClass}">
+                        <div class="email-history-item-row">
+                            <div class="email-history-template-name">${escapeHtml(templateName)}</div>
+                            <div class="email-history-status ${statusClass}">${statusLabel}</div>
+                            <div class="email-history-timestamp">${timestamp}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        })
+        .catch(error => {
+            console.warn('⚠️ Could not load email history:', error.message);
+            listDiv.innerHTML = '<p style="color: #999; font-size: 13px; margin: 0;">Could not load history</p>';
+        });
+}
+
 function openStudentContactModal(studentId) {
     // Use type-safe comparison for string/int IDs from Supabase
     const numericId = parseInt(studentId, 10) || studentId;
@@ -2205,6 +2353,9 @@ function openStudentContactModal(studentId) {
     } else {
         checklistDiv.innerHTML = '';
     }
+
+    // Display email history
+    populateEmailHistory(student);
 
     // Render template buttons grouped by category
     const templatesDiv = document.getElementById('studentEmailTemplates');
@@ -2357,9 +2508,11 @@ async function sendEmailToStudent(templateId, studentId) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+                studentId: student.id,
                 studentEmail: studentEmail,
                 studentName: student.name,
                 templateId,
+                templateName: template.name,
                 subject,
                 body
             })
@@ -2563,9 +2716,11 @@ async function sendBulkEmail(event) {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    studentId: student.id,
                     studentEmail: studentEmail,
                     studentName: student.name,
                     templateId,
+                    templateName: template.name,
                     subject,
                     body
                 })

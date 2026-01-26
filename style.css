@@ -2039,3 +2039,129 @@ button {
         gap: 10px !important;
     }
 }
+
+/* ============================================
+   EMAIL TEMPLATES SELECTION IN EDIT FORM
+   ============================================ */
+
+.email-templates-section {
+    margin-top: 24px;
+    padding: 16px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+}
+
+.email-templates-section h3 {
+    margin-top: 0;
+    margin-bottom: 8px;
+    font-size: 16px;
+    color: #333;
+}
+
+#emailTemplatesCheckboxList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.email-template-checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.email-template-checkbox-item:hover {
+    background-color: #f0f0f0;
+}
+
+.email-template-checkbox-item input[type="checkbox"] {
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+}
+
+.email-template-checkbox-item label {
+    cursor: pointer;
+    margin: 0;
+    flex: 1;
+}
+
+/* ============================================
+   EMAIL HISTORY IN STUDENT DETAILS
+   ============================================ */
+
+.email-history-section {
+    margin-top: 24px;
+    padding: 16px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #fafafa;
+}
+
+.email-history-section h4 {
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: 14px;
+    color: #333;
+}
+
+.email-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.email-history-item {
+    padding: 10px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    background-color: #fff;
+    font-size: 13px;
+}
+
+.email-history-item.sent {
+    border-left: 4px solid #4caf50;
+}
+
+.email-history-item.failed {
+    border-left: 4px solid #f44336;
+}
+
+.email-history-item-row {
+    display: grid;
+    grid-template-columns: 1fr 100px 120px;
+    gap: 12px;
+    align-items: center;
+}
+
+.email-history-template-name {
+    font-weight: 500;
+    color: #333;
+}
+
+.email-history-status {
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 500;
+    text-align: center;
+}
+
+.email-history-status.sent {
+    background-color: #c8e6c9;
+    color: #2e7d32;
+}
+
+.email-history-status.failed {
+    background-color: #ffcdd2;
+    color: #c62828;
+}
+
+.email-history-timestamp {
+    color: #999;
+    font-size: 11px;
+}

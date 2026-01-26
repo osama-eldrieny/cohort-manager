@@ -1,21 +1,15 @@
 [
   {
-    "id": 1,
-    "name": "Waiting list",
-    "subject": "Design Tokens Bootcamp Round 3 is open 1st April",
-    "body": "Hi {name}, this is Osama El Drieny 👋\nI’m contacting you because you previously applied to the Design Tokens Camp.\nThe new round is now open and will start on April 1st 🎉\n\n📌 Camp details:\n• Duration: 6 weeks\n• Sessions: 2 per week\n• Session length: 3–4 hours\n• Schedule: Saturday and Tuesday evenings (around 7–8 PM)\n\n💰 Cost: $500\nInstallment payments are available, as long as the full amount is completed before the course starts.\n\n🎁 Referral offer: Invite a friend and you’ll both receive $50 off.\n\n\nWould you like me to send you the payment link to join this round, or would you prefer to wait for the next one?\n\nYou can reply to this message or contact me on WhatsApp:\nhttps://wa.me/60192231094\n\n📖 Course content details:\nhttps://www.osamaeldrieny.com/courses/design-tokens-from-basic-to-mastery-course",
-    "created_at": "2026-01-24T18:06:17.941788",
-    "updated_at": "2026-01-24T18:06:17.941788",
-    "button_label": "Waiting list"
-  },
-  {
     "id": 2,
     "name": "Roles & Agreement",
     "subject": "Design Tokens Bootcamp Roles & Agreement – Action Required",
     "body": "Dear {name},\n\nBefore we start the Bootcamp, please review the program guidelines and agreement using the link below.\n\nThese guidelines help ensure a smooth and valuable experience for everyone. At the end of the form, select “Agree” to confirm your acceptance.\n\nhttps://forms.gle/UpQ4D53TKJeLFieP8\n\nCompletion is required before the Bootcamp begins.\n\nBest regards,\nOsama",
     "created_at": "2026-01-24T18:06:17.941788",
     "updated_at": "2026-01-24T18:06:17.941788",
-    "button_label": "Roles & Agreement"
+    "button_label": "Roles & Agreement",
+    "auto_enabled": false,
+    "auto_status": null,
+    "checklist_links": []
   },
   {
     "id": 3,
@@ -24,7 +18,10 @@
     "body": "Dear {name},\n\nTo help us group cohorts effectively, please complete the form below.\n\nYour answers will be used to balance experience levels, skills, and leadership preferences across groups, ensuring a better learning experience for everyone.\n\nPlease submit the form as soon as possible:\n\nhttps://forms.gle/4GPqkDvo6tEw8YCZA\n\nThank you.\n\nBest regards,\nOsama",
     "created_at": "2026-01-24T18:06:17.941788",
     "updated_at": "2026-01-24T18:06:17.941788",
-    "button_label": "Cohort Grouping Form"
+    "button_label": "Cohort Grouping Form",
+    "auto_enabled": false,
+    "auto_status": null,
+    "checklist_links": []
   },
   {
     "id": 4,
@@ -33,7 +30,10 @@
     "body": "🎉 Congratulations! {name},\nYou’re just one step away from joining the Design Tokens Community. Click the links below to get started:\n\n🔗 Main Community\nJoin all students from past & current camps.\nhttps://chat.whatsapp.com/DgEOepsbvR60G19QlQh9NW\n\n💬 General Group Chat\nA space for everyone to share & discuss design, UI/UX, and more.\nhttps://chat.whatsapp.com/EFhfq1GlGmwLhijfwKEvVv\n\n👥 Design Tokens Camp Cohort 3\nYour private group for this camp—say hi and introduce yourself!\nhttps://chat.whatsapp.com/JUjg4hCxGlE6jv1flQGOrW",
     "created_at": "2026-01-24T18:06:17.941788",
     "updated_at": "2026-01-24T18:06:17.941788",
-    "button_label": "Community Invitation"
+    "button_label": "Community Invitation",
+    "auto_enabled": false,
+    "auto_status": null,
+    "checklist_links": []
   },
   {
     "id": 5,
@@ -42,7 +42,22 @@
     "body": "Dear {name} 🎉,\n\nCongratulations on successfully completing the Bootcamp 👏\n\nTo receive your certificate, submitting your honest feedback is a required step.\n\nWe kindly ask that you take a few minutes to provide honest feedback, which will be shared publicly to help future cohorts.\n\nYour input helps us improve the program and make it even better for everyone 🚀\n\nPlease submit your feedback here:\nhttps://forms.gle/Kff3Snxuv5tHrwUp7\n\nThank you for your effort and commitment throughout the Bootcamp 🙌\n\nWishing you continued success ahead 🌟",
     "created_at": "2026-01-24T18:06:17.941788",
     "updated_at": "2026-01-24T18:06:17.941788",
-    "button_label": "Camp Feedback"
+    "button_label": "Camp Feedback",
+    "auto_enabled": false,
+    "auto_status": null,
+    "checklist_links": []
+  },
+  {
+    "id": 1,
+    "name": "Waiting list",
+    "subject": "Save your Seat - Design Tokens Camp #3 is open for registration",
+    "body": "Hi {name}, this is Osama El Drieny 👋\nI’m contacting you because you previously applied to the Design Tokens Camp.\nThe new round is now open and will start on April 1st 🎉\n\n📌 Camp details:\n• Duration: 6 weeks\n• Sessions: 2 per week\n• Session length: 3–4 hours\n• Schedule: Saturday and Tuesday evenings (around 7–8 PM)\n\n💰 Cost: $500\nInstallment payments are available, as long as the full amount is completed before the course starts.\n\n🎁 Referral offer: Invite a friend and you’ll both receive $50 off.\n\nSave your seat now.\n\nWould you like me to send you the payment link to join this round, or would you prefer to wait for the next one?\n\nYou can reply to this message or contact me on WhatsApp:\nhttps://wa.me/60192231094\n\n📖 Course content details:\nhttps://www.osamaeldrieny.com/courses/design-tokens-from-basic-to-mastery-course",
+    "created_at": "2026-01-24T18:06:17.941788",
+    "updated_at": "2026-01-24T18:06:17.941788",
+    "button_label": "Waiting list",
+    "auto_enabled": false,
+    "auto_status": null,
+    "checklist_links": []
   },
   {
     "id": 12,
@@ -51,7 +66,10 @@
     "body": "Dear {name},\n\nCongratulations 🎉\n\nYou are receiving this email because your application to join the Design Tokens Bootcamp has been approved and your full payment of $500 has been successfully confirmed.\n\nYour seat in the bootcamp is now secured once you pay.\n\nIf you need to complete the payment, you can use the link below:\nhttps://buy.stripe.com/14A14mfS800w0NDcIJe3e0f\n\nIf you have any questions or need assistance, please feel free to contact me directly on WhatsApp:\nhttps://wa.me/60192231094\n\nMore details about the bootcamp schedule, materials, and next steps will be shared with you soon.\n\nLooking forward to having you in the bootcamp.\n\nBest regards,\nOsama Eldrieny",
     "created_at": "2026-01-24T19:31:45.393484",
     "updated_at": "2026-01-24T19:31:45.393484",
-    "button_label": "Payment link $500"
+    "button_label": "Payment link $500",
+    "auto_enabled": false,
+    "auto_status": null,
+    "checklist_links": []
   },
   {
     "id": 1769353950,
@@ -60,7 +78,10 @@
     "body": "Dear {name},\n\nCongratulations 🎉\n\nYou are receiving this email because your application to join the Design Tokens Bootcamp has been approved\n\nThis email is to request a $100 payment for the Design Tokens Bootcamp.\n\nTo proceed with your enrollment and continue your payment plan, please complete the payment using the link below:\nhttps://buy.stripe.com/8x2cN4axO14A8g5245e3e0a\n\nIf you have any questions or need assistance, feel free to contact me directly on WhatsApp:\nhttps://wa.me/60192231094\n\nFurther details about the bootcamp schedule, materials, and next steps will be shared with you accordingly.\n\nBest regards,\nOsama Eldrieny",
     "created_at": "2026-01-25T15:12:31.708835",
     "updated_at": "2026-01-25T15:12:31.708835",
-    "button_label": "Payment link $100"
+    "button_label": "Payment link $100",
+    "auto_enabled": false,
+    "auto_status": null,
+    "checklist_links": []
   },
   {
     "id": 1769354109,
@@ -69,7 +90,10 @@
     "body": "Dear {name},\n\nCongratulations 🎉\n\nYou are receiving this email because your application to join the Design Tokens Bootcamp has been approved\n\nThis email is to request a $150 payment for the Design Tokens Bootcamp.\n\nTo proceed with your enrollment and continue your payment plan, please complete the payment using the link below:\nhttps://buy.stripe.com/28E3cucFW3cIeEtcIJe3e0c\n\nIf you have any questions or need assistance, feel free to contact me directly on WhatsApp:\nhttps://wa.me/60192231094\n\nFurther details about the bootcamp schedule, materials, and next steps will be shared with you accordingly.\n\nBest regards,\nOsama Eldrieny",
     "created_at": "2026-01-25T15:15:10.579552",
     "updated_at": "2026-01-25T15:15:10.579552",
-    "button_label": "Payment link $150"
+    "button_label": "Payment link $150",
+    "auto_enabled": false,
+    "auto_status": null,
+    "checklist_links": []
   },
   {
     "id": 1769354240,
@@ -78,7 +102,10 @@
     "body": "Dear {name},\n\nCongratulations 🎉\n\nYou are receiving this email because your application to join the Design Tokens Bootcamp has been approved\n\nThis email is to request a $200 payment for the Design Tokens Bootcamp.\n\nTo proceed with your enrollment and continue your payment plan, please complete the payment using the link below:\nhttps://buy.stripe.com/9B63cu0XeeVqgMBfUVe3e09\n\nIf you have any questions or need assistance, feel free to contact me directly on WhatsApp:\nhttps://wa.me/60192231094\n\nFurther details about the bootcamp schedule, materials, and next steps will be shared with you accordingly.\n\nBest regards,\nOsama Eldrieny",
     "created_at": "2026-01-25T15:17:21.534949",
     "updated_at": "2026-01-25T15:17:21.534949",
-    "button_label": "Payment link $200"
+    "button_label": "Payment link $200",
+    "auto_enabled": false,
+    "auto_status": null,
+    "checklist_links": []
   },
   {
     "id": 1769354301,
@@ -87,7 +114,10 @@
     "body": "Dear {name},\n\nCongratulations 🎉\n\nYou are receiving this email because your application to join the Design Tokens Bootcamp has been approved\n\nThis email is to request a $250 payment for the Design Tokens Bootcamp.\n\nTo proceed with your enrollment and continue your payment plan, please complete the payment using the link below:\nhttps://buy.stripe.com/4gM8wO0XefZucwl9wxe3e0e\n\nIf you have any questions or need assistance, feel free to contact me directly on WhatsApp:\nhttps://wa.me/60192231094\n\nFurther details about the bootcamp schedule, materials, and next steps will be shared with you accordingly.\n\nBest regards,\nOsama Eldrieny",
     "created_at": "2026-01-25T15:18:21.797254",
     "updated_at": "2026-01-25T15:18:21.797254",
-    "button_label": "Payment link $250"
+    "button_label": "Payment link $250",
+    "auto_enabled": false,
+    "auto_status": null,
+    "checklist_links": []
   },
   {
     "id": 1769354336,
@@ -96,7 +126,10 @@
     "body": "Dear {name},\n\nCongratulations 🎉\n\nYou are receiving this email because your application to join the Design Tokens Bootcamp has been approved\n\nThis email is to request a $300 payment for the Design Tokens Bootcamp.\n\nTo proceed with your enrollment and continue your payment plan, please complete the payment using the link below:\nhttps://buy.stripe.com/cNicN47lCbJecwl5ghe3e0d\n\nIf you have any questions or need assistance, feel free to contact me directly on WhatsApp:\nhttps://wa.me/60192231094\n\nFurther details about the bootcamp schedule, materials, and next steps will be shared with you accordingly.\n\nBest regards,\nOsama Eldrieny",
     "created_at": "2026-01-25T15:18:57.288478",
     "updated_at": "2026-01-25T15:18:57.288478",
-    "button_label": "Payment link $300"
+    "button_label": "Payment link $300",
+    "auto_enabled": false,
+    "auto_status": null,
+    "checklist_links": []
   },
   {
     "id": 1769354374,
@@ -105,7 +138,10 @@
     "body": "Dear {name},\n\nCongratulations 🎉\n\nYou are receiving this email because your application to join the Design Tokens Bootcamp has been approved\n\nThis email is to request a $350 payment for the Design Tokens Bootcamp.\n\nTo proceed with your enrollment and continue your payment plan, please complete the payment using the link below:\nhttps://buy.stripe.com/bJe4gy7lC9B6eEtgYZe3e08\n\nIf you have any questions or need assistance, feel free to contact me directly on WhatsApp:\nhttps://wa.me/60192231094\n\nFurther details about the bootcamp schedule, materials, and next steps will be shared with you accordingly.\n\nBest regards,\nOsama Eldrieny",
     "created_at": "2026-01-25T15:19:35.438273",
     "updated_at": "2026-01-25T15:19:35.438273",
-    "button_label": "Payment link $350"
+    "button_label": "Payment link $350",
+    "auto_enabled": false,
+    "auto_status": null,
+    "checklist_links": []
   },
   {
     "id": 1769354411,
@@ -114,7 +150,10 @@
     "body": "Dear {name},\n\nCongratulations 🎉\n\nYou are receiving this email because your application to join the Design Tokens Bootcamp has been approved\n\nThis email is to request a $400 payment for the Design Tokens Bootcamp.\n\nTo proceed with your enrollment and continue your payment plan, please complete the payment using the link below:\nhttps://buy.stripe.com/bJeaEW7lC9B67c1245e3e06\n\nIf you have any questions or need assistance, feel free to contact me directly on WhatsApp:\nhttps://wa.me/60192231094\n\nFurther details about the bootcamp schedule, materials, and next steps will be shared with you accordingly.\n\nBest regards,\nOsama Eldrieny",
     "created_at": "2026-01-25T15:20:12.283427",
     "updated_at": "2026-01-25T15:20:12.283427",
-    "button_label": "Payment link $400"
+    "button_label": "Payment link $400",
+    "auto_enabled": false,
+    "auto_status": null,
+    "checklist_links": []
   },
   {
     "id": 1769354470,
@@ -123,7 +162,10 @@
     "body": "Dear {name},\n\nCongratulations 🎉\n\nYou are receiving this email because your application to join the Design Tokens Bootcamp has been approved\n\nThis email is to request a $450 payment for the Design Tokens Bootcamp.\n\nTo proceed with your enrollment and continue your payment plan, please complete the payment using the link below:\nhttps://buy.stripe.com/28EcN45du14Absh8ste3e07\n\nIf you have any questions or need assistance, feel free to contact me directly on WhatsApp:\nhttps://wa.me/60192231094\n\nFurther details about the bootcamp schedule, materials, and next steps will be shared with you accordingly.\n\nBest regards,\nOsama Eldrieny",
     "created_at": "2026-01-25T15:21:11.603351",
     "updated_at": "2026-01-25T15:21:11.603351",
-    "button_label": "Payment link $450"
+    "button_label": "Payment link $450",
+    "auto_enabled": false,
+    "auto_status": null,
+    "checklist_links": []
   },
   {
     "id": 1769355315,
@@ -132,7 +174,10 @@
     "body": "Dear {name},\n\nThis email is to share the Google Drive folder that will be used throughout the Design Tokens Bootcamp for activities, tasks, and file sharing, so please make sure you can access it.\n\nInside the main folder, you will find a subfolder labeled with your name.\n\nGoogle Drive folder link:\nhttps://drive.google.com/drive/folders/1pVmgOvy2MUXnGQhMkAxWJQCl5xmrabJy?usp=sharing\n\nIf you have any issues accessing your folder or have questions, please contact me directly on WhatsApp:\nhttps://wa.me/60192231094\n\nMore instructions will be shared during the bootcamp sessions.\n\nBest regards,\nOsama Eldrieny",
     "created_at": "2026-01-25T15:35:18.022677",
     "updated_at": "2026-01-25T15:35:18.022677",
-    "button_label": "Google Drive link"
+    "button_label": "Google Drive link",
+    "auto_enabled": false,
+    "auto_status": null,
+    "checklist_links": []
   },
   {
     "id": 1769355801,
@@ -141,6 +186,72 @@
     "body": "Dear {name},\n\nThis email is to share the main Figma file that will be used during the Design Tokens Bootcamp.\n\nThis is a shared Figma file for all students, and it will be used by me during the live sessions for explanations.\n\nYou will have edit access to follow along during the sessions.\n\nA separate Figma file for each student will be shared later for individual work and tasks.\n\nShared Figma file link:\nhttps://www.figma.com/design/ygDZoJa2OnLABhrJ16LpAA/Design-Tokens-Bootcamp—Osama–Copy-?node-id=0-1&t=dbqLszh6yjanMSy3-1\n\nIf you have any issues accessing the file, please contact me directly on WhatsApp:\nhttps://wa.me/60192231094\n\nBest regards,\nOsama Eldrieny",
     "created_at": "2026-01-25T15:43:22.629837",
     "updated_at": "2026-01-25T15:43:22.629837",
-    "button_label": "Shared Figma file link"
+    "button_label": "Shared Figma file link",
+    "auto_enabled": false,
+    "auto_status": null,
+    "checklist_links": []
+  },
+  {
+    "id": 1769389862,
+    "name": "Upcoming Rounds",
+    "subject": "Design Tokens Bootcamp – Upcoming Rounds",
+    "body": "Dear {name},\n\nThank you for your reply and for letting us know.\n\nNoted that you will not be joining the April 2026 round. You are welcome to join the next round in September 2026, and we will get in touch with you closer to that round with all the relevant details.\n\nIf you’d like to reach out or have any questions, please reply to this email or contact us on WhatsApp:\nhttps://wa.me/60192231094\n\nBest regards,\nOsama Eldrieny",
+    "created_at": "2026-01-26T01:11:04.741462",
+    "updated_at": "2026-01-26T01:11:04.741462",
+    "button_label": "Upcoming Rounds",
+    "auto_enabled": false,
+    "auto_status": null,
+    "checklist_links": []
+  },
+  {
+    "id": 1769426960,
+    "name": "Welcome to Cohort",
+    "subject": "Welcome {name} to Cohort 0!",
+    "body": "Hi {name}, you've been selected for Cohort 0. Check your details and get started!",
+    "created_at": "2026-01-26T11:29:21.020649",
+    "updated_at": "2026-01-26T11:29:21.020649",
+    "button_label": "Welcome to Cohort",
+    "auto_enabled": false,
+    "auto_status": null,
+    "checklist_links": []
+  },
+  {
+    "id": 1769427159,
+    "name": "Test Template",
+    "subject": "testing subject",
+    "body": "testing body message",
+    "created_at": "2026-01-26T11:32:40.25168",
+    "updated_at": "2026-01-26T11:32:40.25168",
+    "button_label": "testing",
+    "auto_enabled": false,
+    "auto_status": null,
+    "checklist_links": []
+  },
+  {
+    "id": 1769427273,
+    "name": "Testing 2",
+    "subject": "Testing 2 subject",
+    "body": "Testing 2 body message ",
+    "created_at": "2026-01-26T11:34:33.702434",
+    "updated_at": "2026-01-26T11:34:33.702434",
+    "button_label": "Testing 2",
+    "auto_enabled": false,
+    "auto_status": null,
+    "checklist_links": []
+  },
+  {
+    "id": 1769427452,
+    "name": "Testing 3",
+    "subject": "Testing 3 subject",
+    "body": "Testing 3 body",
+    "created_at": "2026-01-26T11:37:32.592271",
+    "updated_at": "2026-01-26T11:37:32.592271",
+    "button_label": "Testing 3",
+    "auto_enabled": true,
+    "auto_status": "Cohort 0",
+    "checklist_links": [
+      "addedCommunity",
+      "sharedFeedbackForm"
+    ]
   }
 ]

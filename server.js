@@ -24,6 +24,56 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = 3002;
 const DATA_FILE = path.join(__dirname, 'students.json');
+const EMAIL_LOGS_FILE = path.join(__dirname, 'email_logs.json');
+
+// ============================================
+// EMAIL LOGGING FUNCTIONS
+// ============================================
+
+function logEmailSent(studentId, templateId, templateName, status = 'sent') {
+    try {
+        let logs = [];
+        
+        // Read existing logs
+        if (fs.existsSync(EMAIL_LOGS_FILE)) {
+            const data = fs.readFileSync(EMAIL_LOGS_FILE, 'utf-8');
+            logs = JSON.parse(data);
+        }
+        
+        // Add new log entry
+        logs.push({
+            id: Math.floor(Date.now() / 1000),
+            student_id: studentId,
+            template_id: templateId,
+            template_name: templateName,
+            status: status,
+            created_at: new Date().toISOString()
+        });
+        
+        // Write back to file
+        fs.writeFileSync(EMAIL_LOGS_FILE, JSON.stringify(logs, null, 2));
+        console.log(`💾 Email log saved: Student ${studentId}, Template: ${templateName}, Status: ${status}`);
+    } catch (error) {
+        console.warn(`⚠️ Could not save email log: ${error.message}`);
+    }
+}
+
+function getEmailLogsForStudent(studentId) {
+    try {
+        if (!fs.existsSync(EMAIL_LOGS_FILE)) {
+            return [];
+        }
+        
+        const data = fs.readFileSync(EMAIL_LOGS_FILE, 'utf-8');
+        const logs = JSON.parse(data);
+        
+        // Filter logs for this student
+        return logs.filter(log => log.student_id == studentId);
+    } catch (error) {
+        console.warn(`⚠️ Could not read email logs: ${error.message}`);
+        return [];
+    }
+}
 
 // Gmail SMTP Configuration
 const SENDER_EMAIL = 'osama.eldrieny@gmail.com';
@@ -295,7 +345,7 @@ app.delete('/api/email-templates/:id', async (req, res) => {
 // POST /api/send-email - Send email to student
 app.post('/api/send-email', async (req, res) => {
     try {
-        const { studentEmail, studentName, templateId, subject, body } = req.body;
+        const { studentId, studentEmail, studentName, templateId, templateName, subject, body } = req.body;
         
         if (!studentEmail || !templateId || !subject || !body) {
             return res.status(400).json({ error: 'Missing required fields' });
@@ -306,6 +356,7 @@ app.post('/api/send-email', async (req, res) => {
         const trimmedEmail = studentEmail.trim();
         if (!emailRegex.test(trimmedEmail)) {
             console.warn(`⚠️ Invalid email format: "${trimmedEmail}"`);
+            logEmailSent(studentId, templateId, templateName, 'failed');
             return res.status(400).json({ error: `Invalid email format: "${trimmedEmail}"` });
         }
         
@@ -314,9 +365,10 @@ app.post('/api/send-email', async (req, res) => {
             console.log(`📧 Email prepared for: ${studentName} <${trimmedEmail}>`);
             console.log(`Subject: ${subject}`);
             console.log(`⚠️  Gmail SMTP not configured. Set GMAIL_APP_PASSWORD environment variable.`);
-            return res.json({ 
+            logEmailSent(studentId, templateId, templateName, 'failed');
+            return res.status(503).json({ 
                 success: false, 
-                message: 'Email service not configured. Contact administrator.' 
+                error: 'Email service not configured. Contact administrator.' 
             });
         }
 
@@ -334,7 +386,9 @@ app.post('/api/send-email', async (req, res) => {
         console.log(`✅ Email sent to ${studentName} <${trimmedEmail}>`);
         console.log(`   Message ID: ${info.messageId}`);
         console.log(`   Response: ${info.response}`);
-        console.log(`   ⚠️  If user doesn't receive: check spam/promotions folder or verify email address`);
+        
+        // Log the email sent
+        logEmailSent(studentId, templateId, templateName, 'sent');
         
         res.json({ 
             success: true, 
@@ -343,10 +397,28 @@ app.post('/api/send-email', async (req, res) => {
         });
     } catch (error) {
         console.error('❌ Error sending email:', error.message);
+        // Log the failed email
+        const { studentId, templateId, templateName } = req.body;
+        if (studentId && templateId) {
+            logEmailSent(studentId, templateId, templateName, 'failed');
+        }
         res.status(500).json({ 
             success: false,
             error: `Failed to send email: ${error.message}` 
         });
+    }
+});
+
+// GET /api/email-logs/:studentId - Get email sending history for a student
+app.get('/api/email-logs/:studentId', (req, res) => {
+    try {
+        const { studentId } = req.params;
+        const logs = getEmailLogsForStudent(studentId);
+        console.log(`📋 Retrieved ${logs.length} email logs for student ${studentId}`);
+        res.json(logs);
+    } catch (error) {
+        console.error('❌ Error fetching email logs:', error.message);
+        res.status(500).json({ error: 'Failed to fetch email logs' });
     }
 });
 
