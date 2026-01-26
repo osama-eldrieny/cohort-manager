@@ -2128,7 +2128,7 @@ function renderTemplateSection(sectionId, bodyId, templates) {
     section.style.display = 'block';
     tbody.innerHTML = templates.map(template => `
         <tr>
-            <td class="col-template-name"><strong>${template.name.charAt(0).toUpperCase() + template.name.slice(1).toLowerCase()}</strong></td>
+            <td class="col-template-name"><strong>${template.name}</strong></td>
             <td class="col-button-label">${template.button_label}</td>
             <td class="col-subject">${template.subject}</td>
             <td class="col-actions">

@@ -918,9 +918,11 @@ input:focus, select:focus, textarea:focus {
     margin-bottom: 0;
     cursor: pointer;
     font-weight: 500;
-    font-size: 14px;
+    font-size: 13px;
     text-transform: none;
     letter-spacing: normal;
+    font-weight: 500;
+    color: #333;
 }
 
 .checklist-group {
@@ -1864,6 +1866,7 @@ button {
     margin: 0;
     font-weight: 500;
     color: #333;
+    text-transform: capitalize;
 }
 
 .figma-status-item input[type="radio"]:checked ~ .figma-status-radio {
@@ -2153,9 +2156,9 @@ button {
 .email-templates-section {
     margin-top: 24px;
     padding: 16px;
-    border: 1px solid #e0e0e0;
     border-radius: 8px;
-    background-color: #f9f9f9;
+    background: var(--bg-light-secondary);
+    border: 1px solid var(--border-light);
 }
 
 .email-templates-section h3 {
@@ -2195,6 +2198,9 @@ button {
     cursor: pointer;
     margin: 0;
     flex: 1;
+    text-transform: capitalize;
+    font-weight: 500;
+    color: #333;
 }
 
 .email-checkbox-group {
@@ -2504,10 +2510,6 @@ button {
     width: 65%;
     text-align: left;
     min-width: 120px;
-}
-
-.email-templates-table td.col-template-name strong {
-    text-transform: none !important;
 }
 
 .email-templates-table th.col-button-label,
