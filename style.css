@@ -845,6 +845,10 @@ input:focus, select:focus, textarea:focus {
     grid-column: 1 / 2;
 }
 
+.form-row-3col {
+    grid-template-columns: 1fr 1fr 1fr !important;
+}
+
 .modal-buttons {
     display: flex;
     gap: 12px;
