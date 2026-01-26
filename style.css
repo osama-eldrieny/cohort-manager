@@ -1812,6 +1812,7 @@ button {
 
 .settings-table-action {
     padding: 16px 15px;
+    text-align: left;
 }
 
 .settings-table-label-error {
