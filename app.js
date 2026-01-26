@@ -610,7 +610,7 @@ function renderStudentsTable() {
     tbody.innerHTML = filtered.map((student, index) => {
         return `
         <tr>
-            <td><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
+            <td style="padding-right: 0px;"><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
             <td><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" onclick="openStudentContactModal('${student.id}')" title="Click to view details">${student.name}</strong></td>
             <td><span class="copy-email" title="Click to copy">${student.email}</span></td>
             <td><span class="status-badge status-${(student.status || 'unknown').toLowerCase().replace(/\s+/g, '-')}">${student.status || 'Unknown'}</span></td>
@@ -717,6 +717,7 @@ function renderCohortPage(cohortId) {
             <table class="students-table">
                 <thead>
                     <tr>
+                        <th>#</th>
                         <th>Name</th>
                         <th>Email</th>
                         <th>Figma Email</th>
@@ -730,11 +731,12 @@ function renderCohortPage(cohortId) {
                     </tr>
                 </thead>
                 <tbody id="cohortTableBody-${cohortId}">
-                    ${cohortStudents.map(student => {
+                    ${cohortStudents.map((student, index) => {
                         const postCourseItems = student.checklist ? [student.checklist.sharedFeedbackForm, student.checklist.submittedCourseFeedback, student.checklist.issuedCertificate].filter(Boolean).length : 0;
                         const postCoursePct = Math.round((postCourseItems / 3) * 100) + '%';
                         return `
                         <tr>
+                            <td style="padding-right: 0px;"><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
                             <td><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" onclick="openStudentContactModal('${student.id}')" title="Click to view details">${student.name}</strong></td>
                             <td><span class="copy-email" title="Click to copy">${student.email}</span></td>
                             <td>${student.figmaEmail ? `<span class="copy-email" title="Click to copy">${student.figmaEmail}</span>` : '-'}</td>
@@ -773,7 +775,7 @@ function renderCohortPage(cohortId) {
             );
             
             const tbody = document.getElementById(`cohortTableBody-${cohortId}`);
-            const colspanNum = showChecklistProgress ? 9 : 8;
+            const colspanNum = showChecklistProgress ? 10 : 9;
             if (filtered.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="${colspanNum}" class="empty">No students found</td></tr>`;
             } else {
@@ -782,7 +784,7 @@ function renderCohortPage(cohortId) {
                     const postCoursePct = Math.round((postCourseItems / 3) * 100) + '%';
                     return `
                     <tr>
-                        <td><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
+                        <td style="padding-right: 0px;"><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
                         <td><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" onclick="openStudentContactModal('${student.id}')" title="Click to view details">${student.name}</strong></td>
                         <td><span class="copy-email" title="Click to copy">${student.email}</span></td>
                         <td>${student.figmaEmail ? `<span class="copy-email" title="Click to copy">${student.figmaEmail}</span>` : '-'}</td>
@@ -892,11 +894,12 @@ function renderStatusPage(status) {
                     </tr>
                 </thead>
                 <tbody id="statusTableBody-${pageId}">
-                    ${statusStudents.map(student => {
+                    ${statusStudents.map((student, index) => {
                         const postCourseItems = student.checklist ? [student.checklist.sharedFeedbackForm, student.checklist.submittedCourseFeedback, student.checklist.issuedCertificate].filter(Boolean).length : 0;
                         const postCoursePct = Math.round((postCourseItems / 3) * 100) + '%';
                         return `
                         <tr>
+                            <td style="padding-right: 0px;"><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
                             <td><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" onclick="openStudentContactModal('${student.id}')" title="Click to view details">${student.name}</strong></td>
                             <td><span class="copy-email" title="Click to copy">${student.email}</span></td>
                             <td>${student.location}</td>
@@ -943,7 +946,7 @@ function renderStatusPage(status) {
                     const postCoursePct = Math.round((postCourseItems / 3) * 100) + '%';
                     return `
                     <tr>
-                        <td><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
+                        <td style="padding-right: 0px;"><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
                         <td><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" onclick="openStudentContactModal('${student.id}')" title="Click to view details">${student.name}</strong></td>
                         <td><span class="copy-email" title="Click to copy">${student.email}</span></td>
                         <td>${student.location}</td>
