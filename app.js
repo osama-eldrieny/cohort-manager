@@ -603,13 +603,14 @@ function renderStudentsTable() {
 
     const tbody = document.getElementById('studentsTableBody');
     if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" class="empty">No students found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="empty">No students found</td></tr>';
         return;
     }
 
-    tbody.innerHTML = filtered.map(student => {
+    tbody.innerHTML = filtered.map((student, index) => {
         return `
         <tr>
+            <td><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
             <td><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" onclick="openStudentContactModal('${student.id}')" title="Click to view details">${student.name}</strong></td>
             <td><span class="copy-email" title="Click to copy">${student.email}</span></td>
             <td><span class="status-badge status-${(student.status || 'unknown').toLowerCase().replace(/\s+/g, '-')}">${student.status || 'Unknown'}</span></td>
@@ -776,11 +777,12 @@ function renderCohortPage(cohortId) {
             if (filtered.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="${colspanNum}" class="empty">No students found</td></tr>`;
             } else {
-                tbody.innerHTML = filtered.map(student => {
+                tbody.innerHTML = filtered.map((student, index) => {
                     const postCourseItems = student.checklist ? [student.checklist.sharedFeedbackForm, student.checklist.submittedCourseFeedback, student.checklist.issuedCertificate].filter(Boolean).length : 0;
                     const postCoursePct = Math.round((postCourseItems / 3) * 100) + '%';
                     return `
                     <tr>
+                        <td><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
                         <td><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" onclick="openStudentContactModal('${student.id}')" title="Click to view details">${student.name}</strong></td>
                         <td><span class="copy-email" title="Click to copy">${student.email}</span></td>
                         <td>${student.figmaEmail ? `<span class="copy-email" title="Click to copy">${student.figmaEmail}</span>` : '-'}</td>
@@ -876,6 +878,7 @@ function renderStatusPage(status) {
             <table class="students-table">
                 <thead>
                     <tr>
+                        <th>#</th>
                         <th>Name</th>
                         <th>Email</th>
                         <th>Location</th>
@@ -933,13 +936,14 @@ function renderStatusPage(status) {
             
             const tbody = document.getElementById(`statusTableBody-${pageId}`);
             if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="10" class="empty">No students found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="11" class="empty">No students found</td></tr>';
             } else {
-                tbody.innerHTML = filtered.map(student => {
+                tbody.innerHTML = filtered.map((student, index) => {
                     const postCourseItems = student.checklist ? [student.checklist.sharedFeedbackForm, student.checklist.submittedCourseFeedback, student.checklist.issuedCertificate].filter(Boolean).length : 0;
                     const postCoursePct = Math.round((postCourseItems / 3) * 100) + '%';
                     return `
                     <tr>
+                        <td><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
                         <td><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" onclick="openStudentContactModal('${student.id}')" title="Click to view details">${student.name}</strong></td>
                         <td><span class="copy-email" title="Click to copy">${student.email}</span></td>
                         <td>${student.location}</td>
