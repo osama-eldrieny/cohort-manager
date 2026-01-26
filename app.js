@@ -1045,10 +1045,10 @@ function renderAnalyticsCharts() {
 
     // Location Distribution by Cohort Status
     const targetCohorts = ['Cohort 0', 'Cohort 1 - Cradis', 'Cohort 1 - Zomra', 'Cohort 2', 'Cohort 3'];
-    const cohortStudents = students.filter(s => targetCohorts.includes(s.status));
+    const locationCohortStudents = students.filter(s => targetCohorts.includes(s.status));
     
     const locationsByStatus = {};
-    cohortStudents.forEach(s => {
+    locationCohortStudents.forEach(s => {
         const location = s.location || 'Unknown';
         locationsByStatus[location] = (locationsByStatus[location] || 0) + 1;
     });
@@ -1084,7 +1084,7 @@ function renderAnalyticsCharts() {
                         label: function(context) {
                             const label = context.label || '';
                             const value = context.parsed || 0;
-                            const total = cohortStudents.length;
+                            const total = locationCohortStudents.length;
                             const percentage = ((value / total) * 100).toFixed(1);
                             return label + ': ' + value + ' (' + percentage + '%)';
                         }
