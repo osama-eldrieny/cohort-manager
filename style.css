@@ -886,6 +886,7 @@ input:focus, select:focus, textarea:focus {
     padding: 20px;
     border-radius: 8px;
     margin-bottom: 25px;
+    margin-top: 16px;
     border-left: 4px solid var(--primary-color);
     border: 1px solid var(--border-light);
 }
@@ -1851,6 +1852,7 @@ button {
     display: flex;
     align-items: center;
     gap: 8px;
+    display: -webkit-inline-box;
 }
 
 .figma-status-item input[type="radio"] {
@@ -1879,8 +1881,8 @@ button {
 
 .figma-status-item:has(input[type="radio"]:checked) {
     border-color: #5b5fc7;
-    background: linear-gradient(135deg, #f8f9ff 0%, #ececf9 100%);
-    box-shadow: 0 4px 16px rgba(91, 95, 199, 0.15);
+    /* background: linear-gradient(135deg, #f8f9ff 0%, #ececf9 100%);
+    box-shadow: 0 4px 16px rgba(91, 95, 199, 0.15); */
 }
 
 .figma-status-label-main {
@@ -2175,6 +2177,7 @@ button {
     gap: 8px;
     padding: 8px;
     border-radius: 4px;
+    padding-left: 1px;
     transition: background-color 0.2s;
 }
 
@@ -2213,7 +2216,6 @@ button {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 12px;
-    padding-left: 4px;
 }
 
 /* ============================================
@@ -2502,6 +2504,10 @@ button {
     width: 65%;
     text-align: left;
     min-width: 120px;
+}
+
+.email-templates-table td.col-template-name strong {
+    text-transform: none !important;
 }
 
 .email-templates-table th.col-button-label,
