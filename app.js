@@ -1811,23 +1811,43 @@ function syncToGoogleSheets() {
 }
 
 function generateCSV(data) {
-    // CSV headers
-    const headers = ['ID', 'Name', 'Email', 'WhatsApp', 'Location', 'Language', 'Status', 'Cohort', 'Total Amount', 'Paid Amount', 'Remaining', 'Note'];
+    // CSV headers - includes onboarding checklist, figma status, and post-course actions
+    const headers = [
+        'ID', 'Name', 'Email', 'WhatsApp', 'Location', 'Language', 'Status', 'Cohort', 
+        'Total Amount', 'Paid Amount', 'Remaining', 'Note',
+        'Onboarding: Community', 'Onboarding: Agreement', 'Onboarding: Signed', 
+        'Onboarding: Drive', 'Onboarding: Figma', 'Onboarding: Master Figma',
+        'Figma Status', 
+        'Post-Course: Feedback Form', 'Post-Course: Course Feedback', 'Post-Course: Certificate'
+    ];
     
     // CSV rows
     const rows = data.map(student => [
         student.id,
         `"${student.name}"`,
         student.email,
-        student.whatsapp,
-        student.location,
-        student.language,
-        student.status,
-        student.cohort,
-        student.totalAmount,
-        student.paidAmount,
-        student.remaining,
-        `"${student.note || ''}"`
+        student.whatsapp || '',
+        student.location || '',
+        student.language || '',
+        student.status || '',
+        student.cohort || '',
+        student.totalAmount || 0,
+        student.paidAmount || 0,
+        student.remaining || 0,
+        `"${student.note || ''}"`,
+        // Onboarding checklist items
+        student.checklist?.addedCommunity ? 'Yes' : 'No',
+        student.checklist?.sharedAgreement ? 'Yes' : 'No',
+        student.checklist?.signedAgreement ? 'Yes' : 'No',
+        student.checklist?.sharedDrive ? 'Yes' : 'No',
+        student.checklist?.createdFigma ? 'Yes' : 'No',
+        student.checklist?.sharedMasterFigma ? 'Yes' : 'No',
+        // Figma status
+        student.checklist?.figmaStatus || 'Not started',
+        // Post-course actions
+        student.checklist?.sharedFeedbackForm ? 'Yes' : 'No',
+        student.checklist?.submittedCourseFeedback ? 'Yes' : 'No',
+        student.checklist?.issuedCertificate ? 'Yes' : 'No'
     ]);
     
     // Combine headers and rows
