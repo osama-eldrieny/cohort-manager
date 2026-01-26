@@ -1818,6 +1818,7 @@ button {
     padding: 16px 15px;
     font-weight: 600;
     color: #f44336;
+    text-align: left;
 }
 
 .settings-table-margin-bottom {
