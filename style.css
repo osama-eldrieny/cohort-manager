@@ -616,7 +616,7 @@ button.danger:hover {
 table {
     width: 100%;
     border-collapse: collapse;
-    table-layout: fixed;
+    table-layout: auto;
 }
 
 thead {
@@ -631,23 +631,7 @@ th {
     color: white;
     text-transform: uppercase;
     letter-spacing: 0.8px;
-    word-wrap: break-word;
-}
-
-th:nth-child(1) {
-    width: 25%;
-}
-
-th:nth-child(2) {
-    width: 20%;
-}
-
-th:nth-child(3) {
-    width: 35%;
-}
-
-th:nth-child(4) {
-    width: 20%;
+    white-space: nowrap;
 }
 
 td {
@@ -655,6 +639,55 @@ td {
     border-bottom: 1px solid var(--border);
     font-size: 14px;
     font-weight: 500;
+}
+
+/* Email template tables - fixed layout with specific widths */
+#setupTemplatesSection table,
+#resourcesTemplatesSection table,
+#paymentsTemplatesSection table {
+    table-layout: fixed;
+}
+
+#setupTemplatesSection table th:nth-child(1),
+#resourcesTemplatesSection table th:nth-child(1),
+#paymentsTemplatesSection table th:nth-child(1),
+#setupTemplatesSection table td:nth-child(1),
+#resourcesTemplatesSection table td:nth-child(1),
+#paymentsTemplatesSection table td:nth-child(1) {
+    width: 25%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+#setupTemplatesSection table th:nth-child(2),
+#resourcesTemplatesSection table th:nth-child(2),
+#paymentsTemplatesSection table th:nth-child(2),
+#setupTemplatesSection table td:nth-child(2),
+#resourcesTemplatesSection table td:nth-child(2),
+#paymentsTemplatesSection table td:nth-child(2) {
+    width: 20%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+#setupTemplatesSection table th:nth-child(3),
+#resourcesTemplatesSection table th:nth-child(3),
+#paymentsTemplatesSection table th:nth-child(3),
+#setupTemplatesSection table td:nth-child(3),
+#resourcesTemplatesSection table td:nth-child(3),
+#paymentsTemplatesSection table td:nth-child(3) {
+    width: 35%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+#setupTemplatesSection table th:nth-child(4),
+#resourcesTemplatesSection table th:nth-child(4),
+#paymentsTemplatesSection table th:nth-child(4),
+#setupTemplatesSection table td:nth-child(4),
+#resourcesTemplatesSection table td:nth-child(4),
+#paymentsTemplatesSection table td:nth-child(4) {
+    width: 20%;
     word-wrap: break-word;
     overflow-wrap: break-word;
 }
