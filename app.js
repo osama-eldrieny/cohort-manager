@@ -1043,6 +1043,57 @@ function renderAnalyticsCharts() {
         }
     });
 
+    // Location Distribution by Cohort Status
+    const targetCohorts = ['Cohort 0', 'Cohort 1 - Cradis', 'Cohort 1 - Zomra', 'Cohort 2', 'Cohort 3'];
+    const cohortStudents = students.filter(s => targetCohorts.includes(s.status));
+    
+    const locationsByStatus = {};
+    cohortStudents.forEach(s => {
+        const location = s.location || 'Unknown';
+        locationsByStatus[location] = (locationsByStatus[location] || 0) + 1;
+    });
+
+    const sortedLocationsByStatus = Object.entries(locationsByStatus)
+        .sort((a, b) => b[1] - a[1]);
+
+    const colorPalette = [
+        '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
+        '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B88B', '#ABEBC6',
+        '#F5B041', '#D7BDE2', '#76D7C4', '#FAD7A0', '#85A5FF'
+    ];
+
+    const ctx3b = document.getElementById('locationCohortChart');
+    if (charts.locationCohort) charts.locationCohort.destroy();
+    charts.locationCohort = new Chart(ctx3b, {
+        type: 'doughnut',
+        data: {
+            labels: sortedLocationsByStatus.map(l => l[0]),
+            datasets: [{
+                data: sortedLocationsByStatus.map(l => l[1]),
+                backgroundColor: colorPalette.slice(0, sortedLocationsByStatus.length),
+                borderColor: '#fff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { 
+                legend: { position: 'bottom', labels: { boxWidth: 14, boxHeight: 14 } },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const total = cohortStudents.length;
+                            const percentage = ((value / total) * 100).toFixed(1);
+                            return label + ': ' + value + ' (' + percentage + '%)';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
     // Payment Status
     const paid = students.filter(s => s.remaining === 0).length;
     const pending = students.filter(s => s.remaining > 0).length;
