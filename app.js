@@ -2089,7 +2089,7 @@ async function loadEmailTemplates() {
 
 function renderEmailTemplatesList() {
     // Categorize templates
-    const setupTemplateNames = ['Waiting list', 'Community Invitation', 'Roles & Agreement', 'Cohort Grouping Form'];
+    const setupTemplateNames = ['Waiting list', 'Community Invitation', 'Roles & Agreement', 'Cohort Grouping Form', 'Camp Feedback', 'Upcoming Rounds'];
     const resourceTemplateNames = ['Google Drive link', 'Shared Figma file'];
     
     const setupTemplates = emailTemplates.filter(t => setupTemplateNames.includes(t.name));
