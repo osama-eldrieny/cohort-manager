@@ -392,7 +392,7 @@ function renderCharts() {
     const locationCounts = {};
     students.forEach(s => {
         // Skip empty locations and normalize location names
-        const location = s.location && s.location.trim() ? s.location : 'Not Specified';
+        const location = s.location && s.location.trim() ? s.location : 'Unknown';
         locationCounts[location] = (locationCounts[location] || 0) + 1;
     });
 
