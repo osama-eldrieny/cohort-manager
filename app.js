@@ -409,11 +409,7 @@ function renderCharts() {
             labels: sortedLocations.map(l => l[0]),
             datasets: [{
                 data: sortedLocations.map(l => l[1]),
-                backgroundColor: [
-                    '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
-                    '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B88B', '#ABEBC6',
-                    '#F5B041', '#D7BDE2', '#76D7C4', '#FAD7A0', '#85A5FF'
-                ],
+                backgroundColor: sortedLocations.map(l => getColor(l[0])),
                 borderColor: '#fff',
                 borderWidth: 2
             }]
@@ -970,6 +966,33 @@ function attachStatusButtonListeners(page) {
 // ============================================
 
 function renderAnalyticsCharts() {
+    // Global color palette for consistent colors across all charts
+    const colorPalette = [
+        '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
+        '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B88B', '#ABEBC6',
+        '#F5B041', '#D7BDE2', '#76D7C4', '#FAD7A0', '#85A5FF',
+        '#F39C12', '#9B59B6', '#3498DB', '#E74C3C', '#1ABC9C',
+        '#34495E', '#16A085', '#27AE60', '#8E44AD', '#C0392B',
+        '#E67E22', '#16A085', '#8E44AD', '#27AE60', '#C0392B'
+    ];
+    
+    // Create a color map for all unique values (locations, languages, cohorts, etc.)
+    const colorMap = {};
+    let colorIndex = 0;
+    
+    function getColor(label) {
+        if (!colorMap[label]) {
+            if (colorIndex < colorPalette.length) {
+                colorMap[label] = colorPalette[colorIndex];
+            } else {
+                // Generate random color if we run out
+                colorMap[label] = '#' + Math.floor(Math.random()*16777215).toString(16);
+            }
+            colorIndex++;
+        }
+        return colorMap[label];
+    }
+
     // Revenue by Cohort
     const cohortRevenue = {};
     COHORTS.forEach(cohort => {
@@ -1035,7 +1058,7 @@ function renderAnalyticsCharts() {
             labels: Object.keys(languages),
             datasets: [{
                 data: Object.values(languages),
-                backgroundColor: ['#667eea', '#764ba2', '#999999'],
+                backgroundColor: Object.keys(languages).map(lang => getColor(lang)),
                 borderColor: '#fff',
                 borderWidth: 2
             }]
@@ -1059,21 +1082,6 @@ function renderAnalyticsCharts() {
     const sortedLocationsByStatus = Object.entries(locationsByStatus)
         .sort((a, b) => b[1] - a[1]);
 
-    // Generate enough colors for all locations
-    const colorPalette = [
-        '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
-        '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B88B', '#ABEBC6',
-        '#F5B041', '#D7BDE2', '#76D7C4', '#FAD7A0', '#85A5FF',
-        '#F39C12', '#9B59B6', '#3498DB', '#E74C3C', '#1ABC9C',
-        '#34495E', '#16A085', '#27AE60', '#8E44AD', '#C0392B'
-    ];
-    
-    // If we need more colors, generate them
-    let colors = colorPalette.slice(0, sortedLocationsByStatus.length);
-    while (colors.length < sortedLocationsByStatus.length) {
-        colors.push('#' + Math.floor(Math.random()*16777215).toString(16));
-    }
-
     const ctx3b = document.getElementById('locationCohortChart');
     if (charts.locationCohort) charts.locationCohort.destroy();
     charts.locationCohort = new Chart(ctx3b, {
@@ -1082,7 +1090,7 @@ function renderAnalyticsCharts() {
             labels: sortedLocationsByStatus.map(l => l[0]),
             datasets: [{
                 data: sortedLocationsByStatus.map(l => l[1]),
-                backgroundColor: colors,
+                backgroundColor: sortedLocationsByStatus.map(l => getColor(l[0])),
                 borderColor: '#fff',
                 borderWidth: 2
             }]
