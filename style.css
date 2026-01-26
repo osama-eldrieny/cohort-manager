@@ -1838,21 +1838,89 @@ button {
 }
 
 .figma-status-section {
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+    padding: 16px;
+    background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+    border-radius: 12px;
+    border: 1px solid #e8ecf5;
 }
 
 .figma-status-item {
     display: flex;
+    flex-direction: column;
     align-items: center;
+    justify-content: center;
+    padding: 16px;
+    cursor: pointer;
+    border: 2px solid #e0e6f2;
+    border-radius: 10px;
+    background: #ffffff;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.figma-status-item:hover {
+    border-color: #d0d8f0;
+    box-shadow: 0 4px 12px rgba(107, 114, 207, 0.1);
+    transform: translateY(-2px);
+}
+
+.figma-status-item input[type="radio"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 24px;
+    height: 24px;
+    border: 2px solid #c0c8e8;
+    border-radius: 50%;
+    cursor: pointer;
+    margin-bottom: 12px;
+    transition: all 0.2s ease;
+    background: #ffffff;
+}
+
+.figma-status-item input[type="radio"]:hover {
+    border-color: #5b5fc7;
+    box-shadow: 0 0 8px rgba(91, 95, 199, 0.2);
+}
+
+.figma-status-item input[type="radio"]:checked {
+    background: linear-gradient(135deg, #5b5fc7 0%, #6b38d9 100%);
+    border-color: #5b5fc7;
+    box-shadow: 0 0 12px rgba(91, 95, 199, 0.4);
+}
+
+.figma-status-item input[type="radio"]:checked::after {
+    content: '✓';
+    position: absolute;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .figma-status-radio {
     cursor: pointer;
     margin: 0;
-    margin-left: 8px;
-    font-weight: 500;
+    font-weight: 600;
+    color: #333;
+    text-align: center;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.figma-status-item input[type="radio"]:checked ~ .figma-status-radio {
+    color: #5b5fc7;
+}
+
+.figma-status-item:has(input[type="radio"]:checked) {
+    border-color: #5b5fc7;
+    background: linear-gradient(135deg, #f8f9ff 0%, #ececf9 100%);
+    box-shadow: 0 4px 16px rgba(91, 95, 199, 0.15);
 }
 
 .figma-status-label-main {
