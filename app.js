@@ -610,20 +610,20 @@ function renderStudentsTable() {
     tbody.innerHTML = filtered.map((student, index) => {
         return `
         <tr>
-            <td style="padding-right: 0px;"><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
-            <td><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" onclick="openStudentContactModal('${student.id}')" title="Click to view details">${student.name}</strong></td>
-            <td><span class="copy-email" title="Click to copy">${student.email}</span></td>
-            <td><span class="status-badge status-${(student.status || 'unknown').toLowerCase().replace(/\s+/g, '-')}">${student.status || 'Unknown'}</span></td>
-            <td>${student.location}</td>
-            <td>${student.language || 'Not specified'}</td>
-            <td>
+            <td class="col-id" style="padding-right: 0px;"><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
+            <td class="col-name"><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" onclick="openStudentContactModal('${student.id}')" title="Click to view details">${student.name}</strong></td>
+            <td class="col-email"><span class="copy-email" title="Click to copy">${student.email}</span></td>
+            <td class="col-status"><span class="status-badge status-${(student.status || 'unknown').toLowerCase().replace(/\s+/g, '-')}">${student.status || 'Unknown'}</span></td>
+            <td class="col-location">${student.location}</td>
+            <td class="col-language">${student.language || 'Not specified'}</td>
+            <td class="col-linkedin">
                 ${student.linkedin ? `<a href="${student.linkedin}" target="_blank" title="LinkedIn Profile" style="color: #0A66C2; text-decoration: none; font-size: 24px; display: inline-flex; align-items: center;"><i class="fab fa-linkedin"></i></a>` : '-'}
             </td>
-            <td>
+            <td class="col-whatsapp">
                 ${student.whatsapp ? `<a href="https://wa.me/${student.whatsapp.replace(/\D/g, '')}" target="_blank" title="Send WhatsApp message" style="color: #25D366; text-decoration: none; display: flex; align-items: center; gap: 4px;"><i class="fab fa-whatsapp"></i> ${student.whatsapp}</a>` : '-'}
             </td>
-            <td>${student.note || '-'}</td>
-            <td>
+            <td class="col-notes">${student.note || '-'}</td>
+            <td class="col-actions">
                 <button class="btn-small btn-edit" data-student-id="${student.id}" title="Edit"><i class="fas fa-pencil-alt"></i></button>
                 <button class="btn-small btn-danger btn-delete" data-student-id="${student.id}" title="Delete"><i class="fas fa-trash"></i></button>
             </td>

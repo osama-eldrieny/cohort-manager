@@ -2167,48 +2167,252 @@ button {
 }
 
 /* ============================================
-   RESPONSIVE EMAIL TEMPLATES TABLE COLUMNS
+   RESPONSIVE TABLE COLUMNS (Mobile-First)
    ============================================ */
 
-/* Default desktop layout */
+/* === STUDENTS DATA TABLE === */
+
+/* Mobile (default - min-width: 0) - Show: ID, Name, Status, Actions */
+.students-data-table th.col-id,
+.students-data-table td.col-id {
+    display: table-cell;
+    width: 40px;
+    text-align: center;
+    min-width: 40px;
+}
+
+.students-data-table th.col-name,
+.students-data-table td.col-name {
+    display: table-cell;
+    width: 50%;
+    text-align: left;
+    min-width: 120px;
+}
+
+.students-data-table th.col-email,
+.students-data-table td.col-email {
+    display: none;
+    min-width: 150px;
+}
+
+.students-data-table th.col-status,
+.students-data-table td.col-status {
+    display: table-cell;
+    width: auto;
+    text-align: center;
+    min-width: 100px;
+}
+
+.students-data-table th.col-location,
+.students-data-table td.col-location {
+    display: none;
+    min-width: 100px;
+}
+
+.students-data-table th.col-language,
+.students-data-table td.col-language {
+    display: none;
+    min-width: 80px;
+}
+
+.students-data-table th.col-linkedin,
+.students-data-table td.col-linkedin {
+    display: none;
+    min-width: 40px;
+    text-align: center;
+}
+
+.students-data-table th.col-whatsapp,
+.students-data-table td.col-whatsapp {
+    display: none;
+    min-width: 80px;
+}
+
+.students-data-table th.col-notes,
+.students-data-table td.col-notes {
+    display: none;
+    min-width: 100px;
+}
+
+.students-data-table th.col-actions,
+.students-data-table td.col-actions {
+    display: table-cell;
+    width: auto;
+    text-align: center;
+    min-width: 60px;
+}
+
+/* Tablet (min-width: 768px) - Add: Email, Status visible */
+@media (min-width: 768px) {
+    .students-data-table th.col-email,
+    .students-data-table td.col-email {
+        display: table-cell;
+        width: 25%;
+    }
+    
+    .students-data-table th.col-name,
+    .students-data-table td.col-name {
+        width: 25%;
+    }
+    
+    .students-data-table th.col-status,
+    .students-data-table td.col-status {
+        width: auto;
+    }
+}
+
+/* Medium Desktop (min-width: 1024px) - Add: Location, Language */
+@media (min-width: 1024px) {
+    .students-data-table th.col-id,
+    .students-data-table td.col-id {
+        width: 5%;
+    }
+    
+    .students-data-table th.col-name,
+    .students-data-table td.col-name {
+        width: 15%;
+    }
+    
+    .students-data-table th.col-email,
+    .students-data-table td.col-email {
+        width: 20%;
+    }
+    
+    .students-data-table th.col-status,
+    .students-data-table td.col-status {
+        width: 12%;
+    }
+    
+    .students-data-table th.col-location,
+    .students-data-table td.col-location {
+        display: table-cell;
+        width: 12%;
+    }
+    
+    .students-data-table th.col-language,
+    .students-data-table td.col-language {
+        display: table-cell;
+        width: 10%;
+    }
+    
+    .students-data-table th.col-linkedin,
+    .students-data-table td.col-linkedin {
+        display: table-cell;
+        width: 5%;
+    }
+    
+    .students-data-table th.col-whatsapp,
+    .students-data-table td.col-whatsapp {
+        display: table-cell;
+        width: 10%;
+    }
+    
+    .students-data-table th.col-actions,
+    .students-data-table td.col-actions {
+        width: 8%;
+    }
+}
+
+/* Large Desktop (min-width: 1400px) - Show: All columns including Notes */
+@media (min-width: 1400px) {
+    .students-data-table th.col-id,
+    .students-data-table td.col-id {
+        width: 4%;
+    }
+    
+    .students-data-table th.col-name,
+    .students-data-table td.col-name {
+        width: 12%;
+    }
+    
+    .students-data-table th.col-email,
+    .students-data-table td.col-email {
+        width: 15%;
+    }
+    
+    .students-data-table th.col-status,
+    .students-data-table td.col-status {
+        width: 10%;
+    }
+    
+    .students-data-table th.col-location,
+    .students-data-table td.col-location {
+        width: 10%;
+    }
+    
+    .students-data-table th.col-language,
+    .students-data-table td.col-language {
+        width: 8%;
+    }
+    
+    .students-data-table th.col-linkedin,
+    .students-data-table td.col-linkedin {
+        width: 5%;
+    }
+    
+    .students-data-table th.col-whatsapp,
+    .students-data-table td.col-whatsapp {
+        width: 8%;
+    }
+    
+    .students-data-table th.col-notes,
+    .students-data-table td.col-notes {
+        display: table-cell;
+        width: 12%;
+    }
+    
+    .students-data-table th.col-actions,
+    .students-data-table td.col-actions {
+        width: 6%;
+    }
+}
+
+/* === EMAIL TEMPLATES TABLE === */
+
+/* Mobile (default - min-width: 0) - Show: Template Name, Actions */
 .email-templates-table th.col-template-name,
 .email-templates-table td.col-template-name {
-    width: 25%;
+    display: table-cell;
+    width: 65%;
     text-align: left;
+    min-width: 120px;
 }
 
 .email-templates-table th.col-button-label,
 .email-templates-table td.col-button-label {
-    width: 15%;
-    text-align: left;
+    display: none;
+    min-width: 100px;
 }
 
 .email-templates-table th.col-subject,
 .email-templates-table td.col-subject {
-    width: 45%;
-    text-align: left;
+    display: none;
+    min-width: 150px;
 }
 
 .email-templates-table th.col-actions,
 .email-templates-table td.col-actions {
-    width: 15%;
+    display: table-cell;
+    width: 35%;
     text-align: center;
+    min-width: 80px;
 }
 
-/* Tablet - hide button label column */
-@media (max-width: 1024px) {
-    .email-templates-table th.col-button-label,
-    .email-templates-table td.col-button-label {
-        display: none;
-    }
-    
+/* Tablet (min-width: 768px) - Add: Subject, hide Button Label */
+@media (min-width: 768px) {
     .email-templates-table th.col-template-name,
     .email-templates-table td.col-template-name {
         width: 30%;
     }
     
+    .email-templates-table th.col-button-label,
+    .email-templates-table td.col-button-label {
+        display: none;
+    }
+    
     .email-templates-table th.col-subject,
     .email-templates-table td.col-subject {
+        display: table-cell;
         width: 55%;
     }
     
@@ -2218,27 +2422,26 @@ button {
     }
 }
 
-/* Mobile - show only name, subject and actions */
-@media (max-width: 768px) {
+/* Desktop (min-width: 1024px) - Show: All columns */
+@media (min-width: 1024px) {
+    .email-templates-table th.col-template-name,
+    .email-templates-table td.col-template-name {
+        width: 25%;
+    }
+    
     .email-templates-table th.col-button-label,
     .email-templates-table td.col-button-label {
-        display: none;
+        display: table-cell;
+        width: 15%;
     }
     
     .email-templates-table th.col-subject,
     .email-templates-table td.col-subject {
-        display: none;
-    }
-    
-    .email-templates-table th.col-template-name,
-    .email-templates-table td.col-template-name {
-        width: 60%;
-        text-align: left;
+        width: 45%;
     }
     
     .email-templates-table th.col-actions,
     .email-templates-table td.col-actions {
-        width: 40%;
-        text-align: right;
+        width: 15%;
     }
 }
