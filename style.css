@@ -841,6 +841,10 @@ input:focus, select:focus, textarea:focus {
     gap: 20px;
 }
 
+.form-row .form-group:only-child {
+    grid-column: 1 / 2;
+}
+
 .modal-buttons {
     display: flex;
     gap: 12px;
@@ -2433,7 +2437,7 @@ button {
 @media (min-width: 1024px) {
     .email-templates-table th.col-template-name,
     .email-templates-table td.col-template-name {
-        width: 25%;
+        width: 15%;
     }
     
     .email-templates-table th.col-button-label,
