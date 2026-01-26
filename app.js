@@ -2132,7 +2132,7 @@ function renderTemplateSection(sectionId, bodyId, templates) {
             <td class="col-button-label">${template.button_label}</td>
             <td class="col-subject">${template.subject}</td>
             <td class="col-actions">
-                <button class="btn-small btn-primary" onclick="openBulkEmailModal('${template.id}')" title="Send to Group"><i class="fas fa-paper-plane"></i></button>
+                <button class="btn-action" onclick="openBulkEmailModal('${template.id}')" title="Send to Group"><i class="fas fa-paper-plane"></i></button>
                 <button class="btn-small btn-edit" onclick="editEmailTemplate('${template.id}')" title="Edit"><i class="fas fa-pencil-alt"></i></button>
                 <button class="btn-small btn-danger" onclick="deleteEmailTemplate('${template.id}')" title="Delete"><i class="fas fa-trash"></i></button>
             </td>
