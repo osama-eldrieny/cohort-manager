@@ -2088,14 +2088,32 @@ async function loadEmailTemplates() {
 }
 
 function renderEmailTemplatesList() {
-    const tbody = document.getElementById('emailTemplatesBody');
+    // Categorize templates
+    const setupTemplateNames = ['Waiting list', 'Community Invitation', 'Roles & Agreement', 'Cohort Grouping Form'];
+    const resourceTemplateNames = ['Google Drive link', 'Shared Figma file'];
     
-    if (emailTemplates.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px; color: #999;">No templates yet</td></tr>';
+    const setupTemplates = emailTemplates.filter(t => setupTemplateNames.includes(t.name));
+    const resourceTemplates = emailTemplates.filter(t => resourceTemplateNames.includes(t.name));
+    const paymentsTemplates = emailTemplates.filter(t => !setupTemplateNames.includes(t.name) && !resourceTemplateNames.includes(t.name));
+    
+    // Render each section
+    renderTemplateSection('setupTemplatesSection', 'setupTemplatesBody', setupTemplates);
+    renderTemplateSection('resourcesTemplatesSection', 'resourcesTemplatesBody', resourceTemplates);
+    renderTemplateSection('paymentsTemplatesSection', 'paymentsTemplatesBody', paymentsTemplates);
+}
+
+function renderTemplateSection(sectionId, bodyId, templates) {
+    const section = document.getElementById(sectionId);
+    const tbody = document.getElementById(bodyId);
+    
+    if (templates.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px; color: #999;">No templates in this section</td></tr>';
+        section.style.display = 'none';
         return;
     }
-
-    tbody.innerHTML = emailTemplates.map(template => `
+    
+    section.style.display = 'block';
+    tbody.innerHTML = templates.map(template => `
         <tr>
             <td><strong>${template.name}</strong></td>
             <td>${template.button_label}</td>
