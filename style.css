@@ -686,6 +686,7 @@ tbody tr:hover {
 th:last-child,
 td:last-child {
     min-width: 120px;
+    text-align: right;
 }
 
 /* Make Notes column narrower on students page */
