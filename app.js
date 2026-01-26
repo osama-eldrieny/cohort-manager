@@ -1059,11 +1059,20 @@ function renderAnalyticsCharts() {
     const sortedLocationsByStatus = Object.entries(locationsByStatus)
         .sort((a, b) => b[1] - a[1]);
 
+    // Generate enough colors for all locations
     const colorPalette = [
         '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
         '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B88B', '#ABEBC6',
-        '#F5B041', '#D7BDE2', '#76D7C4', '#FAD7A0', '#85A5FF'
+        '#F5B041', '#D7BDE2', '#76D7C4', '#FAD7A0', '#85A5FF',
+        '#F39C12', '#9B59B6', '#3498DB', '#E74C3C', '#1ABC9C',
+        '#34495E', '#16A085', '#27AE60', '#8E44AD', '#C0392B'
     ];
+    
+    // If we need more colors, generate them
+    let colors = colorPalette.slice(0, sortedLocationsByStatus.length);
+    while (colors.length < sortedLocationsByStatus.length) {
+        colors.push('#' + Math.floor(Math.random()*16777215).toString(16));
+    }
 
     const ctx3b = document.getElementById('locationCohortChart');
     if (charts.locationCohort) charts.locationCohort.destroy();
@@ -1073,7 +1082,7 @@ function renderAnalyticsCharts() {
             labels: sortedLocationsByStatus.map(l => l[0]),
             datasets: [{
                 data: sortedLocationsByStatus.map(l => l[1]),
-                backgroundColor: colorPalette.slice(0, sortedLocationsByStatus.length),
+                backgroundColor: colors,
                 borderColor: '#fff',
                 borderWidth: 2
             }]
@@ -1081,7 +1090,16 @@ function renderAnalyticsCharts() {
         options: {
             responsive: true,
             plugins: { 
-                legend: { position: 'bottom', labels: { boxWidth: 14, boxHeight: 14 } },
+                legend: { 
+                    position: 'bottom',
+                    labels: { 
+                        boxWidth: 12, 
+                        boxHeight: 12,
+                        font: { size: 11 },
+                        padding: 10
+                    },
+                    maxHeight: 150
+                },
                 tooltip: {
                     callbacks: {
                         label: function(context) {
