@@ -1227,8 +1227,8 @@ button {
 /* Small button with primary color - light background exception */
 .btn-small.btn-primary {
     padding: 8px 14px !important;
-    background-color: rgba(91, 95, 199, 0.1) !important;
-    color: var(--primary-color) !important;
+    background-color: #e8e5f5 !important;
+    color: #333 !important;
     border: none !important;
     box-shadow: none !important;
     font-size: 12px !important;
@@ -1242,8 +1242,8 @@ button {
 }
 
 .btn-small.btn-primary:hover {
-    background-color: rgba(91, 95, 199, 0.15) !important;
-    box-shadow: 0 2px 8px rgba(91, 95, 199, 0.15) !important;
+    background-color: #d8d0ed !important;
+    box-shadow: 0 2px 8px rgba(91, 95, 199, 0.2) !important;
     transform: none !important;
 }
 
