@@ -1020,7 +1020,8 @@ function renderAnalyticsCharts() {
     // Language Distribution
     const languages = {};
     students.forEach(s => {
-        languages[s.language] = (languages[s.language] || 0) + 1;
+        const lang = s.language || 'Unknown';
+        languages[lang] = (languages[lang] || 0) + 1;
     });
 
     const ctx3 = document.getElementById('languageChart');
@@ -1031,7 +1032,7 @@ function renderAnalyticsCharts() {
             labels: Object.keys(languages),
             datasets: [{
                 data: Object.values(languages),
-                backgroundColor: ['#667eea', '#764ba2'],
+                backgroundColor: ['#667eea', '#764ba2', '#999999'],
                 borderColor: '#fff',
                 borderWidth: 2
             }]
