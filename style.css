@@ -686,6 +686,15 @@ tbody tr:hover {
 th:last-child,
 td:last-child {
     min-width: 120px;
+}
+
+/* Align Actions column to the right in email templates tables only */
+#setupTemplatesSection table th:last-child,
+#setupTemplatesSection table td:last-child,
+#resourcesTemplatesSection table th:last-child,
+#resourcesTemplatesSection table td:last-child,
+#paymentsTemplatesSection table th:last-child,
+#paymentsTemplatesSection table td:last-child {
     text-align: right;
 }
 
