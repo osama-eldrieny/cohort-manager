@@ -667,7 +667,8 @@ tbody tr:hover {
 /* Make Actions column wider for students page */
 th:last-child,
 td:last-child {
-    min-width: 120px;
+    min-width: 60px;
+    text-align: right;
 }
 
 /* Make Notes column narrower on students page */
@@ -2177,7 +2178,7 @@ button {
 .students-data-table td.col-id {
     display: table-cell;
     width: 40px;
-    text-align: center;
+    text-align: left;
     min-width: 40px;
 }
 
@@ -2199,7 +2200,7 @@ button {
 .students-data-table td.col-status {
     display: table-cell;
     width: auto;
-    text-align: center;
+    text-align: left;
     min-width: 100px;
 }
 
@@ -2317,12 +2318,12 @@ button {
 @media (min-width: 1400px) {
     .students-data-table th.col-id,
     .students-data-table td.col-id {
-        width: 4%;
+        width: 2%;
     }
     
     .students-data-table th.col-name,
     .students-data-table td.col-name {
-        width: 12%;
+        width: 11%;
     }
     
     .students-data-table th.col-email,
@@ -2332,17 +2333,17 @@ button {
     
     .students-data-table th.col-status,
     .students-data-table td.col-status {
-        width: 10%;
+        width: 9%;
     }
     
     .students-data-table th.col-location,
     .students-data-table td.col-location {
-        width: 10%;
+        width: 6%;
     }
     
     .students-data-table th.col-language,
     .students-data-table td.col-language {
-        width: 8%;
+        width: 4%;
     }
     
     .students-data-table th.col-linkedin,
@@ -2358,7 +2359,7 @@ button {
     .students-data-table th.col-notes,
     .students-data-table td.col-notes {
         display: table-cell;
-        width: 12%;
+        width: 20%;
     }
     
     .students-data-table th.col-actions,
@@ -2388,13 +2389,16 @@ button {
 .email-templates-table td.col-subject {
     display: none;
     min-width: 150px;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .email-templates-table th.col-actions,
 .email-templates-table td.col-actions {
     display: table-cell;
     width: 35%;
-    text-align: center;
+    text-align: right;
     min-width: 80px;
 }
 
@@ -2414,6 +2418,9 @@ button {
     .email-templates-table td.col-subject {
         display: table-cell;
         width: 55%;
+        white-space: normal;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
     }
     
     .email-templates-table th.col-actions,
@@ -2438,6 +2445,9 @@ button {
     .email-templates-table th.col-subject,
     .email-templates-table td.col-subject {
         width: 45%;
+        white-space: normal;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
     }
     
     .email-templates-table th.col-actions,

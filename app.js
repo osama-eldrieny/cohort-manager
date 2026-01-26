@@ -2117,7 +2117,7 @@ function renderTemplateSection(sectionId, bodyId, templates) {
         <tr>
             <td class="col-template-name"><strong>${template.name}</strong></td>
             <td class="col-button-label">${template.button_label}</td>
-            <td class="col-subject">${template.subject.substring(0, 50)}${template.subject.length > 50 ? '...' : ''}</td>
+            <td class="col-subject">${template.subject}</td>
             <td class="col-actions">
                 <button class="btn-small btn-primary" onclick="openBulkEmailModal('${template.id}')" title="Send to Group"><i class="fas fa-paper-plane"></i></button>
                 <button class="btn-small btn-edit" onclick="editEmailTemplate('${template.id}')" title="Edit"><i class="fas fa-pencil-alt"></i></button>
