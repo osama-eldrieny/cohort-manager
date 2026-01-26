@@ -1377,29 +1377,42 @@ function populateEmailTemplatesCheckboxes(student) {
     
     section.style.display = 'block';
     
-    // Create checkboxes for each email template
-    emailTemplates.forEach(template => {
-        const div = document.createElement('div');
-        div.className = 'email-template-checkbox-item';
+    // Organize templates into 3 groups (same as email templates page)
+    const setupTemplateNames = ['Waiting list', 'Community Invitation', 'Roles & Agreement', 'Cohort Grouping Form', 'Camp Feedback', 'Upcoming Rounds'];
+    const resourceTemplateNames = ['Google Drive link', 'Shared Figma file'];
+    
+    const setupTemplates = emailTemplates.filter(t => setupTemplateNames.includes(t.name));
+    const resourceTemplates = emailTemplates.filter(t => resourceTemplateNames.includes(t.name));
+    const paymentTemplates = emailTemplates.filter(t => !setupTemplateNames.includes(t.name) && !resourceTemplateNames.includes(t.name));
+    
+    // Helper function to create checkbox items
+    const createCheckboxGroup = (templates, groupTitle) => {
+        if (templates.length === 0) return '';
         
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.id = `emailTemplate_${template.id}`;
-        checkbox.value = template.id;
-        checkbox.className = 'email-template-checkbox';
+        let html = `<div class="email-checkbox-group">`;
+        html += `<div class="email-checkbox-group-title">${groupTitle}</div>`;
         
-        // Check if this template was previously selected (from email_logs)
-        const wasSelected = student.email_logs?.some(log => log.template_id === template.id && log.status !== 'failed');
-        checkbox.checked = wasSelected;
+        templates.forEach(template => {
+            const wasSelected = student.email_logs?.some(log => log.template_id === template.id && log.status !== 'failed');
+            html += `
+                <div class="email-template-checkbox-item">
+                    <input type="checkbox" id="emailTemplate_${template.id}" value="${template.id}" class="email-template-checkbox" ${wasSelected ? 'checked' : ''}>
+                    <label for="emailTemplate_${template.id}">${template.name || template.button_label}</label>
+                </div>
+            `;
+        });
         
-        const label = document.createElement('label');
-        label.htmlFor = `emailTemplate_${template.id}`;
-        label.textContent = template.name || template.button_label;
-        
-        div.appendChild(checkbox);
-        div.appendChild(label);
-        container.appendChild(div);
-    });
+        html += `</div>`;
+        return html;
+    };
+    
+    // Build HTML for all groups
+    let html = '';
+    html += createCheckboxGroup(setupTemplates, '📋 Setup Templates');
+    html += createCheckboxGroup(resourceTemplates, '🔗 Resources & Tools');
+    html += createCheckboxGroup(paymentTemplates, '💳 Payments & Completion');
+    
+    container.innerHTML = html;
 }
 
 function saveStudent(event) {
