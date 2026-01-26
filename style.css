@@ -641,57 +641,6 @@ td {
     font-weight: 500;
 }
 
-/* Email template tables - fixed layout with specific widths */
-#setupTemplatesSection table,
-#resourcesTemplatesSection table,
-#paymentsTemplatesSection table {
-    table-layout: fixed;
-}
-
-#setupTemplatesSection table th:nth-child(1),
-#resourcesTemplatesSection table th:nth-child(1),
-#paymentsTemplatesSection table th:nth-child(1),
-#setupTemplatesSection table td:nth-child(1),
-#resourcesTemplatesSection table td:nth-child(1),
-#paymentsTemplatesSection table td:nth-child(1) {
-    width: 25%;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-}
-
-#setupTemplatesSection table th:nth-child(2),
-#resourcesTemplatesSection table th:nth-child(2),
-#paymentsTemplatesSection table th:nth-child(2),
-#setupTemplatesSection table td:nth-child(2),
-#resourcesTemplatesSection table td:nth-child(2),
-#paymentsTemplatesSection table td:nth-child(2) {
-    width: 20%;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-}
-
-#setupTemplatesSection table th:nth-child(3),
-#resourcesTemplatesSection table th:nth-child(3),
-#paymentsTemplatesSection table th:nth-child(3),
-#setupTemplatesSection table td:nth-child(3),
-#resourcesTemplatesSection table td:nth-child(3),
-#paymentsTemplatesSection table td:nth-child(3) {
-    width: 35%;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-}
-
-#setupTemplatesSection table th:nth-child(4),
-#resourcesTemplatesSection table th:nth-child(4),
-#paymentsTemplatesSection table th:nth-child(4),
-#setupTemplatesSection table td:nth-child(4),
-#resourcesTemplatesSection table td:nth-child(4),
-#paymentsTemplatesSection table td:nth-child(4) {
-    width: 20%;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-}
-
 tbody tr {
     transition: background-color 0.3s;
 }
@@ -719,16 +668,6 @@ tbody tr:hover {
 th:last-child,
 td:last-child {
     min-width: 120px;
-}
-
-/* Align Actions column to the right in email templates tables only */
-#setupTemplatesSection table th:last-child,
-#setupTemplatesSection table td:last-child,
-#resourcesTemplatesSection table th:last-child,
-#resourcesTemplatesSection table td:last-child,
-#paymentsTemplatesSection table th:last-child,
-#paymentsTemplatesSection table td:last-child {
-    text-align: right;
 }
 
 /* Make Notes column narrower on students page */
@@ -2225,4 +2164,81 @@ button {
 .email-history-timestamp {
     color: #999;
     font-size: 11px;
+}
+
+/* ============================================
+   RESPONSIVE EMAIL TEMPLATES TABLE COLUMNS
+   ============================================ */
+
+/* Default desktop layout */
+.email-templates-table th.col-template-name,
+.email-templates-table td.col-template-name {
+    width: 25%;
+    text-align: left;
+}
+
+.email-templates-table th.col-button-label,
+.email-templates-table td.col-button-label {
+    width: 15%;
+    text-align: left;
+}
+
+.email-templates-table th.col-subject,
+.email-templates-table td.col-subject {
+    width: 45%;
+    text-align: left;
+}
+
+.email-templates-table th.col-actions,
+.email-templates-table td.col-actions {
+    width: 15%;
+    text-align: center;
+}
+
+/* Tablet - hide button label column */
+@media (max-width: 1024px) {
+    .email-templates-table th.col-button-label,
+    .email-templates-table td.col-button-label {
+        display: none;
+    }
+    
+    .email-templates-table th.col-template-name,
+    .email-templates-table td.col-template-name {
+        width: 30%;
+    }
+    
+    .email-templates-table th.col-subject,
+    .email-templates-table td.col-subject {
+        width: 55%;
+    }
+    
+    .email-templates-table th.col-actions,
+    .email-templates-table td.col-actions {
+        width: 15%;
+    }
+}
+
+/* Mobile - show only name, subject and actions */
+@media (max-width: 768px) {
+    .email-templates-table th.col-button-label,
+    .email-templates-table td.col-button-label {
+        display: none;
+    }
+    
+    .email-templates-table th.col-subject,
+    .email-templates-table td.col-subject {
+        display: none;
+    }
+    
+    .email-templates-table th.col-template-name,
+    .email-templates-table td.col-template-name {
+        width: 60%;
+        text-align: left;
+    }
+    
+    .email-templates-table th.col-actions,
+    .email-templates-table td.col-actions {
+        width: 40%;
+        text-align: right;
+    }
 }
