@@ -1406,41 +1406,26 @@ async function saveToStorage(studentToSave = null) {
 
 async function loadStudents() {
     try {
-        // Try to load from server first
+        // Load from server (Supabase via students.json endpoint)
         const response = await fetch(`${API_BASE_URL}/api/students`);
         if (response.ok) {
             const serverStudents = await response.json();
             if (serverStudents && Array.isArray(serverStudents) && serverStudents.length > 0) {
                 students = serverStudents;
-                console.log(`✅ Loaded ${students.length} students from server (students.json)`);
+                console.log(`✅ Loaded ${students.length} students from Supabase`);
                 logStudentStats();
                 return;
             }
         }
+        // If server returns empty or no data, log warning
+        console.warn('⚠️ No students found on server');
     } catch (error) {
-        console.log('⚠️ Server not available, trying localStorage...');
+        console.error('❌ Error loading students from server:', error);
     }
     
-    // Fallback to localStorage
-    const stored = localStorage.getItem('students');
-    if (stored) {
-        try {
-            const parsedStudents = JSON.parse(stored);
-            if (parsedStudents && Array.isArray(parsedStudents) && parsedStudents.length > 0) {
-                students = parsedStudents;
-                console.log(`✅ Loaded ${students.length} students from localStorage`);
-                logStudentStats();
-                return;
-            }
-        } catch (e) {
-            console.error('Error parsing stored students:', e);
-        }
-    }
-    
-    // If no valid stored data, load sample data
+    // Fallback to sample data if server unavailable
     students = getSampleData();
-    await saveToStorage();
-    console.log(`✅ Loaded ${students.length} students from sample data`);
+    console.log(`⚠️ Server unavailable - Loaded ${students.length} students from sample data (local fallback)`);
     logStudentStats();
 }
 
