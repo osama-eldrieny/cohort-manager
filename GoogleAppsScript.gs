@@ -49,10 +49,11 @@ function updateStudentSheet(students) {
         
         // Add headers
         const headers = [
-            'ID', 'Name', 'Email', 'WhatsApp', 'Location', 'Language',
-            'Status', 'Cohort', 'Total Amount', 'Paid Amount', 'Remaining',
-            'Note', 'Checklist: Community', 'Checklist: Agreement', 'Checklist: Signed',
-            'Checklist: Drive', 'Checklist: Figma', 'Checklist: Master Figma', 'Figma Status', 'Last Updated'
+            'ID', 'Name', 'Email', 'Figma Email', 'LinkedIn', 'WhatsApp', 'Location', 'Language',
+            'Payment Method', 'Total Amount', 'Paid Amount', 'Remaining', 'Status', 'Cohort',
+            'Note', 'Onboarding: Community', 'Onboarding: Agreement', 'Onboarding: Signed',
+            'Onboarding: Drive', 'Onboarding: Figma', 'Onboarding: Master Figma', 'Figma Status', 
+            'Post-Course: Feedback Form', 'Post-Course: Course Feedback', 'Post-Course: Certificate', 'Last Updated'
         ];
         
         sheet.appendRow(headers);
@@ -63,14 +64,17 @@ function updateStudentSheet(students) {
             student.id,
             student.name,
             student.email,
+            student.figmaEmail || '',
+            student.linkedin || '',
             student.whatsapp || '',
-            student.location,
-            student.language,
-            student.status,
-            student.cohort,
-            student.totalAmount,
-            student.paidAmount,
-            student.remaining,
+            student.location || '',
+            student.language || '',
+            student.paymentMethod || '',
+            student.totalAmount || 0,
+            student.paidAmount || 0,
+            student.remaining || 0,
+            student.status || '',
+            student.cohort || '',
             student.note || '',
             student.checklist?.addedCommunity ? 'Yes' : 'No',
             student.checklist?.sharedAgreement ? 'Yes' : 'No',
@@ -78,7 +82,10 @@ function updateStudentSheet(students) {
             student.checklist?.sharedDrive ? 'Yes' : 'No',
             student.checklist?.createdFigma ? 'Yes' : 'No',
             student.checklist?.sharedMasterFigma ? 'Yes' : 'No',
-            student.checklist?.figmaStatus || '',
+            student.checklist?.figmaStatus || 'Not started',
+            student.checklist?.sharedFeedbackForm ? 'Yes' : 'No',
+            student.checklist?.submittedCourseFeedback ? 'Yes' : 'No',
+            student.checklist?.issuedCertificate ? 'Yes' : 'No',
             timestamp
         ]);
         

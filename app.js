@@ -1813,8 +1813,8 @@ function syncToGoogleSheets() {
 function generateCSV(data) {
     // CSV headers - includes onboarding checklist, figma status, and post-course actions
     const headers = [
-        'ID', 'Name', 'Email', 'WhatsApp', 'Location', 'Language', 'Status', 'Cohort', 
-        'Total Amount', 'Paid Amount', 'Remaining', 'Note',
+        'ID', 'Name', 'Email', 'Figma Email', 'LinkedIn', 'WhatsApp', 'Location', 'Language', 'Status', 'Cohort', 
+        'Payment Method', 'Total Amount', 'Paid Amount', 'Remaining', 'Note',
         'Onboarding: Community', 'Onboarding: Agreement', 'Onboarding: Signed', 
         'Onboarding: Drive', 'Onboarding: Figma', 'Onboarding: Master Figma',
         'Figma Status', 
@@ -1826,11 +1826,14 @@ function generateCSV(data) {
         student.id,
         `"${student.name}"`,
         student.email,
+        student.figmaEmail || '',
+        student.linkedin || '',
         student.whatsapp || '',
         student.location || '',
         student.language || '',
         student.status || '',
         student.cohort || '',
+        student.paymentMethod || '',
         student.totalAmount || 0,
         student.paidAmount || 0,
         student.remaining || 0,
