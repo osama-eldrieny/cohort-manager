@@ -7,7 +7,7 @@ let currentEditingId = null;
 let originalEditingEmail = null; // Track original email when editing
 let emailWasChanged = false;
 let charts = {};
-const COHORTS = ['Cohort 0', 'Cohort 1 - Cradis', 'Cohort 1 - Zomra', 'Cohort 2', 'Cohort 3'];
+const COHORTS = ['Cohort 0', 'Cohort 1 - Cradis', 'Cohort 1 - Zomra', 'Cohort 2', 'Cohort 3', 'English 1'];
 
 // Global color palette for consistent colors across all charts
 const COLOR_PALETTE = [
@@ -254,6 +254,7 @@ function renderPage(pageId) {
         'cohortfree': { title: 'Cohort - Free', subtitle: 'Students in Cohort - Free' },
         'cohort2': { title: 'Cohort 2', subtitle: 'Students in Cohort 2' },
         'cohort3': { title: 'Cohort 3', subtitle: 'Students in Cohort 3' },
+        'english1': { title: 'English 1', subtitle: 'Students in English 1' },
         'waitinglist': { title: 'Waiting List', subtitle: 'Students in waiting list' },
         'cantreach': { title: "Can't Reach", subtitle: "Students that can't be reached" },
         'nextcohort': { title: 'Next Cohort', subtitle: 'Students in next cohort' },
@@ -271,7 +272,7 @@ function renderPage(pageId) {
         renderOverview();
     } else if (pageId === 'students') {
         renderStudentsTable();
-    } else if (pageId.startsWith('cohort')) {
+    } else if (pageId.startsWith('cohort') || pageId === 'english1') {
         renderCohortPage(pageId);
     } else if (pageId === 'waitinglist') {
         renderStatusPage('Waiting list');
@@ -302,6 +303,7 @@ function renderOverview() {
 function updateStats() {
     const totalStudents = students.length;
     const cohort3Students = students.filter(s => s.cohort === 'Cohort 3').length;
+    const english1Students = students.filter(s => s.cohort === 'English 1').length;
     const waitingListStudents = students.filter(s => s.status === 'Waiting list').length;
     const nextCohortStudents = students.filter(s => s.status === 'Next Cohort').length;
     const totalRevenue = students.reduce((sum, s) => sum + s.paidAmount, 0);
@@ -367,7 +369,8 @@ function renderCharts() {
         'Cohort 1 - Cradis': students.filter(s => s.status === 'Cohort 1 - Cradis').length,
         'Cohort 1 - Zomra': students.filter(s => s.status === 'Cohort 1 - Zomra').length,
         'Cohort 2': students.filter(s => s.status === 'Cohort 2').length,
-        'Cohort 3': students.filter(s => s.status === 'Cohort 3').length
+        'Cohort 3': students.filter(s => s.status === 'Cohort 3').length,
+        'English 1': students.filter(s => s.status === 'English 1').length
     };
 
     const ctx1 = document.getElementById('statusChart');
@@ -538,6 +541,9 @@ function renderCharts() {
 
     // Payment Status Chart - Cohort 3
     const cohort3Students = students.filter(s => s.cohort === 'Cohort 3');
+    
+    // Payment Status Chart - English 1
+    const english1Students = students.filter(s => s.cohort === 'English 1');
     const cohort3Paid = cohort3Students.reduce((sum, s) => sum + s.paidAmount, 0);
     const cohort3Pending = cohort3Students.reduce((sum, s) => sum + s.remaining, 0);
 
@@ -661,7 +667,8 @@ function renderCohortPage(cohortId) {
         'cohort1cradis': 'Cohort 1 - Cradis',
         'cohort1zomra': 'Cohort 1 - Zomra',
         'cohort2': 'Cohort 2',
-        'cohort3': 'Cohort 3'
+        'cohort3': 'Cohort 3',
+        'english1': 'English 1'
     };
     
     const cohort = cohortMap[cohortId] || cohortId;
@@ -670,8 +677,9 @@ function renderCohortPage(cohortId) {
     // Store cohort data for search
     page.cohortName = cohort;
     
-    let cohortStudents = students.filter(s => s.cohort === cohort);
-    const showChecklistProgress = cohortId === 'cohort2' || cohortId === 'cohort3';
+    // Filter by cohort field first, fallback to status field for backward compatibility
+    let cohortStudents = students.filter(s => s.cohort === cohort || s.status === cohort);
+    const showChecklistProgress = cohortId === 'cohort2' || cohortId === 'cohort3' || cohortId === 'english1';
 
     if (cohortStudents.length === 0) {
         page.innerHTML = `
@@ -1076,7 +1084,7 @@ function renderAnalyticsCharts() {
     });
 
     // Location Distribution by Cohort Status
-    const targetCohorts = ['Cohort 0', 'Cohort 1 - Cradis', 'Cohort 1 - Zomra', 'Cohort 2', 'Cohort 3'];
+    const targetCohorts = ['Cohort 0', 'Cohort 1 - Cradis', 'Cohort 1 - Zomra', 'Cohort 2', 'Cohort 3', 'English 1'];
     const locationCohortStudents = students.filter(s => targetCohorts.includes(s.status));
     
     const locationsByStatus = {};
@@ -1197,7 +1205,7 @@ function editStudent(id) {
     document.getElementById('note').value = student.note || '';
     document.getElementById('paymentMethod').value = student.paymentMethod || '';
 
-    if (student.status === 'Cohort 0' || student.status === 'Cohort 1' || student.status === 'Cohort 2' || student.status === 'Cohort 3' || student.status === 'Cohort 1 - Cradis' || student.status === 'Cohort 1 - Zomra' || student.status === 'Cohort - Free') {
+    if (student.status === 'Cohort 0' || student.status === 'Cohort 1' || student.status === 'Cohort 2' || student.status === 'Cohort 3' || student.status === 'Cohort 1 - Cradis' || student.status === 'Cohort 1 - Zomra' || student.status === 'Cohort - Free' || student.status === 'English 1') {
         toggleChecklistSection();
         const addedCommunityEl = document.getElementById('addedCommunity');
         const sharedAgreementEl = document.getElementById('sharedAgreement');
@@ -2591,6 +2599,7 @@ const BULK_GROUP_OPTIONS = [
     'Cohort 1 - Zomra',
     'Cohort 2',
     'Cohort 3',
+    'English 1',
     'Waiting list',
     "Can't reach",
     'Next Cohort',

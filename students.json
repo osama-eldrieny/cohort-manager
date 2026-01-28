@@ -4699,5 +4699,36 @@
     "paymentMethod": null,
     "created_at": "2026-01-24 11:26:28",
     "updated_at": "2026-01-24 11:26:28"
+  },
+  {
+    "id": "english1test001",
+    "name": "Test Student - English 1",
+    "email": "english1test@example.com",
+    "figmaEmail": null,
+    "linkedin": null,
+    "whatsapp": null,
+    "location": "Test Location",
+    "language": "English",
+    "status": "English 1",
+    "cohort": "English 1",
+    "totalAmount": 500,
+    "paidAmount": 250,
+    "remaining": 250,
+    "note": "Test student for English 1 cohort",
+    "paymentMethod": "Credit Card",
+    "checklist": {
+      "addedCommunity": true,
+      "sharedAgreement": true,
+      "signedAgreement": true,
+      "sharedDrive": true,
+      "createdFigma": true,
+      "sharedMasterFigma": true,
+      "figmaStatus": "In Progress",
+      "sharedFeedbackForm": false,
+      "submittedCourseFeedback": false,
+      "issuedCertificate": false
+    },
+    "created_at": "2026-01-29 12:00:00",
+    "updated_at": "2026-01-29 12:00:00"
   }
 ]
