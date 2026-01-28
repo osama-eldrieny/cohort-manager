@@ -204,5 +204,21 @@
     "template_name": "Shared Figma file",
     "status": "sent",
     "created_at": "2026-01-26T13:58:38.905Z"
+  },
+  {
+    "id": 1769621682,
+    "student_id": "1769621616",
+    "template_id": 1,
+    "template_name": "Waiting list",
+    "status": "sent",
+    "created_at": "2026-01-28T17:34:42.129Z"
+  },
+  {
+    "id": 1769621707,
+    "student_id": 1769621616,
+    "template_id": "1",
+    "template_name": "Waiting list",
+    "status": "sent",
+    "created_at": "2026-01-28T17:35:07.403Z"
   }
 ]
