@@ -667,7 +667,7 @@ tbody tr:hover {
 /* Make Actions column wider for students page */
 th:last-child,
 td:last-child {
-    min-width: 60px;
+    min-width: 90px;
     text-align: right;
 }
 
@@ -1647,6 +1647,7 @@ button {
         width: 95%;
         padding: 20px;
         margin: 10% auto;
+        height: 80%;
     }
 
     .modal-header {
