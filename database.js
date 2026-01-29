@@ -489,6 +489,149 @@ export async function deleteEmailLogsForStudent(studentId) {
     }
 }
 
+// Initialize column preferences table
+export async function initializeColumnPreferencesTable() {
+    try {
+        if (!supabase) return;
+
+        // Try to fetch a record to verify table exists
+        // If it doesn't exist, the API will handle it gracefully
+        const { error } = await supabase
+            .from('user_preferences')
+            .select('id', { count: 'exact', head: true });
+
+        if (error) {
+            // Table doesn't exist yet - log a message but don't fail
+            // User can create it manually via Supabase dashboard if needed
+            console.log('ℹ️  user_preferences table not found in Supabase (will be created on first use)');
+            return;
+        }
+
+        console.log('✅ Column preferences table ready');
+    } catch (error) {
+        console.warn('ℹ️  Could not verify column preferences table:', error.message);
+    }
+}
+
+// Get column preferences for a page
+export async function getColumnPreferences(pageId) {
+    try {
+        if (!supabase) return null;
+
+        const { data, error } = await supabase
+            .from('user_preferences')
+            .select('visible_columns')
+            .eq('page_id', pageId)
+            .single();
+
+        // If table doesn't exist or record not found, return null gracefully
+        if (error) {
+            if (error.code === 'PGRST116') {
+                // Record not found (table might exist)
+                return null;
+            }
+            if (error.code === '42P01' || error.message.includes('does not exist')) {
+                // Table doesn't exist - log once and return null
+                console.warn('ℹ️  user_preferences table does not exist yet. Please run migration SQL.');
+                return null;
+            }
+            // Other errors
+            console.warn('Warning fetching column preferences:', error.message);
+            return null;
+        }
+
+        return data?.visible_columns || null;
+    } catch (error) {
+        console.warn('Could not fetch column preferences:', error.message);
+        return null;
+    }
+}
+
+// Save column preferences for a page
+export async function saveColumnPreferences(pageId, visibleColumns) {
+    try {
+        if (!supabase) return null;
+
+        const { data, error } = await supabase
+            .from('user_preferences')
+            .upsert(
+                {
+                    page_id: pageId,
+                    visible_columns: visibleColumns,
+                    updated_at: new Date().toISOString()
+                },
+                { onConflict: 'page_id' }
+            )
+            .select()
+            .single();
+
+        if (error) {
+            if (error.code === '42P01' || error.message.includes('does not exist')) {
+                // Table doesn't exist - log message
+                console.warn('ℹ️  user_preferences table does not exist. Please run migration SQL to create it.');
+                return null;
+            }
+            throw error;
+        }
+
+        return data;
+    } catch (error) {
+        console.warn('Could not save column preferences:', error.message);
+        return null;
+    }
+}
+
+// Delete column preferences for a page (reset to defaults)
+export async function deleteColumnPreferences(pageId) {
+    try {
+        if (!supabase) return null;
+
+        const { error } = await supabase
+            .from('user_preferences')
+            .delete()
+            .eq('page_id', pageId);
+
+        if (error) {
+            if (error.code === '42P01' || error.message.includes('does not exist')) {
+                // Table doesn't exist - graceful handling
+                return true;
+            }
+            throw error;
+        }
+        
+        return true;
+    } catch (error) {
+        console.warn('Could not delete column preferences:', error.message);
+        return false;
+    }
+}
+
+// Get all column preferences
+export async function getAllColumnPreferences() {
+    try {
+        if (!supabase) return [];
+
+        const { data, error } = await supabase
+            .from('user_preferences')
+            .select('*')
+            .order('updated_at', { ascending: false });
+
+        if (error) {
+            if (error.code === '42P01' || error.message.includes('does not exist')) {
+                // Table doesn't exist - return empty array
+                console.warn('ℹ️  user_preferences table does not exist yet');
+                return [];
+            }
+            throw error;
+        }
+
+        return data || [];
+    } catch (error) {
+        console.warn('Could not fetch all column preferences:', error.message);
+        return [];
+    }
+}
+
 // Close database connection
 export function closeDatabase() {
     // Supabase client doesn't need explicit closing

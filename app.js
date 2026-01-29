@@ -102,8 +102,25 @@ const PAGE_COLUMNS = {
     ]
 };
 
-// Get column preferences for a page
-function getColumnPreferences(pageId) {
+// Get column preferences for a page (from database with localStorage fallback)
+async function getColumnPreferences(pageId) {
+    try {
+        // Try to fetch from database first
+        const response = await fetch(`${API_BASE_URL}/api/column-preferences/${pageId}`);
+        if (response.ok) {
+            const data = await response.json();
+            if (data.found && data.visibleColumns) {
+                // Cache in localStorage for offline/performance
+                const key = `columnPreferences_${pageId}`;
+                localStorage.setItem(key, JSON.stringify(data.visibleColumns));
+                return data.visibleColumns;
+            }
+        }
+    } catch (error) {
+        console.warn('Could not fetch column preferences from database:', error.message);
+    }
+    
+    // Fallback to localStorage
     const key = `columnPreferences_${pageId}`;
     const stored = localStorage.getItem(key);
     if (stored) {
@@ -120,16 +137,35 @@ function getColumnPreferences(pageId) {
     }
 }
 
-// Save column preferences for a page
-function saveColumnPreferences(pageId, visibleColumns) {
+// Save column preferences for a page (to database and localStorage)
+async function saveColumnPreferences(pageId, visibleColumns) {
+    try {
+        // Save to database
+        const response = await fetch(`${API_BASE_URL}/api/column-preferences`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pageId, visibleColumns })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to save to database');
+        }
+    } catch (error) {
+        console.warn('Could not save column preferences to database:', error.message);
+    }
+    
+    // Always save to localStorage as backup
     const key = `columnPreferences_${pageId}`;
     localStorage.setItem(key, JSON.stringify(visibleColumns));
 }
 
-// Check if a column should be visible
-function isColumnVisible(pageId, columnId) {
-    const visibleColumns = getColumnPreferences(pageId);
-    return visibleColumns.includes(columnId);
+// Check if a column should be visible (synchronous using cached data)
+function isColumnVisible(pageId, columnId, visibleColumns) {
+    // Use provided visibleColumns if available, otherwise return true (show all)
+    if (visibleColumns) {
+        return visibleColumns.includes(columnId);
+    }
+    return true;
 }
 
 // Get all available columns for a page
@@ -144,11 +180,11 @@ function getAvailableColumns(pageId) {
 }
 
 // Apply column visibility to a table
-function applyColumnVisibility(tableBodyId, pageId, pageType) {
+async function applyColumnVisibility(tableBodyId, pageId, pageType) {
     const tbody = document.getElementById(tableBodyId);
     if (!tbody) return;
     
-    const visibleColumns = getColumnPreferences(pageId);
+    const visibleColumns = await getColumnPreferences(pageId);
     const rows = tbody.querySelectorAll('tr');
     
     // For header row
@@ -188,9 +224,9 @@ function applyColumnVisibility(tableBodyId, pageId, pageType) {
 }
 
 // Create column visibility control modal
-function createColumnControlModal(pageId, pageTitle) {
+async function createColumnControlModal(pageId, pageTitle) {
     const availableColumns = getAvailableColumns(pageId);
-    const visibleColumns = getColumnPreferences(pageId);
+    const visibleColumns = await getColumnPreferences(pageId);
     
     const modal = document.createElement('div');
     modal.className = 'modal';
@@ -208,7 +244,7 @@ function createColumnControlModal(pageId, pageTitle) {
         <div class="modal-content" style="width: 400px; max-height: 80vh; overflow-y: auto;">
             <div class="modal-header">
                 <h3>Column Visibility - ${pageTitle}</h3>
-                <button class="close-modal" onclick="document.getElementById('columnControlModal').remove()">&times;</button>
+                <button class="close-modal" data-action="close">&times;</button>
             </div>
             <div class="modal-body" style="padding: 20px;">
                 <div class="column-controls">
@@ -216,14 +252,30 @@ function createColumnControlModal(pageId, pageTitle) {
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="document.getElementById('columnControlModal').remove()">Close</button>
-                <button class="btn btn-primary" onclick="applyColumnPreferences('${pageId}')">Apply</button>
-                <button class="btn btn-light" onclick="resetColumnPreferences('${pageId}')">Reset to Default</button>
+                <button class="btn btn-secondary" data-action="close">Close</button>
+                <button class="btn btn-primary" data-action="apply">Apply</button>
+                <button class="btn btn-light" data-action="reset">Reset to Default</button>
             </div>
         </div>
     `;
     
     document.body.appendChild(modal);
+    
+    // Add event listeners
+    const closeButtons = modal.querySelectorAll('[data-action="close"]');
+    closeButtons.forEach(btn => {
+        btn.addEventListener('click', () => modal.remove());
+    });
+    
+    const applyBtn = modal.querySelector('[data-action="apply"]');
+    if (applyBtn) {
+        applyBtn.addEventListener('click', () => applyColumnPreferences(pageId));
+    }
+    
+    const resetBtn = modal.querySelector('[data-action="reset"]');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', () => resetColumnPreferences(pageId));
+    }
     
     // Close on background click
     modal.addEventListener('click', (e) => {
@@ -234,7 +286,7 @@ function createColumnControlModal(pageId, pageTitle) {
 }
 
 // Apply selected column preferences
-function applyColumnPreferences(pageId) {
+async function applyColumnPreferences(pageId) {
     const modal = document.getElementById('columnControlModal');
     const checkboxes = modal.querySelectorAll('.column-checkbox:checked');
     const visibleColumns = Array.from(checkboxes).map(cb => cb.dataset.columnId);
@@ -244,7 +296,7 @@ function applyColumnPreferences(pageId) {
         return;
     }
     
-    saveColumnPreferences(pageId, visibleColumns);
+    await saveColumnPreferences(pageId, visibleColumns);
     modal.remove();
     
     // Re-render the page
@@ -252,7 +304,17 @@ function applyColumnPreferences(pageId) {
 }
 
 // Reset column preferences to default
-function resetColumnPreferences(pageId) {
+async function resetColumnPreferences(pageId) {
+    try {
+        // Delete from database
+        await fetch(`${API_BASE_URL}/api/column-preferences/${pageId}`, {
+            method: 'DELETE'
+        });
+    } catch (error) {
+        console.warn('Could not delete preferences from database:', error.message);
+    }
+    
+    // Clear from localStorage
     const key = `columnPreferences_${pageId}`;
     localStorage.removeItem(key);
     
@@ -876,7 +938,9 @@ function renderStudentsTable() {
     });
 
     // Apply column visibility
-    applyColumnVisibility('studentsTableBody', 'students', 'students');
+    applyColumnVisibility('studentsTableBody', 'students', 'students').catch(err => 
+        console.warn('Failed to apply column visibility:', err)
+    );
 }
 
 
@@ -1052,7 +1116,9 @@ function renderCohortPage(cohortId) {
     attachCohortButtonListeners(page);
     
     // Apply column visibility
-    applyColumnVisibility(`cohortTableBody-${cohortId}`, cohortId, 'cohort');
+    applyColumnVisibility(`cohortTableBody-${cohortId}`, cohortId, 'cohort').catch(err => 
+        console.warn('Failed to apply column visibility:', err)
+    );
 }
 
 function attachCohortButtonListeners(page) {
@@ -1229,7 +1295,9 @@ function renderStatusPage(status) {
     attachStatusButtonListeners(page);
     
     // Apply column visibility
-    applyColumnVisibility(`statusTableBody-${pageId}`, pageId, 'status');
+    applyColumnVisibility(`statusTableBody-${pageId}`, pageId, 'status').catch(err => 
+        console.warn('Failed to apply column visibility:', err)
+    );
 }
 
 function attachStatusButtonListeners(page) {

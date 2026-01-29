@@ -19,7 +19,12 @@ import {
     logEmailSentToDB,
     getEmailLogsFromDB,
     getAllEmailLogsFromDB,
-    deleteEmailLogsForStudent
+    deleteEmailLogsForStudent,
+    initializeColumnPreferencesTable,
+    getColumnPreferences,
+    saveColumnPreferences,
+    deleteColumnPreferences,
+    getAllColumnPreferences
 } from './database.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -125,6 +130,7 @@ let dbInitError = null;
 (async () => {
     try {
         await initializeDatabase();
+        await initializeColumnPreferencesTable();
         dbReady = true;
         console.log('🔧 Database initialization complete');
     } catch (error) {
@@ -384,6 +390,86 @@ app.get('/api/email-logs/:studentId', async (req, res) => {
     } catch (error) {
         console.error('❌ Error fetching email logs:', error.message);
         res.status(500).json({ error: 'Failed to fetch email logs' });
+    }
+});
+
+// ============================================
+// COLUMN PREFERENCES ENDPOINTS
+// ============================================
+
+// GET /api/column-preferences/:pageId - Get column preferences for a page
+app.get('/api/column-preferences/:pageId', async (req, res) => {
+    try {
+        const { pageId } = req.params;
+        const preferences = await getColumnPreferences(pageId);
+        res.json({ 
+            pageId,
+            visibleColumns: preferences,
+            found: preferences !== null
+        });
+    } catch (error) {
+        console.error('❌ Error fetching column preferences:', error.message);
+        res.status(500).json({ error: 'Failed to fetch column preferences' });
+    }
+});
+
+// POST /api/column-preferences - Save column preferences for a page
+app.post('/api/column-preferences', async (req, res) => {
+    try {
+        const { pageId, visibleColumns } = req.body;
+        
+        if (!pageId || !Array.isArray(visibleColumns)) {
+            return res.status(400).json({ 
+                error: 'Missing or invalid pageId or visibleColumns' 
+            });
+        }
+
+        const result = await saveColumnPreferences(pageId, visibleColumns);
+        res.json({ 
+            success: true,
+            message: 'Column preferences saved',
+            pageId,
+            visibleColumns
+        });
+    } catch (error) {
+        console.error('❌ Error saving column preferences:', error.message);
+        res.status(500).json({ error: 'Failed to save column preferences' });
+    }
+});
+
+// DELETE /api/column-preferences/:pageId - Delete column preferences (reset to defaults)
+app.delete('/api/column-preferences/:pageId', async (req, res) => {
+    try {
+        const { pageId } = req.params;
+        const success = await deleteColumnPreferences(pageId);
+        
+        if (success) {
+            res.json({ 
+                success: true,
+                message: 'Column preferences reset to defaults',
+                pageId
+            });
+        } else {
+            res.status(500).json({ error: 'Failed to delete column preferences' });
+        }
+    } catch (error) {
+        console.error('❌ Error deleting column preferences:', error.message);
+        res.status(500).json({ error: 'Failed to delete column preferences' });
+    }
+});
+
+// GET /api/column-preferences - Get all column preferences
+app.get('/api/column-preferences', async (req, res) => {
+    try {
+        const allPreferences = await getAllColumnPreferences();
+        res.json({ 
+            success: true,
+            count: allPreferences.length,
+            preferences: allPreferences
+        });
+    } catch (error) {
+        console.error('❌ Error fetching all column preferences:', error.message);
+        res.status(500).json({ error: 'Failed to fetch column preferences' });
     }
 });
 
