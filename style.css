@@ -607,6 +607,7 @@ button.danger:hover {
 .students-table {
     background: white;
     border-radius: 12px;
+    display: block;
     overflow-x: auto;
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
@@ -617,6 +618,7 @@ button.danger:hover {
 
 table {
     width: 100%;
+    min-width: 100%;
     border-collapse: collapse;
     table-layout: auto;
 }
