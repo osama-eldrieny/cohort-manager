@@ -2327,7 +2327,7 @@ button {
     display: table-cell;
     width: 50%;
     text-align: left;
-    min-width: 120px;
+    min-width: 170px;
 }
 
 .students-data-table th.col-email,
@@ -2341,7 +2341,7 @@ button {
     display: table-cell;
     width: auto;
     text-align: left;
-    min-width: 100px;
+    min-width: 127px;
 }
 
 .students-data-table th.col-location,
@@ -2380,7 +2380,7 @@ button {
     display: table-cell;
     width: auto;
     text-align: center;
-    min-width: 60px;
+    min-width: 90px;
 }
 
 /* Tablet (min-width: 768px) - Add: Email, Status visible */
