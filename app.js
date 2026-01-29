@@ -224,30 +224,6 @@ document.addEventListener('DOMContentLoaded', () => {
     attachEyeToggleListeners();
 });
 
-// Old code location (removing inline listener setup)
-/*
-    document.querySelectorAll('.eye-toggle-small').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            const revenueId = btn.getAttribute('data-revenue-id');
-            const revenueElement = document.getElementById(revenueId);
-            if (revenueElement) {
-                revenueElement.classList.toggle('hidden');
-                const icon = btn.querySelector('i');
-                if (revenueElement.classList.contains('hidden')) {
-                    revenueElement.textContent = '●●●';
-                    icon.classList.remove('fa-eye');
-                    icon.classList.add('fa-eye-slash');
-                } else {
-                    revenueElement.textContent = revenueElement.getAttribute('data-value');
-                    icon.classList.remove('fa-eye-slash');
-                    icon.classList.add('fa-eye');
-                }
-            }
-        });
-    });
-}
-
 // Copy email to clipboard
 function copyEmailToClipboard(email) {
     navigator.clipboard.writeText(email).then(() => {
