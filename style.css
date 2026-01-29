@@ -2313,7 +2313,7 @@ button {
 
 /* === STUDENTS DATA TABLE === */
 
-/* Mobile (default - min-width: 0) - Show: ID, Name, Status, Actions */
+/* Mobile (default - min-width: 0) - Show: ID, Name, Status, Actions - All others scroll */
 .students-data-table th.col-id,
 .students-data-table td.col-id {
     display: table-cell;
@@ -2332,7 +2332,7 @@ button {
 
 .students-data-table th.col-email,
 .students-data-table td.col-email {
-    display: none;
+    display: table-cell;
     min-width: 150px;
 }
 
@@ -2346,32 +2346,32 @@ button {
 
 .students-data-table th.col-location,
 .students-data-table td.col-location {
-    display: none;
+    display: table-cell;
     min-width: 100px;
 }
 
 .students-data-table th.col-language,
 .students-data-table td.col-language {
-    display: none;
+    display: table-cell;
     min-width: 80px;
 }
 
 .students-data-table th.col-linkedin,
 .students-data-table td.col-linkedin {
-    display: none;
+    display: table-cell;
     min-width: 40px;
     text-align: center;
 }
 
 .students-data-table th.col-whatsapp,
 .students-data-table td.col-whatsapp {
-    display: none;
+    display: table-cell;
     min-width: 80px;
 }
 
 .students-data-table th.col-notes,
 .students-data-table td.col-notes {
-    display: none;
+    display: table-cell;
     min-width: 100px;
 }
 
