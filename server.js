@@ -15,7 +15,11 @@ import {
     getAllEmailTemplates,
     saveEmailTemplate,
     deleteEmailTemplate,
-    exportEmailTemplatesToJson
+    exportEmailTemplatesToJson,
+    logEmailSentToDB,
+    getEmailLogsFromDB,
+    getAllEmailLogsFromDB,
+    deleteEmailLogsForStudent
 } from './database.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -24,56 +28,17 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = 3002;
 const DATA_FILE = path.join(__dirname, 'students.json');
-const EMAIL_LOGS_FILE = path.join(__dirname, 'email_logs.json');
+
+// Email logs are now stored in Supabase database, not in file
 
 // ============================================
-// EMAIL LOGGING FUNCTIONS
+// EMAIL LOGGING (Uses Supabase Database)
 // ============================================
 
-function logEmailSent(studentId, templateId, templateName, status = 'sent') {
-    try {
-        let logs = [];
-        
-        // Read existing logs
-        if (fs.existsSync(EMAIL_LOGS_FILE)) {
-            const data = fs.readFileSync(EMAIL_LOGS_FILE, 'utf-8');
-            logs = JSON.parse(data);
-        }
-        
-        // Add new log entry
-        logs.push({
-            id: Math.floor(Date.now() / 1000),
-            student_id: studentId,
-            template_id: templateId,
-            template_name: templateName,
-            status: status,
-            created_at: new Date().toISOString()
-        });
-        
-        // Write back to file
-        fs.writeFileSync(EMAIL_LOGS_FILE, JSON.stringify(logs, null, 2));
-        console.log(`💾 Email log saved: Student ${studentId}, Template: ${templateName}, Status: ${status}`);
-    } catch (error) {
-        console.warn(`⚠️ Could not save email log: ${error.message}`);
-    }
-}
+// Note: Email logs are now stored in Supabase database
+// Legacy file-based functions removed in favor of database storage
+// See database.js for: logEmailSentToDB(), getEmailLogsFromDB()
 
-function getEmailLogsForStudent(studentId) {
-    try {
-        if (!fs.existsSync(EMAIL_LOGS_FILE)) {
-            return [];
-        }
-        
-        const data = fs.readFileSync(EMAIL_LOGS_FILE, 'utf-8');
-        const logs = JSON.parse(data);
-        
-        // Filter logs for this student
-        return logs.filter(log => log.student_id == studentId);
-    } catch (error) {
-        console.warn(`⚠️ Could not read email logs: ${error.message}`);
-        return [];
-    }
-}
 
 // Gmail SMTP Configuration
 const SENDER_EMAIL = 'osama.eldrieny@gmail.com';
@@ -356,7 +321,7 @@ app.post('/api/send-email', async (req, res) => {
         const trimmedEmail = studentEmail.trim();
         if (!emailRegex.test(trimmedEmail)) {
             console.warn(`⚠️ Invalid email format: "${trimmedEmail}"`);
-            logEmailSent(studentId, templateId, templateName, 'failed');
+            await logEmailSentToDB(studentId, templateId, templateName, 'failed');
             return res.status(400).json({ error: `Invalid email format: "${trimmedEmail}"` });
         }
         
@@ -365,7 +330,7 @@ app.post('/api/send-email', async (req, res) => {
             console.log(`📧 Email prepared for: ${studentName} <${trimmedEmail}>`);
             console.log(`Subject: ${subject}`);
             console.log(`⚠️  Gmail SMTP not configured. Set GMAIL_APP_PASSWORD environment variable.`);
-            logEmailSent(studentId, templateId, templateName, 'failed');
+            await logEmailSentToDB(studentId, templateId, templateName, 'failed');
             return res.status(503).json({ 
                 success: false, 
                 error: 'Email service not configured. Contact administrator.' 
@@ -387,8 +352,8 @@ app.post('/api/send-email', async (req, res) => {
         console.log(`   Message ID: ${info.messageId}`);
         console.log(`   Response: ${info.response}`);
         
-        // Log the email sent
-        logEmailSent(studentId, templateId, templateName, 'sent');
+        // Log the email sent to Supabase database
+        await logEmailSentToDB(studentId, templateId, templateName, 'sent');
         
         res.json({ 
             success: true, 
@@ -397,10 +362,10 @@ app.post('/api/send-email', async (req, res) => {
         });
     } catch (error) {
         console.error('❌ Error sending email:', error.message);
-        // Log the failed email
+        // Log the failed email to Supabase database
         const { studentId, templateId, templateName } = req.body;
         if (studentId && templateId) {
-            logEmailSent(studentId, templateId, templateName, 'failed');
+            await logEmailSentToDB(studentId, templateId, templateName, 'failed');
         }
         res.status(500).json({ 
             success: false,
@@ -410,10 +375,10 @@ app.post('/api/send-email', async (req, res) => {
 });
 
 // GET /api/email-logs/:studentId - Get email sending history for a student
-app.get('/api/email-logs/:studentId', (req, res) => {
+app.get('/api/email-logs/:studentId', async (req, res) => {
     try {
         const { studentId } = req.params;
-        const logs = getEmailLogsForStudent(studentId);
+        const logs = await getEmailLogsFromDB(studentId);
         console.log(`📋 Retrieved ${logs.length} email logs for student ${studentId}`);
         res.json(logs);
     } catch (error) {

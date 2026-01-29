@@ -1301,11 +1301,6 @@ button {
    TABLE CONTAINER
    ============================================ */
 
-.table-container {
-    overflow-x: auto;
-    border-radius: 12px;
-    -webkit-overflow-scrolling: touch;
-}
 
 /* ============================================
    COHORT STATS MINI

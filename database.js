@@ -392,6 +392,103 @@ export async function exportEmailTemplatesToJson() {
     }
 }
 
+// ============================================
+// EMAIL LOGS FUNCTIONS (Supabase Database)
+// ============================================
+
+// Save email log to database
+export async function logEmailSentToDB(studentId, templateId, templateName, status = 'sent') {
+    try {
+        if (!supabase) {
+            // Fallback to JSON file for local development
+            console.warn('⚠️ Supabase not available, email log not saved to database');
+            return;
+        }
+
+        const { error } = await supabase
+            .from('email_logs')
+            .insert({
+                student_id: studentId,
+                template_id: templateId,
+                template_name: templateName,
+                status: status,
+                created_at: new Date().toISOString()
+            });
+
+        if (error) throw error;
+        console.log(`💾 Email log saved to Supabase: Student ${studentId}, Template: ${templateName}, Status: ${status}`);
+    } catch (error) {
+        console.error('❌ Error saving email log to database:', error.message);
+        throw error;
+    }
+}
+
+// Get email logs for a specific student from database
+export async function getEmailLogsFromDB(studentId) {
+    try {
+        if (!supabase) {
+            console.warn('⚠️ Supabase not available, returning empty logs');
+            return [];
+        }
+
+        const { data, error } = await supabase
+            .from('email_logs')
+            .select('*')
+            .eq('student_id', studentId)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        console.log(`📋 Retrieved ${(data || []).length} email logs for student ${studentId}`);
+        return data || [];
+    } catch (error) {
+        console.error('❌ Error fetching email logs from database:', error.message);
+        throw error;
+    }
+}
+
+// Get all email logs from database (admin/reporting)
+export async function getAllEmailLogsFromDB() {
+    try {
+        if (!supabase) {
+            console.warn('⚠️ Supabase not available, returning empty logs');
+            return [];
+        }
+
+        const { data, error } = await supabase
+            .from('email_logs')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        console.log(`📋 Retrieved ${(data || []).length} total email logs`);
+        return data || [];
+    } catch (error) {
+        console.error('❌ Error fetching all email logs:', error.message);
+        throw error;
+    }
+}
+
+// Delete email logs for a student (when deleting student)
+export async function deleteEmailLogsForStudent(studentId) {
+    try {
+        if (!supabase) {
+            console.warn('⚠️ Supabase not available, email logs not deleted');
+            return;
+        }
+
+        const { error } = await supabase
+            .from('email_logs')
+            .delete()
+            .eq('student_id', studentId);
+
+        if (error) throw error;
+        console.log(`🗑️ Deleted email logs for student ${studentId}`);
+    } catch (error) {
+        console.error('❌ Error deleting email logs:', error.message);
+        throw error;
+    }
+}
+
 // Close database connection
 export function closeDatabase() {
     // Supabase client doesn't need explicit closing

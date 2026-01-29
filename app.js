@@ -693,8 +693,7 @@ function renderCohortPage(cohortId) {
     const stats = {
         total: cohortStudents.length,
         revenue: cohortStudents.reduce((sum, s) => sum + s.paidAmount, 0),
-        pending: cohortStudents.reduce((sum, s) => sum + s.remaining, 0),
-        current: cohortStudents.filter(s => s.status === 'Current Cohort').length
+        pending: cohortStudents.reduce((sum, s) => sum + s.remaining, 0)
     };
 
     const tableHtml = `
@@ -715,14 +714,10 @@ function renderCohortPage(cohortId) {
                 <div class="mini-label">Pending</div>
                 <div class="mini-value">$${stats.pending.toFixed(2)}</div>
             </div>
-            <div class="mini-stat">
-                <div class="mini-label">Active</div>
-                <div class="mini-value">${stats.current}</div>
-            </div>
         </div>
 
-        <div class="table-container">
-            <table class="students-table">
+        <div class="students-table">
+            <table>
                 <thead>
                     <tr>
                         <th>#</th>
@@ -884,8 +879,8 @@ function renderStatusPage(status) {
             </div>
         </div>
 
-        <div class="table-container">
-            <table class="students-table">
+        <div class="students-table">
+            <table>
                 <thead>
                     <tr>
                         <th>#</th>
@@ -1209,20 +1204,24 @@ function editStudent(id) {
         toggleChecklistSection();
         const addedCommunityEl = document.getElementById('addedCommunity');
         const sharedAgreementEl = document.getElementById('sharedAgreement');
-        const signedAgreementEl = document.getElementById('signedAgreement');
+        const respondStudentGroupingEl = document.getElementById('respondStudentGrouping');
         const sharedDriveEl = document.getElementById('sharedDrive');
-        const createdFigmaEl = document.getElementById('createdFigma');
         const sharedMasterFigmaEl = document.getElementById('sharedMasterFigma');
+        const signedAgreementEl = document.getElementById('signedAgreement');
+        const respondedStudentGroupingEl = document.getElementById('respondedStudentGrouping');
+        const createdFigmaEl = document.getElementById('createdFigma');
         const sharedFeedbackFormEl = document.getElementById('sharedFeedbackForm');
         const submittedCourseFeedbackEl = document.getElementById('submittedCourseFeedback');
         const issuedCertificateEl = document.getElementById('issuedCertificate');
         
         if (addedCommunityEl) addedCommunityEl.checked = student.checklist?.addedCommunity || false;
         if (sharedAgreementEl) sharedAgreementEl.checked = student.checklist?.sharedAgreement || false;
-        if (signedAgreementEl) signedAgreementEl.checked = student.checklist?.signedAgreement || false;
+        if (respondStudentGroupingEl) respondStudentGroupingEl.checked = student.checklist?.respondStudentGrouping || false;
         if (sharedDriveEl) sharedDriveEl.checked = student.checklist?.sharedDrive || false;
-        if (createdFigmaEl) createdFigmaEl.checked = student.checklist?.createdFigma || false;
         if (sharedMasterFigmaEl) sharedMasterFigmaEl.checked = student.checklist?.sharedMasterFigma || false;
+        if (signedAgreementEl) signedAgreementEl.checked = student.checklist?.signedAgreement || false;
+        if (respondedStudentGroupingEl) respondedStudentGroupingEl.checked = student.checklist?.respondedStudentGrouping || false;
+        if (createdFigmaEl) createdFigmaEl.checked = student.checklist?.createdFigma || false;
         if (sharedFeedbackFormEl) sharedFeedbackFormEl.checked = student.checklist?.sharedFeedbackForm || false;
         if (submittedCourseFeedbackEl) submittedCourseFeedbackEl.checked = student.checklist?.submittedCourseFeedback || false;
         if (issuedCertificateEl) issuedCertificateEl.checked = student.checklist?.issuedCertificate || false;
@@ -1338,20 +1337,15 @@ function calculateChecklistProgress(student) {
     const checklistItems = [
         'addedCommunity',
         'sharedAgreement',
-        'signedAgreement',
+        'respondStudentGrouping',
         'sharedDrive',
-        'createdFigma',
         'sharedMasterFigma',
-        'figmaStatus'
+        'signedAgreement',
+        'respondedStudentGrouping',
+        'createdFigma'
     ];
     
-    const completedItems = checklistItems.filter(item => {
-        if (item === 'figmaStatus') {
-            // Only count as completed if it's NOT "Not started"
-            return student.checklist[item] && student.checklist[item] !== 'Not started';
-        }
-        return student.checklist[item];
-    }).length;
+    const completedItems = checklistItems.filter(item => student.checklist[item]).length;
     
     const totalItems = checklistItems.length;
     const percentage = Math.round((completedItems / totalItems) * 100);
@@ -1451,15 +1445,17 @@ function saveStudent(event) {
     console.log('💰 Payment: Method=' + student.paymentMethod + ', Total=' + student.totalAmount + ', Paid=' + student.paidAmount, ', Remaining=' + student.remaining);
 
     // Add checklist for any cohort-related status
-    const isCohortStatus = student.status && (student.status.startsWith('Cohort') || student.status === 'Next Cohort');
+    const isCohortStatus = student.status && (student.status.startsWith('Cohort') || student.status === 'Next Cohort' || student.status === 'English 1');
     if (isCohortStatus) {
         student.checklist = {
             addedCommunity: document.getElementById('addedCommunity').checked,
             sharedAgreement: document.getElementById('sharedAgreement').checked,
-            signedAgreement: document.getElementById('signedAgreement').checked,
+            respondStudentGrouping: document.getElementById('respondStudentGrouping').checked,
             sharedDrive: document.getElementById('sharedDrive').checked,
-            createdFigma: document.getElementById('createdFigma').checked,
             sharedMasterFigma: document.getElementById('sharedMasterFigma').checked,
+            signedAgreement: document.getElementById('signedAgreement').checked,
+            respondedStudentGrouping: document.getElementById('respondedStudentGrouping').checked,
+            createdFigma: document.getElementById('createdFigma').checked,
             figmaStatus: document.querySelector('input[name="figmaStatus"]:checked')?.value || 'Not started',
             sharedFeedbackForm: document.getElementById('sharedFeedbackForm')?.checked || false,
             submittedCourseFeedback: document.getElementById('submittedCourseFeedback')?.checked || false,
@@ -2013,8 +2009,8 @@ function generateCSV(data) {
     const headers = [
         'ID', 'Name', 'Email', 'Figma Email', 'LinkedIn', 'WhatsApp', 'Location', 'Language', 'Status', 'Cohort', 
         'Payment Method', 'Total Amount', 'Paid Amount', 'Remaining', 'Note',
-        'Onboarding: Community', 'Onboarding: Agreement', 'Onboarding: Signed', 
-        'Onboarding: Drive', 'Onboarding: Figma', 'Onboarding: Master Figma',
+        'Onboarding: Community', 'Onboarding: Agreement', 'Onboarding: Student Grouping', 
+        'Onboarding: Drive', 'Onboarding: Master Figma', 'Onboarding: Signed', 'Onboarding: Responded Grouping', 'Onboarding: Figma',
         'Figma Status', 
         'Post-Course: Feedback Form', 'Post-Course: Course Feedback', 'Post-Course: Certificate'
     ];
@@ -2036,13 +2032,15 @@ function generateCSV(data) {
         student.paidAmount || 0,
         student.remaining || 0,
         `"${student.note || ''}"`,
-        // Onboarding checklist items
+        // Onboarding checklist items (8 items in new order)
         student.checklist?.addedCommunity ? 'Yes' : 'No',
         student.checklist?.sharedAgreement ? 'Yes' : 'No',
-        student.checklist?.signedAgreement ? 'Yes' : 'No',
+        student.checklist?.respondStudentGrouping ? 'Yes' : 'No',
         student.checklist?.sharedDrive ? 'Yes' : 'No',
-        student.checklist?.createdFigma ? 'Yes' : 'No',
         student.checklist?.sharedMasterFigma ? 'Yes' : 'No',
+        student.checklist?.signedAgreement ? 'Yes' : 'No',
+        student.checklist?.respondedStudentGrouping ? 'Yes' : 'No',
+        student.checklist?.createdFigma ? 'Yes' : 'No',
         // Figma status
         student.checklist?.figmaStatus || 'Not started',
         // Post-course actions
@@ -2334,7 +2332,7 @@ function openStudentContactModal(studentId) {
         const checklistItems = [];
         
         // Onboarding Checklist
-        const onboardingItems = ['addedCommunity', 'sharedAgreement', 'signedAgreement', 'sharedDrive', 'createdFigma', 'sharedMasterFigma'];
+        const onboardingItems = ['addedCommunity', 'sharedAgreement', 'respondStudentGrouping', 'sharedDrive', 'sharedMasterFigma', 'signedAgreement', 'respondedStudentGrouping', 'createdFigma'];
         const onboardingChecked = onboardingItems.filter(item => checklist[item]).length;
         
         // Post-Course Actions
@@ -2350,10 +2348,12 @@ function openStudentContactModal(studentId) {
         const onboardingLabels = {
             'addedCommunity': 'Added to community group',
             'sharedAgreement': 'Shared course agreement',
-            'signedAgreement': 'Signed course agreement',
+            'respondStudentGrouping': 'Shared Student Grouping form',
             'sharedDrive': 'Shared Google Drive folder',
-            'createdFigma': 'Created Figma account',
-            'sharedMasterFigma': 'Shared Master Figma file'
+            'sharedMasterFigma': 'Shared Master Figma file',
+            'signedAgreement': 'Signed course agreement',
+            'respondedStudentGrouping': 'Respond Student Grouping Form',
+            'createdFigma': 'Create private figma file'
         };
         
         Object.entries(onboardingLabels).forEach(([key, label]) => {
