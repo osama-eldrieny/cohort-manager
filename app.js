@@ -706,13 +706,23 @@ function renderCohortPage(cohortId) {
                 <div class="mini-label">Total Students</div>
                 <div class="mini-value">${stats.total}</div>
             </div>
-            <div class="mini-stat">
-                <div class="mini-label">Revenue</div>
-                <div class="mini-value">$${stats.revenue.toFixed(2)}</div>
+            <div class="mini-stat mini-stat-revenue">
+                <div class="mini-label-wrapper">
+                    <div class="mini-label">Revenue</div>
+                    <button class="eye-toggle-small" data-revenue-id="cohort-${cohortId}-revenue" title="Toggle revenue visibility">
+                        <i class="fas fa-eye-slash"></i>
+                    </button>
+                </div>
+                <div class="mini-value hidden" id="cohort-${cohortId}-revenue" data-value="$${stats.revenue.toFixed(2)}">●●●</div>
             </div>
-            <div class="mini-stat">
-                <div class="mini-label">Pending</div>
-                <div class="mini-value">$${stats.pending.toFixed(2)}</div>
+            <div class="mini-stat mini-stat-pending">
+                <div class="mini-label-wrapper">
+                    <div class="mini-label">Pending</div>
+                    <button class="eye-toggle-small" data-revenue-id="cohort-${cohortId}-pending" title="Toggle pending visibility">
+                        <i class="fas fa-eye-slash"></i>
+                    </button>
+                </div>
+                <div class="mini-value hidden" id="cohort-${cohortId}-pending" data-value="$${stats.pending.toFixed(2)}">●●●</div>
             </div>
         </div>
 
@@ -869,13 +879,23 @@ function renderStatusPage(status) {
                 <div class="mini-label">Total Students</div>
                 <div class="mini-value">${stats.total}</div>
             </div>
-            <div class="mini-stat">
-                <div class="mini-label">Revenue</div>
-                <div class="mini-value">$${stats.revenue.toFixed(2)}</div>
+            <div class="mini-stat mini-stat-revenue">
+                <div class="mini-label-wrapper">
+                    <div class="mini-label">Revenue</div>
+                    <button class="eye-toggle-small" data-revenue-id="status-${pageId}-revenue" title="Toggle revenue visibility">
+                        <i class="fas fa-eye-slash"></i>
+                    </button>
+                </div>
+                <div class="mini-value hidden" id="status-${pageId}-revenue" data-value="$${stats.revenue.toFixed(2)}">●●●</div>
             </div>
-            <div class="mini-stat">
-                <div class="mini-label">Pending</div>
-                <div class="mini-value">$${stats.pending.toFixed(2)}</div>
+            <div class="mini-stat mini-stat-pending">
+                <div class="mini-label-wrapper">
+                    <div class="mini-label">Pending</div>
+                    <button class="eye-toggle-small" data-revenue-id="status-${pageId}-pending" title="Toggle pending visibility">
+                        <i class="fas fa-eye-slash"></i>
+                    </button>
+                </div>
+                <div class="mini-value hidden" id="status-${pageId}-pending" data-value="$${stats.pending.toFixed(2)}">●●●</div>
             </div>
         </div>
 

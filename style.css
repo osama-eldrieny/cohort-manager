@@ -1340,6 +1340,34 @@ button {
     color: var(--text-primary);
 }
 
+.mini-value.hidden {
+    color: #ccc;
+    letter-spacing: 2px;
+    font-size: 14px;
+}
+
+.mini-label-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 6px;
+    position: relative;
+}
+
+.mini-stat-revenue,
+.mini-stat-pending {
+    position: relative;
+}
+
+.mini-stat-revenue .eye-toggle-small,
+.mini-stat-pending .eye-toggle-small {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 12px;
+}
+
 /* ============================================
    UTILITY CLASSES
    ============================================ */
