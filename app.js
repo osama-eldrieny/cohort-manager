@@ -186,6 +186,46 @@ function setupEventListeners() {
     }
     
     // Revenue Eye Toggle - Cohort Revenue Cards
+    // Don't attach listeners here - will be attached after page render
+}
+
+// Function to attach eye toggle listeners - must be called after elements are created
+function attachEyeToggleListeners() {
+    document.querySelectorAll('.eye-toggle-small').forEach(btn => {
+        // Remove existing listeners to avoid duplicates
+        btn.replaceWith(btn.cloneNode(true));
+    });
+    
+    // Attach fresh listeners to all eye-toggle-small buttons
+    document.querySelectorAll('.eye-toggle-small').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const revenueId = btn.getAttribute('data-revenue-id');
+            const revenueElement = document.getElementById(revenueId);
+            if (revenueElement) {
+                revenueElement.classList.toggle('hidden');
+                const icon = btn.querySelector('i');
+                if (revenueElement.classList.contains('hidden')) {
+                    revenueElement.textContent = '●●●';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    revenueElement.textContent = revenueElement.getAttribute('data-value');
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            }
+        });
+    });
+}
+
+// Attach listeners on page load
+document.addEventListener('DOMContentLoaded', () => {
+    attachEyeToggleListeners();
+});
+
+// Old code location (removing inline listener setup)
+/*
     document.querySelectorAll('.eye-toggle-small').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -835,14 +875,15 @@ function attachCohortButtonListeners(page) {
         });
     });
 
-
-
     page.querySelectorAll('.btn-delete').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
             deleteStudent(btn.dataset.studentId);
         });
     });
+    
+    // Attach eye toggle listeners for mini-stat money displays
+    attachEyeToggleListeners();
 }
 
 // ============================================
@@ -1007,14 +1048,15 @@ function attachStatusButtonListeners(page) {
         });
     });
 
-
-
     page.querySelectorAll('.btn-delete').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
             deleteStudent(btn.dataset.studentId);
         });
     });
+    
+    // Attach eye toggle listeners for mini-stat money displays
+    attachEyeToggleListeners();
 }
 
 // ============================================
