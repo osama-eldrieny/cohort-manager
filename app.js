@@ -56,6 +56,213 @@ function escapeHtml(text) {
     return text.replace(/[&<>"']/g, m => map[m]);
 }
 
+// ============================================
+// COLUMN VISIBILITY MANAGEMENT SYSTEM
+// ============================================
+
+// Define all columns for each page type
+const PAGE_COLUMNS = {
+    students: [
+        { id: 'col-id', label: '#', visible: true },
+        { id: 'col-name', label: 'Name', visible: true },
+        { id: 'col-email', label: 'Email', visible: true },
+        { id: 'col-status', label: 'Status', visible: true },
+        { id: 'col-location', label: 'Location', visible: true },
+        { id: 'col-language', label: 'Language', visible: true },
+        { id: 'col-linkedin', label: 'LinkedIn', visible: true },
+        { id: 'col-whatsapp', label: 'WhatsApp', visible: true },
+        { id: 'col-notes', label: 'Notes', visible: true },
+        { id: 'col-actions', label: 'Actions', visible: true }
+    ],
+    cohort: [
+        { id: 'col-id', label: '#', visible: true },
+        { id: 'col-name', label: 'Name', visible: true },
+        { id: 'col-email', label: 'Email', visible: true },
+        { id: 'col-figmaEmail', label: 'Figma Email', visible: true },
+        { id: 'col-location', label: 'Location', visible: true },
+        { id: 'col-language', label: 'Language', visible: true },
+        { id: 'col-linkedin', label: 'LinkedIn', visible: true },
+        { id: 'col-whatsapp', label: 'WhatsApp', visible: true },
+        { id: 'col-onboarding', label: 'Onboarding', visible: true },
+        { id: 'col-postcourse', label: 'Post-Course', visible: true },
+        { id: 'col-actions', label: 'Actions', visible: true }
+    ],
+    status: [
+        { id: 'col-id', label: '#', visible: true },
+        { id: 'col-name', label: 'Name', visible: true },
+        { id: 'col-email', label: 'Email', visible: true },
+        { id: 'col-location', label: 'Location', visible: true },
+        { id: 'col-language', label: 'Language', visible: true },
+        { id: 'col-linkedin', label: 'LinkedIn', visible: true },
+        { id: 'col-whatsapp', label: 'WhatsApp', visible: true },
+        { id: 'col-notes', label: 'Notes', visible: true },
+        { id: 'col-onboarding', label: 'Onboarding', visible: true },
+        { id: 'col-postcourse', label: 'Post-Course', visible: true },
+        { id: 'col-actions', label: 'Actions', visible: true }
+    ]
+};
+
+// Get column preferences for a page
+function getColumnPreferences(pageId) {
+    const key = `columnPreferences_${pageId}`;
+    const stored = localStorage.getItem(key);
+    if (stored) {
+        return JSON.parse(stored);
+    }
+    
+    // Return defaults based on page type
+    if (pageId === 'students') {
+        return PAGE_COLUMNS.students.map(col => col.id);
+    } else if (pageId.startsWith('cohort')) {
+        return PAGE_COLUMNS.cohort.map(col => col.id);
+    } else {
+        return PAGE_COLUMNS.status.map(col => col.id);
+    }
+}
+
+// Save column preferences for a page
+function saveColumnPreferences(pageId, visibleColumns) {
+    const key = `columnPreferences_${pageId}`;
+    localStorage.setItem(key, JSON.stringify(visibleColumns));
+}
+
+// Check if a column should be visible
+function isColumnVisible(pageId, columnId) {
+    const visibleColumns = getColumnPreferences(pageId);
+    return visibleColumns.includes(columnId);
+}
+
+// Get all available columns for a page
+function getAvailableColumns(pageId) {
+    if (pageId === 'students') {
+        return PAGE_COLUMNS.students;
+    } else if (pageId.startsWith('cohort')) {
+        return PAGE_COLUMNS.cohort;
+    } else {
+        return PAGE_COLUMNS.status;
+    }
+}
+
+// Apply column visibility to a table
+function applyColumnVisibility(tableBodyId, pageId, pageType) {
+    const tbody = document.getElementById(tableBodyId);
+    if (!tbody) return;
+    
+    const visibleColumns = getColumnPreferences(pageId);
+    const rows = tbody.querySelectorAll('tr');
+    
+    // For header row
+    const table = tbody.closest('table');
+    if (table) {
+        const thead = table.querySelector('thead');
+        if (thead) {
+            const headerCells = thead.querySelectorAll('th');
+            headerCells.forEach((cell) => {
+                // Get the class that starts with 'col-'
+                const columnClass = Array.from(cell.classList).find(cls => cls.startsWith('col-'));
+                if (columnClass) {
+                    if (visibleColumns.includes(columnClass)) {
+                        cell.style.display = '';
+                    } else {
+                        cell.style.display = 'none';
+                    }
+                }
+            });
+        }
+    }
+    
+    // Hide cells based on visibility
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        cells.forEach(cell => {
+            const columnClass = Array.from(cell.classList).find(cls => cls.startsWith('col-'));
+            if (columnClass) {
+                if (visibleColumns.includes(columnClass)) {
+                    cell.style.display = '';
+                } else {
+                    cell.style.display = 'none';
+                }
+            }
+        });
+    });
+}
+
+// Create column visibility control modal
+function createColumnControlModal(pageId, pageTitle) {
+    const availableColumns = getAvailableColumns(pageId);
+    const visibleColumns = getColumnPreferences(pageId);
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.id = 'columnControlModal';
+    modal.style.display = 'flex';
+    
+    const columnsHtml = availableColumns.map(col => `
+        <label class="column-control-label">
+            <input type="checkbox" class="column-checkbox" data-column-id="${col.id}" ${visibleColumns.includes(col.id) ? 'checked' : ''}>
+            <span>${col.label}</span>
+        </label>
+    `).join('');
+    
+    modal.innerHTML = `
+        <div class="modal-content" style="width: 400px; max-height: 80vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3>Column Visibility - ${pageTitle}</h3>
+                <button class="close-modal" onclick="document.getElementById('columnControlModal').remove()">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <div class="column-controls">
+                    ${columnsHtml}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="document.getElementById('columnControlModal').remove()">Close</button>
+                <button class="btn btn-primary" onclick="applyColumnPreferences('${pageId}')">Apply</button>
+                <button class="btn btn-light" onclick="resetColumnPreferences('${pageId}')">Reset to Default</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Close on background click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+}
+
+// Apply selected column preferences
+function applyColumnPreferences(pageId) {
+    const modal = document.getElementById('columnControlModal');
+    const checkboxes = modal.querySelectorAll('.column-checkbox:checked');
+    const visibleColumns = Array.from(checkboxes).map(cb => cb.dataset.columnId);
+    
+    if (visibleColumns.length === 0) {
+        alert('Please select at least one column to display');
+        return;
+    }
+    
+    saveColumnPreferences(pageId, visibleColumns);
+    modal.remove();
+    
+    // Re-render the page
+    renderPage(pageId);
+}
+
+// Reset column preferences to default
+function resetColumnPreferences(pageId) {
+    const key = `columnPreferences_${pageId}`;
+    localStorage.removeItem(key);
+    
+    const modal = document.getElementById('columnControlModal');
+    modal.remove();
+    
+    // Re-render the page
+    renderPage(pageId);
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
     await loadStudents();
@@ -668,8 +875,10 @@ function renderStudentsTable() {
         });
     });
 
-
+    // Apply column visibility
+    applyColumnVisibility('studentsTableBody', 'students', 'students');
 }
+
 
 // ============================================
 // COHORT PAGES
@@ -713,8 +922,9 @@ function renderCohortPage(cohortId) {
     };
 
     const tableHtml = `
-        <div class="controls" style="margin-bottom: 20px;">
+        <div class="controls" style="margin-bottom: 20px; display: flex; gap: 10px;">
             <input type="text" id="searchCohort-${cohortId}" placeholder="Search student..." style="flex: 1; padding: 12px 14px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
+            <button class="column-control-button" onclick="createColumnControlModal('${cohortId}', '${cohort}')" title="Column visibility settings"><i class="fas fa-sliders-h"></i> Columns</button>
         </div>
 
         <div class="cohort-stats-mini">
@@ -746,17 +956,17 @@ function renderCohortPage(cohortId) {
             <table>
                 <thead>
                     <tr>
-                        <th>#</th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Figma Email</th>
-                        <th>Location</th>
-                        <th>Language</th>
-                        <th>LinkedIn</th>
-                        <th>WhatsApp</th>
-                        ${showChecklistProgress ? '<th>Onboarding</th>' : ''}
-                        <th>Post-Course</th>
-                        <th>Actions</th>
+                        <th class="col-id">#</th>
+                        <th class="col-name">Name</th>
+                        <th class="col-email">Email</th>
+                        <th class="col-figmaEmail">Figma Email</th>
+                        <th class="col-location">Location</th>
+                        <th class="col-language">Language</th>
+                        <th class="col-linkedin">LinkedIn</th>
+                        <th class="col-whatsapp">WhatsApp</th>
+                        ${showChecklistProgress ? '<th class="col-onboarding">Onboarding</th>' : ''}
+                        <th class="col-postcourse">Post-Course</th>
+                        <th class="col-actions">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="cohortTableBody-${cohortId}">
@@ -765,21 +975,21 @@ function renderCohortPage(cohortId) {
                         const postCoursePct = Math.round((postCourseItems / 3) * 100) + '%';
                         return `
                         <tr>
-                            <td style="padding-right: 0px;"><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
-                            <td><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" onclick="openStudentContactModal('${student.id}')" title="Click to view details">${student.name}</strong></td>
-                            <td><span class="copy-email" title="Click to copy">${student.email}</span></td>
-                            <td>${student.figmaEmail ? `<span class="copy-email" title="Click to copy">${student.figmaEmail}</span>` : '-'}</td>
-                            <td>${student.location}</td>
-                            <td>${student.language || 'Not specified'}</td>
-                            <td>
+                            <td class="col-id" style="padding-right: 0px;"><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
+                            <td class="col-name"><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" onclick="openStudentContactModal('${student.id}')" title="Click to view details">${student.name}</strong></td>
+                            <td class="col-email"><span class="copy-email" title="Click to copy">${student.email}</span></td>
+                            <td class="col-figmaEmail">${student.figmaEmail ? `<span class="copy-email" title="Click to copy">${student.figmaEmail}</span>` : '-'}</td>
+                            <td class="col-location">${student.location}</td>
+                            <td class="col-language">${student.language || 'Not specified'}</td>
+                            <td class="col-linkedin">
                                 ${student.linkedin ? `<a href="${student.linkedin}" target="_blank" title="LinkedIn Profile" style="color: #0A66C2; text-decoration: none; font-size: 24px; display: inline-flex; align-items: center;"><i class="fab fa-linkedin"></i></a>` : '-'}
                             </td>
-                            <td>
+                            <td class="col-whatsapp">
                                 ${student.whatsapp ? `<a href="https://wa.me/${student.whatsapp.replace(/\\D/g, '')}" target="_blank" title="Send WhatsApp message" style="color: #25D366; text-decoration: none; display: flex; align-items: center; gap: 4px;"><i class="fab fa-whatsapp"></i> ${student.whatsapp}</a>` : '-'}
                             </td>
-                            ${showChecklistProgress ? `<td>${calculateChecklistProgress(student)}%</td>` : ''}
-                            <td>${postCoursePct}</td>
-                            <td>
+                            ${showChecklistProgress ? `<td class="col-onboarding">${calculateChecklistProgress(student)}%</td>` : ''}
+                            <td class="col-postcourse">${postCoursePct}</td>
+                            <td class="col-actions">
                                 <button class="btn-small btn-edit" data-student-id="${student.id}" title="Edit"><i class="fas fa-pencil-alt"></i></button>
                                 <button class="btn-small btn-danger btn-delete" data-student-id="${student.id}" title="Delete"><i class="fas fa-trash"></i></button>
                             </td>
@@ -813,21 +1023,21 @@ function renderCohortPage(cohortId) {
                     const postCoursePct = Math.round((postCourseItems / 3) * 100) + '%';
                     return `
                     <tr>
-                        <td style="padding-right: 0px;"><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
-                        <td><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" onclick="openStudentContactModal('${student.id}')" title="Click to view details">${student.name}</strong></td>
-                        <td><span class="copy-email" title="Click to copy">${student.email}</span></td>
-                        <td>${student.figmaEmail ? `<span class="copy-email" title="Click to copy">${student.figmaEmail}</span>` : '-'}</td>
-                        <td>${student.location}</td>
-                        <td>${student.language || 'Not specified'}</td>
-                        <td>
+                        <td class="col-id" style="padding-right: 0px;"><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
+                        <td class="col-name"><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" onclick="openStudentContactModal('${student.id}')" title="Click to view details">${student.name}</strong></td>
+                        <td class="col-email"><span class="copy-email" title="Click to copy">${student.email}</span></td>
+                        <td class="col-figmaEmail">${student.figmaEmail ? `<span class="copy-email" title="Click to copy">${student.figmaEmail}</span>` : '-'}</td>
+                        <td class="col-location">${student.location}</td>
+                        <td class="col-language">${student.language || 'Not specified'}</td>
+                        <td class="col-linkedin">
                             ${student.linkedin ? `<a href="${student.linkedin}" target="_blank" title="LinkedIn Profile" style="color: #0A66C2; text-decoration: none; font-size: 24px; display: inline-flex; align-items: center;"><i class="fab fa-linkedin"></i></a>` : '-'}
                         </td>
-                        <td>
+                        <td class="col-whatsapp">
                             ${student.whatsapp ? `<a href="https://wa.me/${student.whatsapp.replace(/\\D/g, '')}" target="_blank" title="Send WhatsApp message" style="color: #25D366; text-decoration: none; display: flex; align-items: center; gap: 4px;"><i class="fab fa-whatsapp"></i> ${student.whatsapp}</a>` : '-'}
                         </td>
-                        ${showChecklistProgress ? `<td>${calculateChecklistProgress(student)}%</td>` : ''}
-                        <td>${postCoursePct}</td>
-                        <td>
+                        ${showChecklistProgress ? `<td class="col-onboarding">${calculateChecklistProgress(student)}%</td>` : ''}
+                        <td class="col-postcourse">${postCoursePct}</td>
+                        <td class="col-actions">
                             <button class="btn-small btn-edit" data-student-id="${student.id}" title="Edit"><i class="fas fa-pencil-alt"></i></button>
                             <button class="btn-small btn-danger btn-delete" data-student-id="${student.id}" title="Delete"><i class="fas fa-trash"></i></button>
                         </td>
@@ -840,6 +1050,9 @@ function renderCohortPage(cohortId) {
     }
 
     attachCohortButtonListeners(page);
+    
+    // Apply column visibility
+    applyColumnVisibility(`cohortTableBody-${cohortId}`, cohortId, 'cohort');
 }
 
 function attachCohortButtonListeners(page) {
@@ -887,8 +1100,9 @@ function renderStatusPage(status) {
     };
 
     const tableHtml = `
-        <div class="controls" style="margin-bottom: 20px;">
+        <div class="controls" style="margin-bottom: 20px; display: flex; gap: 10px;">
             <input type="text" id="searchStatus-${pageId}" placeholder="Search student..." style="flex: 1; padding: 12px 14px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
+            <button class="column-control-button" onclick="createColumnControlModal('${pageId}', '${status}')" title="Column visibility settings"><i class="fas fa-sliders-h"></i> Columns</button>
         </div>
 
         <div class="cohort-stats-mini">
@@ -920,17 +1134,17 @@ function renderStatusPage(status) {
             <table>
                 <thead>
                     <tr>
-                        <th>#</th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Location</th>
-                        <th>Language</th>
-                        <th>LinkedIn</th>
-                        <th>WhatsApp</th>
-                        <th>Notes</th>
-                        <th>Onboarding</th>
-                        <th>Post-Course</th>
-                        <th>Actions</th>
+                        <th class="col-id">#</th>
+                        <th class="col-name">Name</th>
+                        <th class="col-email">Email</th>
+                        <th class="col-location">Location</th>
+                        <th class="col-language">Language</th>
+                        <th class="col-linkedin">LinkedIn</th>
+                        <th class="col-whatsapp">WhatsApp</th>
+                        <th class="col-notes">Notes</th>
+                        <th class="col-onboarding">Onboarding</th>
+                        <th class="col-postcourse">Post-Course</th>
+                        <th class="col-actions">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="statusTableBody-${pageId}">
@@ -939,21 +1153,21 @@ function renderStatusPage(status) {
                         const postCoursePct = Math.round((postCourseItems / 3) * 100) + '%';
                         return `
                         <tr>
-                            <td style="padding-right: 0px;"><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
-                            <td><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" onclick="openStudentContactModal('${student.id}')" title="Click to view details">${student.name}</strong></td>
-                            <td><span class="copy-email" title="Click to copy">${student.email}</span></td>
-                            <td>${student.location}</td>
-                            <td>${student.language || 'Not specified'}</td>
-                            <td>
+                            <td class="col-id" style="padding-right: 0px;"><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
+                            <td class="col-name"><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" onclick="openStudentContactModal('${student.id}')" title="Click to view details">${student.name}</strong></td>
+                            <td class="col-email"><span class="copy-email" title="Click to copy">${student.email}</span></td>
+                            <td class="col-location">${student.location}</td>
+                            <td class="col-language">${student.language || 'Not specified'}</td>
+                            <td class="col-linkedin">
                                 ${student.linkedin ? `<a href="${student.linkedin}" target="_blank" title="LinkedIn Profile" style="color: #0A66C2; text-decoration: none; font-size: 24px; display: inline-flex; align-items: center;"><i class="fab fa-linkedin"></i></a>` : '-'}
                             </td>
-                            <td>
+                            <td class="col-whatsapp">
                                 ${student.whatsapp ? `<a href="https://wa.me/${student.whatsapp.replace(/\\D/g, '')}" target="_blank" title="Send WhatsApp message" style="color: #25D366; text-decoration: none; display: flex; align-items: center; gap: 4px;"><i class="fab fa-whatsapp"></i> ${student.whatsapp}</a>` : '-'}
                             </td>
-                            <td>${student.note || '-'}</td>
-                            <td>${calculateChecklistProgress(student)}%</td>
-                            <td>${postCoursePct}</td>
-                            <td>
+                            <td class="col-notes">${student.note || '-'}</td>
+                            <td class="col-onboarding">${calculateChecklistProgress(student)}%</td>
+                            <td class="col-postcourse">${postCoursePct}</td>
+                            <td class="col-actions">
                                 <button class="btn-small btn-edit" data-student-id="${student.id}" title="Edit"><i class="fas fa-pencil-alt"></i></button>
                                 <button class="btn-small btn-danger btn-delete" data-student-id="${student.id}" title="Delete"><i class="fas fa-trash"></i></button>
                             </td>
@@ -986,21 +1200,21 @@ function renderStatusPage(status) {
                     const postCoursePct = Math.round((postCourseItems / 3) * 100) + '%';
                     return `
                     <tr>
-                        <td style="padding-right: 0px;"><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
-                        <td><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" onclick="openStudentContactModal('${student.id}')" title="Click to view details">${student.name}</strong></td>
-                        <td><span class="copy-email" title="Click to copy">${student.email}</span></td>
-                        <td>${student.location}</td>
-                        <td>${student.language || 'Not specified'}</td>
-                        <td>
+                        <td class="col-id" style="padding-right: 0px;"><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
+                        <td class="col-name"><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" onclick="openStudentContactModal('${student.id}')" title="Click to view details">${student.name}</strong></td>
+                        <td class="col-email"><span class="copy-email" title="Click to copy">${student.email}</span></td>
+                        <td class="col-location">${student.location}</td>
+                        <td class="col-language">${student.language || 'Not specified'}</td>
+                        <td class="col-linkedin">
                             ${student.linkedin ? `<a href="${student.linkedin}" target="_blank" title="LinkedIn Profile" style="color: #0A66C2; text-decoration: none; font-size: 24px; display: inline-flex; align-items: center;"><i class="fab fa-linkedin"></i></a>` : '-'}
                         </td>
-                        <td>
+                        <td class="col-whatsapp">
                             ${student.whatsapp ? `<a href="https://wa.me/${student.whatsapp.replace(/\\D/g, '')}" target="_blank" title="Send WhatsApp message" style="color: #25D366; text-decoration: none; display: flex; align-items: center; gap: 4px;"><i class="fab fa-whatsapp"></i> ${student.whatsapp}</a>` : '-'}
                         </td>
-                        <td>${student.note || '-'}</td>
-                        <td>${calculateChecklistProgress(student)}%</td>
-                        <td>${postCoursePct}</td>
-                        <td>
+                        <td class="col-notes">${student.note || '-'}</td>
+                        <td class="col-onboarding">${calculateChecklistProgress(student)}%</td>
+                        <td class="col-postcourse">${postCoursePct}</td>
+                        <td class="col-actions">
                             <button class="btn-small btn-edit" data-student-id="${student.id}" title="Edit"><i class="fas fa-pencil-alt"></i></button>
                             <button class="btn-small btn-danger btn-delete" data-student-id="${student.id}" title="Delete"><i class="fas fa-trash"></i></button>
                         </td>
@@ -1013,6 +1227,9 @@ function renderStatusPage(status) {
     }
 
     attachStatusButtonListeners(page);
+    
+    // Apply column visibility
+    applyColumnVisibility(`statusTableBody-${pageId}`, pageId, 'status');
 }
 
 function attachStatusButtonListeners(page) {
