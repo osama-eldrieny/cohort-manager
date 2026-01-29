@@ -1209,6 +1209,9 @@ function openAddModal() {
 function closeStudentModal() {
     document.getElementById('studentModal').style.display = 'none';
     currentEditingId = null;
+    // Reset form for next entry
+    document.getElementById('studentForm').reset();
+    document.getElementById('modalTitle').textContent = 'Add New Student';
 }
 
 function editStudent(id) {
@@ -1465,18 +1468,18 @@ function saveStudent(event) {
         id: currentEditingId || Math.floor(Date.now() / 1000),
         name: document.getElementById('name').value,
         email: newEmail,
-        linkedin: document.getElementById('linkedin').value,
-        whatsapp: document.getElementById('whatsapp').value,
-        figmaEmail: document.getElementById('figmaEmail').value,
-        location: document.getElementById('location').value,
-        language: document.getElementById('language').value,
+        linkedin: document.getElementById('linkedin').value || null,
+        whatsapp: document.getElementById('whatsapp').value || null,
+        figmaEmail: document.getElementById('figmaEmail').value || null,
+        location: document.getElementById('location').value || null,
+        language: document.getElementById('language').value || null,
         status: statusValue,
         cohort: statusValue, // Cohort is now the same as status
         totalAmount: parseFloat(document.getElementById('totalAmount').value) || 0,
         paidAmount: parseFloat(document.getElementById('paidAmount').value) || 0,
         remaining: parseFloat(document.getElementById('remaining').value) || 0,
-        note: document.getElementById('note').value,
-        paymentMethod: document.getElementById('paymentMethod').value
+        note: document.getElementById('note').value || null,
+        paymentMethod: document.getElementById('paymentMethod').value || null
     };
 
     console.log('📝 Saving student:', student.name, '| Status:', student.status, '| ID:', student.id, '| Email:', student.email);
