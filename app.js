@@ -61,44 +61,69 @@ function escapeHtml(text) {
 // ============================================
 
 // Define all columns for each page type
+// Standard columns for all tables (Students, Cohort, Status pages)
+const STANDARD_COLUMNS = [
+    { id: 'col-id', label: '#' },
+    { id: 'col-name', label: 'Name' },
+    { id: 'col-email', label: 'Email' },
+    { id: 'col-figmaEmail', label: 'Figma Email' },
+    { id: 'col-status', label: 'Status' },
+    { id: 'col-location', label: 'Location' },
+    { id: 'col-language', label: 'Language' },
+    { id: 'col-linkedin', label: 'LinkedIn' },
+    { id: 'col-whatsapp', label: 'WhatsApp' },
+    { id: 'col-notes', label: 'Notes' },
+    { id: 'col-onboarding', label: 'Onboarding' },
+    { id: 'col-postcourse', label: 'Post-Course' },
+    { id: 'col-actions', label: 'Actions' }
+];
+
+// Page-specific default visibility (each page has independent column preferences)
 const PAGE_COLUMNS = {
     students: [
-        { id: 'col-id', label: '#', visible: true },
-        { id: 'col-name', label: 'Name', visible: true },
-        { id: 'col-email', label: 'Email', visible: true },
-        { id: 'col-status', label: 'Status', visible: true },
-        { id: 'col-location', label: 'Location', visible: true },
-        { id: 'col-language', label: 'Language', visible: true },
-        { id: 'col-linkedin', label: 'LinkedIn', visible: true },
-        { id: 'col-whatsapp', label: 'WhatsApp', visible: true },
-        { id: 'col-notes', label: 'Notes', visible: true },
-        { id: 'col-actions', label: 'Actions', visible: true }
+        { id: 'col-id', label: '#' },
+        { id: 'col-name', label: 'Name' },
+        { id: 'col-email', label: 'Email' },
+        { id: 'col-figmaEmail', label: 'Figma Email' },
+        { id: 'col-status', label: 'Status' },
+        { id: 'col-location', label: 'Location' },
+        { id: 'col-language', label: 'Language' },
+        { id: 'col-linkedin', label: 'LinkedIn' },
+        { id: 'col-whatsapp', label: 'WhatsApp' },
+        { id: 'col-notes', label: 'Notes' },
+        { id: 'col-onboarding', label: 'Onboarding' },
+        { id: 'col-postcourse', label: 'Post-Course' },
+        { id: 'col-actions', label: 'Actions' }
     ],
     cohort: [
-        { id: 'col-id', label: '#', visible: true },
-        { id: 'col-name', label: 'Name', visible: true },
-        { id: 'col-email', label: 'Email', visible: true },
-        { id: 'col-figmaEmail', label: 'Figma Email', visible: true },
-        { id: 'col-location', label: 'Location', visible: true },
-        { id: 'col-language', label: 'Language', visible: true },
-        { id: 'col-linkedin', label: 'LinkedIn', visible: true },
-        { id: 'col-whatsapp', label: 'WhatsApp', visible: true },
-        { id: 'col-onboarding', label: 'Onboarding', visible: true },
-        { id: 'col-postcourse', label: 'Post-Course', visible: true },
-        { id: 'col-actions', label: 'Actions', visible: true }
+        { id: 'col-id', label: '#' },
+        { id: 'col-name', label: 'Name' },
+        { id: 'col-email', label: 'Email' },
+        { id: 'col-figmaEmail', label: 'Figma Email' },
+        { id: 'col-status', label: 'Status' },
+        { id: 'col-location', label: 'Location' },
+        { id: 'col-language', label: 'Language' },
+        { id: 'col-linkedin', label: 'LinkedIn' },
+        { id: 'col-whatsapp', label: 'WhatsApp' },
+        { id: 'col-notes', label: 'Notes' },
+        { id: 'col-onboarding', label: 'Onboarding' },
+        { id: 'col-postcourse', label: 'Post-Course' },
+        { id: 'col-actions', label: 'Actions' }
     ],
     status: [
-        { id: 'col-id', label: '#', visible: true },
-        { id: 'col-name', label: 'Name', visible: true },
-        { id: 'col-email', label: 'Email', visible: true },
-        { id: 'col-location', label: 'Location', visible: true },
-        { id: 'col-language', label: 'Language', visible: true },
-        { id: 'col-linkedin', label: 'LinkedIn', visible: true },
-        { id: 'col-whatsapp', label: 'WhatsApp', visible: true },
-        { id: 'col-notes', label: 'Notes', visible: true },
-        { id: 'col-onboarding', label: 'Onboarding', visible: true },
-        { id: 'col-postcourse', label: 'Post-Course', visible: true },
-        { id: 'col-actions', label: 'Actions', visible: true }
+        { id: 'col-id', label: '#' },
+        { id: 'col-name', label: 'Name' },
+        { id: 'col-email', label: 'Email' },
+        { id: 'col-figmaEmail', label: 'Figma Email' },
+        { id: 'col-status', label: 'Status' },
+        { id: 'col-location', label: 'Location' },
+        { id: 'col-language', label: 'Language' },
+        { id: 'col-linkedin', label: 'LinkedIn' },
+        { id: 'col-whatsapp', label: 'WhatsApp' },
+        { id: 'col-notes', label: 'Notes' },
+        { id: 'col-onboarding', label: 'Onboarding' },
+        { id: 'col-postcourse', label: 'Post-Course' },
+        { id: 'col-actions', label: 'Actions' }
     ]
 };
 
@@ -130,10 +155,10 @@ async function getColumnPreferences(pageId) {
     // Return defaults based on page type
     if (pageId === 'students') {
         return PAGE_COLUMNS.students.map(col => col.id);
-    } else if (pageId.startsWith('cohort')) {
-        return PAGE_COLUMNS.cohort.map(col => col.id);
+    } else if (pageId.startsWith('cohort') || pageId.startsWith('waiting') || pageId.startsWith('cant') || pageId.startsWith('next') || pageId.startsWith('stand') || pageId.startsWith('grad')) {
+        return PAGE_COLUMNS.students.map(col => col.id); // All pages now use same columns
     } else {
-        return PAGE_COLUMNS.status.map(col => col.id);
+        return PAGE_COLUMNS.students.map(col => col.id);
     }
 }
 
@@ -170,13 +195,8 @@ function isColumnVisible(pageId, columnId, visibleColumns) {
 
 // Get all available columns for a page
 function getAvailableColumns(pageId) {
-    if (pageId === 'students') {
-        return PAGE_COLUMNS.students;
-    } else if (pageId.startsWith('cohort')) {
-        return PAGE_COLUMNS.cohort;
-    } else {
-        return PAGE_COLUMNS.status;
-    }
+    // All pages use the standardized columns
+    return PAGE_COLUMNS.students; // All pages now have same columns
 }
 
 // Apply column visibility to a table
@@ -888,9 +908,13 @@ function renderStudentsTable() {
     if (searchTerm) {
         filtered = filtered.filter(s => 
             s.name.toLowerCase().includes(searchTerm) || 
-            s.email.toLowerCase().includes(searchTerm)
+            s.email.toLowerCase().includes(searchTerm) ||
+            (s.whatsapp && s.whatsapp.toLowerCase().includes(searchTerm))
         );
     }
+
+    // Sort by name A-Z
+    filtered.sort((a, b) => (a.name || '').localeCompare((b.name || '')));
 
     const tbody = document.getElementById('studentsTableBody');
     if (filtered.length === 0) {
@@ -904,9 +928,10 @@ function renderStudentsTable() {
             <td class="col-id" style="padding-right: 0px;"><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
             <td class="col-name"><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" onclick="openStudentContactModal('${student.id}')" title="Click to view details">${student.name}</strong></td>
             <td class="col-email"><span class="copy-email" title="Click to copy">${student.email}</span></td>
+            <td class="col-figmaEmail">${student.figmaEmail ? `<span class="copy-email" title="Click to copy">${student.figmaEmail}</span>` : '-'}</td>
             <td class="col-status"><span class="status-badge status-${(student.status || 'unknown').toLowerCase().replace(/\s+/g, '-')}">${student.status || 'Unknown'}</span></td>
-            <td class="col-location">${student.location}</td>
-            <td class="col-language">${student.language || 'Not specified'}</td>
+            <td class="col-location">${student.location || '-'}</td>
+            <td class="col-language">${student.language || '-'}</td>
             <td class="col-linkedin">
                 ${student.linkedin ? `<a href="${student.linkedin}" target="_blank" title="LinkedIn Profile" style="color: #0A66C2; text-decoration: none; font-size: 24px; display: inline-flex; align-items: center;"><i class="fab fa-linkedin"></i></a>` : '-'}
             </td>
@@ -914,6 +939,8 @@ function renderStudentsTable() {
                 ${student.whatsapp ? `<a href="https://wa.me/${student.whatsapp.replace(/\D/g, '')}" target="_blank" title="Send WhatsApp message" style="color: #25D366; text-decoration: none; display: flex; align-items: center; gap: 4px;"><i class="fab fa-whatsapp"></i> ${student.whatsapp}</a>` : '-'}
             </td>
             <td class="col-notes">${student.note || '-'}</td>
+            <td class="col-onboarding">-</td>
+            <td class="col-postcourse">-</td>
             <td class="col-actions">
                 <button class="btn-small btn-edit" data-student-id="${student.id}" title="Edit"><i class="fas fa-pencil-alt"></i></button>
                 <button class="btn-small btn-danger btn-delete" data-student-id="${student.id}" title="Delete"><i class="fas fa-trash"></i></button>
@@ -968,7 +995,6 @@ function renderCohortPage(cohortId) {
     
     // Filter by cohort field first, fallback to status field for backward compatibility
     let cohortStudents = students.filter(s => s.cohort === cohort || s.status === cohort);
-    const showChecklistProgress = cohortId === 'cohort2' || cohortId === 'cohort3' || cohortId === 'english1';
 
     if (cohortStudents.length === 0) {
         page.innerHTML = `
@@ -1024,11 +1050,13 @@ function renderCohortPage(cohortId) {
                         <th class="col-name">Name</th>
                         <th class="col-email">Email</th>
                         <th class="col-figmaEmail">Figma Email</th>
+                        <th class="col-status">Status</th>
                         <th class="col-location">Location</th>
                         <th class="col-language">Language</th>
                         <th class="col-linkedin">LinkedIn</th>
                         <th class="col-whatsapp">WhatsApp</th>
-                        ${showChecklistProgress ? '<th class="col-onboarding">Onboarding</th>' : ''}
+                        <th class="col-notes">Notes</th>
+                        <th class="col-onboarding">Onboarding</th>
                         <th class="col-postcourse">Post-Course</th>
                         <th class="col-actions">Actions</th>
                     </tr>
@@ -1043,15 +1071,17 @@ function renderCohortPage(cohortId) {
                             <td class="col-name"><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" onclick="openStudentContactModal('${student.id}')" title="Click to view details">${student.name}</strong></td>
                             <td class="col-email"><span class="copy-email" title="Click to copy">${student.email}</span></td>
                             <td class="col-figmaEmail">${student.figmaEmail ? `<span class="copy-email" title="Click to copy">${student.figmaEmail}</span>` : '-'}</td>
-                            <td class="col-location">${student.location}</td>
-                            <td class="col-language">${student.language || 'Not specified'}</td>
+                            <td class="col-status"><span class="status-badge status-${(student.status || 'unknown').toLowerCase().replace(/\s+/g, '-')}">${student.status || 'Unknown'}</span></td>
+                            <td class="col-location">${student.location || '-'}</td>
+                            <td class="col-language">${student.language || '-'}</td>
                             <td class="col-linkedin">
                                 ${student.linkedin ? `<a href="${student.linkedin}" target="_blank" title="LinkedIn Profile" style="color: #0A66C2; text-decoration: none; font-size: 24px; display: inline-flex; align-items: center;"><i class="fab fa-linkedin"></i></a>` : '-'}
                             </td>
                             <td class="col-whatsapp">
                                 ${student.whatsapp ? `<a href="https://wa.me/${student.whatsapp.replace(/\\D/g, '')}" target="_blank" title="Send WhatsApp message" style="color: #25D366; text-decoration: none; display: flex; align-items: center; gap: 4px;"><i class="fab fa-whatsapp"></i> ${student.whatsapp}</a>` : '-'}
                             </td>
-                            ${showChecklistProgress ? `<td class="col-onboarding">${calculateChecklistProgress(student)}%</td>` : ''}
+                            <td class="col-notes">${student.note || '-'}</td>
+                            <td class="col-onboarding">${calculateChecklistProgress(student)}%</td>
                             <td class="col-postcourse">${postCoursePct}</td>
                             <td class="col-actions">
                                 <button class="btn-small btn-edit" data-student-id="${student.id}" title="Edit"><i class="fas fa-pencil-alt"></i></button>
@@ -1072,15 +1102,18 @@ function renderCohortPage(cohortId) {
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
             const searchTerm = e.target.value.toLowerCase();
-            const filtered = cohortStudents.filter(s => 
+            let filtered = cohortStudents.filter(s => 
                 s.name.toLowerCase().includes(searchTerm) || 
-                s.email.toLowerCase().includes(searchTerm)
+                s.email.toLowerCase().includes(searchTerm) ||
+                (s.whatsapp && s.whatsapp.toLowerCase().includes(searchTerm))
             );
             
+            // Sort by name A-Z
+            filtered.sort((a, b) => (a.name || '').localeCompare((b.name || '')));
+            
             const tbody = document.getElementById(`cohortTableBody-${cohortId}`);
-            const colspanNum = showChecklistProgress ? 10 : 9;
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="${colspanNum}" class="empty">No students found</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="13" class="empty">No students found</td></tr>`;
             } else {
                 tbody.innerHTML = filtered.map((student, index) => {
                     const postCourseItems = student.checklist ? [student.checklist.sharedFeedbackForm, student.checklist.submittedCourseFeedback, student.checklist.issuedCertificate].filter(Boolean).length : 0;
@@ -1091,15 +1124,17 @@ function renderCohortPage(cohortId) {
                         <td class="col-name"><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" onclick="openStudentContactModal('${student.id}')" title="Click to view details">${student.name}</strong></td>
                         <td class="col-email"><span class="copy-email" title="Click to copy">${student.email}</span></td>
                         <td class="col-figmaEmail">${student.figmaEmail ? `<span class="copy-email" title="Click to copy">${student.figmaEmail}</span>` : '-'}</td>
-                        <td class="col-location">${student.location}</td>
-                        <td class="col-language">${student.language || 'Not specified'}</td>
+                        <td class="col-status"><span class="status-badge status-${(student.status || 'unknown').toLowerCase().replace(/\s+/g, '-')}">${student.status || 'Unknown'}</span></td>
+                        <td class="col-location">${student.location || '-'}</td>
+                        <td class="col-language">${student.language || '-'}</td>
                         <td class="col-linkedin">
                             ${student.linkedin ? `<a href="${student.linkedin}" target="_blank" title="LinkedIn Profile" style="color: #0A66C2; text-decoration: none; font-size: 24px; display: inline-flex; align-items: center;"><i class="fab fa-linkedin"></i></a>` : '-'}
                         </td>
                         <td class="col-whatsapp">
                             ${student.whatsapp ? `<a href="https://wa.me/${student.whatsapp.replace(/\\D/g, '')}" target="_blank" title="Send WhatsApp message" style="color: #25D366; text-decoration: none; display: flex; align-items: center; gap: 4px;"><i class="fab fa-whatsapp"></i> ${student.whatsapp}</a>` : '-'}
                         </td>
-                        ${showChecklistProgress ? `<td class="col-onboarding">${calculateChecklistProgress(student)}%</td>` : ''}
+                        <td class="col-notes">${student.note || '-'}</td>
+                        <td class="col-onboarding">${calculateChecklistProgress(student)}%</td>
                         <td class="col-postcourse">${postCoursePct}</td>
                         <td class="col-actions">
                             <button class="btn-small btn-edit" data-student-id="${student.id}" title="Edit"><i class="fas fa-pencil-alt"></i></button>
@@ -1203,6 +1238,8 @@ function renderStatusPage(status) {
                         <th class="col-id">#</th>
                         <th class="col-name">Name</th>
                         <th class="col-email">Email</th>
+                        <th class="col-figmaEmail">Figma Email</th>
+                        <th class="col-status">Status</th>
                         <th class="col-location">Location</th>
                         <th class="col-language">Language</th>
                         <th class="col-linkedin">LinkedIn</th>
@@ -1222,8 +1259,10 @@ function renderStatusPage(status) {
                             <td class="col-id" style="padding-right: 0px;"><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
                             <td class="col-name"><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" onclick="openStudentContactModal('${student.id}')" title="Click to view details">${student.name}</strong></td>
                             <td class="col-email"><span class="copy-email" title="Click to copy">${student.email}</span></td>
-                            <td class="col-location">${student.location}</td>
-                            <td class="col-language">${student.language || 'Not specified'}</td>
+                            <td class="col-figmaEmail">${student.figmaEmail ? `<span class="copy-email" title="Click to copy">${student.figmaEmail}</span>` : '-'}</td>
+                            <td class="col-status"><span class="status-badge status-${(student.status || 'unknown').toLowerCase().replace(/\s+/g, '-')}">${student.status || 'Unknown'}</span></td>
+                            <td class="col-location">${student.location || '-'}</td>
+                            <td class="col-language">${student.language || '-'}</td>
                             <td class="col-linkedin">
                                 ${student.linkedin ? `<a href="${student.linkedin}" target="_blank" title="LinkedIn Profile" style="color: #0A66C2; text-decoration: none; font-size: 24px; display: inline-flex; align-items: center;"><i class="fab fa-linkedin"></i></a>` : '-'}
                             </td>
@@ -1252,14 +1291,18 @@ function renderStatusPage(status) {
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
             const searchTerm = e.target.value.toLowerCase();
-            const filtered = statusStudents.filter(s => 
+            let filtered = statusStudents.filter(s => 
                 s.name.toLowerCase().includes(searchTerm) || 
-                s.email.toLowerCase().includes(searchTerm)
+                s.email.toLowerCase().includes(searchTerm) ||
+                (s.whatsapp && s.whatsapp.toLowerCase().includes(searchTerm))
             );
+            
+            // Sort by name A-Z
+            filtered.sort((a, b) => (a.name || '').localeCompare((b.name || '')));
             
             const tbody = document.getElementById(`statusTableBody-${pageId}`);
             if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="11" class="empty">No students found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="13" class="empty">No students found</td></tr>';
             } else {
                 tbody.innerHTML = filtered.map((student, index) => {
                     const postCourseItems = student.checklist ? [student.checklist.sharedFeedbackForm, student.checklist.submittedCourseFeedback, student.checklist.issuedCertificate].filter(Boolean).length : 0;
@@ -1269,8 +1312,10 @@ function renderStatusPage(status) {
                         <td class="col-id" style="padding-right: 0px;"><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
                         <td class="col-name"><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" onclick="openStudentContactModal('${student.id}')" title="Click to view details">${student.name}</strong></td>
                         <td class="col-email"><span class="copy-email" title="Click to copy">${student.email}</span></td>
-                        <td class="col-location">${student.location}</td>
-                        <td class="col-language">${student.language || 'Not specified'}</td>
+                        <td class="col-figmaEmail">${student.figmaEmail ? `<span class="copy-email" title="Click to copy">${student.figmaEmail}</span>` : '-'}</td>
+                        <td class="col-status"><span class="status-badge status-${(student.status || 'unknown').toLowerCase().replace(/\s+/g, '-')}">${student.status || 'Unknown'}</span></td>
+                        <td class="col-location">${student.location || '-'}</td>
+                        <td class="col-language">${student.language || '-'}</td>
                         <td class="col-linkedin">
                             ${student.linkedin ? `<a href="${student.linkedin}" target="_blank" title="LinkedIn Profile" style="color: #0A66C2; text-decoration: none; font-size: 24px; display: inline-flex; align-items: center;"><i class="fab fa-linkedin"></i></a>` : '-'}
                         </td>
@@ -1693,12 +1738,19 @@ function populateEmailTemplatesCheckboxes(student) {
     const container = document.getElementById('emailTemplatesCheckboxList');
     const section = document.getElementById('emailTemplatesSection');
     
-    if (!container || !section) return;
+    if (!container || !section) {
+        console.warn('⚠️ Email templates container or section not found in DOM');
+        return;
+    }
     
     container.innerHTML = '';
     
+    console.log(`📋 Email templates available: ${emailTemplates.length} total`);
+    console.log(`   Templates:`, emailTemplates.map(t => `${t.id}:${t.name}`).join(', '));
+    
     // Show section only if there are email templates
     if (!emailTemplates || emailTemplates.length === 0) {
+        console.log('ℹ️ No email templates available, hiding section');
         section.style.display = 'none';
         return;
     }
@@ -1805,6 +1857,11 @@ function saveStudent(event) {
         students.push(student);
     }
 
+    // ⭐ IMPORTANT: Collect email templates BEFORE closing modal (which resets the form)
+    const selectedTemplateCheckboxes = document.querySelectorAll('.email-template-checkbox:checked');
+    const selectedTemplateIds = Array.from(selectedTemplateCheckboxes).map(cb => parseInt(cb.value));
+    const selectedTemplates = emailTemplates.filter(t => selectedTemplateIds.includes(t.id));
+
     closeStudentModal();
     
     // If editing and email changed, log it (server UPSERT on ID will handle the update correctly)
@@ -1813,14 +1870,11 @@ function saveStudent(event) {
         console.log(`   - Server will update record by ID ${currentEditingId} (UPSERT on ID prevents duplicates)`);
     }
     
-    // Collect selected email templates
-    const selectedTemplateCheckboxes = document.querySelectorAll('.email-template-checkbox:checked');
-    const selectedTemplateIds = Array.from(selectedTemplateCheckboxes).map(cb => parseInt(cb.value));
-    const selectedTemplates = emailTemplates.filter(t => selectedTemplateIds.includes(t.id));
-    
     if (selectedTemplates.length > 0) {
         console.log(`📧 Selected ${selectedTemplates.length} email template(s) to send:`);
         selectedTemplates.forEach(t => console.log(`   - ${t.name}`));
+    } else {
+        console.log('ℹ️ No email templates selected to send');
     }
     
     // Save to storage and refresh UI - pass only the single student
@@ -1829,6 +1883,7 @@ function saveStudent(event) {
     // - Create new if ID doesn't exist (INSERT for new records)
     const actionType = currentEditingId ? 'update' : 'create';
     console.log(`💾 Saving student to server (${actionType}): ${newEmail}`);
+    
     saveToStorage(student).then(() => {
         loadStudents().then(() => {
             renderPage(document.querySelector('.page.active').id);
@@ -1842,7 +1897,10 @@ function saveStudent(event) {
             
             // Send selected email templates with delay
             if (selectedTemplates.length > 0) {
+                console.log(`🚀 Starting email send process for ${selectedTemplates.length} template(s)`);
                 sendEmailTemplatesWithDelay(student, selectedTemplates);
+            } else {
+                console.log(`ℹ️ No templates selected, skipping email send`);
             }
         });
     });
@@ -1853,21 +1911,44 @@ function saveStudent(event) {
 
 async function sendEmailTemplatesWithDelay(student, templates) {
     console.log(`⏳ Queuing ${templates.length} email(s) to send to ${student.email} with 4-second delays...`);
+    console.log(`📧 Student: ${student.name} (ID: ${student.id}, Email: ${student.email})`);
+    console.log(`📋 Templates to send:`, templates.map(t => `${t.name} (ID: ${t.id})`).join(', '));
     
     for (let i = 0; i < templates.length; i++) {
         const template = templates[i];
         
         // Wait 4 seconds before each email (including the first one)
         if (i > 0) {
+            console.log(`⏳ Waiting 4 seconds before next email...`);
             await new Promise(resolve => setTimeout(resolve, 4000));
         }
         
         try {
             // Replace placeholders in template
-            const subject = template.subject.replace(/{name}/g, student.name);
-            const body = template.body.replace(/{name}/g, student.name);
+            let subject = template.subject || '';
+            let body = template.body || '';
+            
+            // Replace all dynamic placeholders
+            subject = subject.replace(/{name}/g, student.name || '');
+            subject = subject.replace(/{email}/g, student.email || '');
+            
+            body = body.replace(/{name}/g, student.name || '');
+            body = body.replace(/{email}/g, student.email || '');
+            body = body.replace(/{cohort}/g, student.cohort || student.status || '');
+            body = body.replace(/{status}/g, student.status || '');
+            body = body.replace(/{location}/g, student.location || '');
+            body = body.replace(/{language}/g, student.language || '');
+            body = body.replace(/{linkedin}/g, student.linkedin || '');
+            body = body.replace(/{whatsapp}/g, student.whatsapp || '');
+            body = body.replace(/{figmaEmail}/g, student.figmaEmail || '');
+            body = body.replace(/{paymentMethod}/g, student.paymentMethod || '');
+            body = body.replace(/{totalAmount}/g, student.totalAmount || '0');
+            body = body.replace(/{paidAmount}/g, student.paidAmount || '0');
+            body = body.replace(/{remaining}/g, student.remaining || '0');
+            body = body.replace(/{note}/g, student.note || '');
             
             console.log(`📧 Sending email ${i + 1}/${templates.length}: "${template.name}" to ${student.email}`);
+            console.log(`   Subject: ${subject.substring(0, 60)}${subject.length > 60 ? '...' : ''}`);
             
             const response = await fetch(`${API_BASE_URL}/api/send-email`, {
                 method: 'POST',
@@ -1884,16 +1965,23 @@ async function sendEmailTemplatesWithDelay(student, templates) {
                 })
             });
             
+            const responseData = await response.json();
+            
             if (response.ok) {
-                console.log(`✅ Email sent: ${template.name}`);
+                console.log(`✅ Email sent successfully: ${template.name}`);
+                console.log(`   Message ID: ${responseData.messageId}`);
+                showToast(`✅ Email sent: ${template.name}`, 'success');
             } else {
-                const errorData = await response.json();
-                console.error(`❌ Failed to send email: ${errorData.error || 'Unknown error'}`);
+                console.error(`❌ Failed to send email: ${responseData.error || 'Unknown error'}`);
+                showToast(`❌ Failed to send ${template.name}: ${responseData.error}`, 'error');
             }
         } catch (error) {
-            console.error(`❌ Error sending email: ${error.message}`);
+            console.error(`❌ Error sending email (${template.name}):`, error);
+            console.error(`   Stack: ${error.stack}`);
+            showToast(`❌ Error sending ${template.name}: ${error.message}`, 'error');
         }
     }
+    console.log(`✅ Email sending queue completed for ${student.name}`);
 }
 
 // ============================================
@@ -2582,11 +2670,19 @@ function populateEmailHistory(student) {
     
     if (!section || !listDiv) return;
     
+    console.log(`📧 Loading email history for student ID: ${student.id}`);
+    
     // Load email history from server
     fetch(`${API_BASE_URL}/api/email-logs/${student.id}`)
-        .then(response => response.json())
+        .then(response => {
+            console.log(`📋 API Response status: ${response.status}`);
+            return response.json();
+        })
         .then(logs => {
+            console.log(`📋 Email logs received:`, logs);
+            
             if (!logs || logs.length === 0) {
+                console.log('ℹ️ No email history found for this student');
                 listDiv.innerHTML = '<p style="color: #999; font-size: 13px; margin: 0;">No emails sent yet</p>';
                 return;
             }
@@ -2611,9 +2707,10 @@ function populateEmailHistory(student) {
                     </div>
                 `;
             }).join('');
+            console.log(`✅ Rendered ${sortedLogs.length} email history items`);
         })
         .catch(error => {
-            console.warn('⚠️ Could not load email history:', error.message);
+            console.error('❌ Error loading email history:', error);
             listDiv.innerHTML = '<p style="color: #999; font-size: 13px; margin: 0;">Could not load history</p>';
         });
 }

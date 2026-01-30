@@ -77,7 +77,7 @@ export async function getAllStudents() {
         const { data, error } = await supabase
             .from('students')
             .select('*')
-            .order('updated_at', { ascending: false });
+            .order('name', { ascending: true });
 
         if (error) throw error;
         // Convert all students from snake_case to camelCase
@@ -431,14 +431,22 @@ export async function getEmailLogsFromDB(studentId) {
             return [];
         }
 
+        // Convert studentId to number to match database BIGINT type
+        const numericStudentId = parseInt(studentId, 10);
+        
+        if (isNaN(numericStudentId)) {
+            console.warn(`⚠️ Invalid student ID: ${studentId}`);
+            return [];
+        }
+
         const { data, error } = await supabase
             .from('email_logs')
             .select('*')
-            .eq('student_id', studentId)
+            .eq('student_id', numericStudentId)
             .order('created_at', { ascending: false });
 
         if (error) throw error;
-        console.log(`📋 Retrieved ${(data || []).length} email logs for student ${studentId}`);
+        console.log(`📋 Retrieved ${(data || []).length} email logs for student ${numericStudentId}`);
         return data || [];
     } catch (error) {
         console.error('❌ Error fetching email logs from database:', error.message);
