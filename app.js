@@ -261,12 +261,12 @@ async function createColumnControlModal(pageId, pageTitle) {
     `).join('');
     
     modal.innerHTML = `
-        <div class="modal-content" style="width: 400px; max-height: 80vh; overflow-y: auto;">
+        <div class="modal-content column-control-modal-content" style="width: 400px; max-height: 53%; overflow-y: auto;">
             <div class="modal-header">
                 <h3>Column Visibility - ${pageTitle}</h3>
                 <button class="close-modal" data-action="close">&times;</button>
             </div>
-            <div class="modal-body" style="padding: 20px;">
+            <div class="modal-body">
                 <div class="column-controls">
                     ${columnsHtml}
                 </div>

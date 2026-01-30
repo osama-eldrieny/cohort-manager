@@ -494,13 +494,13 @@ button {
     transition: all 0.3s;
     font-weight: 600;
     letter-spacing: 0.3px;
-    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
+    /* box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2); */
 }
 
 button:hover {
     background-color: #45a049;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+    /* box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3); */
 }
 
 button.secondary {
@@ -2402,7 +2402,7 @@ button {
     display: table-cell;
     width: auto;
     text-align: left;
-    min-width: 127px;
+    min-width: 166px;
 }
 
 .students-data-table th.col-location,
@@ -2747,6 +2747,7 @@ button {
     margin: 20px 0;
     max-height: 60vh;
     overflow-y: auto;
+    padding: 0;
 }
 
 .modal-footer {
