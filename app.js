@@ -949,8 +949,8 @@ function renderStudentsTable() {
             <td class="col-notes">${student.note || '-'}</td>
             <td class="col-onboarding">-</td>
             <td class="col-postcourse">-</td>
-            <td class="col-paid">${student.paidAmount ? `$${student.paidAmount.toFixed(2)}` : '-'}</td>
-            <td class="col-remaining">${student.remaining ? `$${student.remaining.toFixed(2)}` : '-'}</td>
+            <td class="col-paid">${student.paidAmount != null ? `$${student.paidAmount.toFixed(2)}` : '-'}</td>
+            <td class="col-remaining">${student.remaining != null ? `$${student.remaining.toFixed(2)}` : '-'}</td>
             <td class="col-actions">
                 <button class="btn-small btn-edit" data-student-id="${student.id}" title="Edit"><i class="fas fa-pencil-alt"></i></button>
                 <button class="btn-small btn-danger btn-delete" data-student-id="${student.id}" title="Delete"><i class="fas fa-trash"></i></button>
@@ -1095,8 +1095,8 @@ function renderCohortPage(cohortId) {
                             <td class="col-notes">${student.note || '-'}</td>
                             <td class="col-onboarding">${calculateChecklistProgress(student)}%</td>
                             <td class="col-postcourse">${postCoursePct}</td>
-                            <td class="col-paid">${student.paidAmount ? `$${student.paidAmount.toFixed(2)}` : '-'}</td>
-                            <td class="col-remaining">${student.remaining ? `$${student.remaining.toFixed(2)}` : '-'}</td>
+                            <td class="col-paid">${student.paidAmount != null ? `$${student.paidAmount.toFixed(2)}` : '-'}</td>
+                            <td class="col-remaining">${student.remaining != null ? `$${student.remaining.toFixed(2)}` : '-'}</td>
                             <td class="col-actions">
                                 <button class="btn-small btn-edit" data-student-id="${student.id}" title="Edit"><i class="fas fa-pencil-alt"></i></button>
                                 <button class="btn-small btn-danger btn-delete" data-student-id="${student.id}" title="Delete"><i class="fas fa-trash"></i></button>
@@ -1288,8 +1288,8 @@ function renderStatusPage(status) {
                             <td class="col-notes">${student.note || '-'}</td>
                             <td class="col-onboarding">${calculateChecklistProgress(student)}%</td>
                             <td class="col-postcourse">${postCoursePct}</td>
-                            <td class="col-paid">${student.paidAmount ? `$${student.paidAmount.toFixed(2)}` : '-'}</td>
-                            <td class="col-remaining">${student.remaining ? `$${student.remaining.toFixed(2)}` : '-'}</td>
+                            <td class="col-paid">${student.paidAmount != null ? `$${student.paidAmount.toFixed(2)}` : '-'}</td>
+                            <td class="col-remaining">${student.remaining != null ? `$${student.remaining.toFixed(2)}` : '-'}</td>
                             <td class="col-actions">
                                 <button class="btn-small btn-edit" data-student-id="${student.id}" title="Edit"><i class="fas fa-pencil-alt"></i></button>
                                 <button class="btn-small btn-danger btn-delete" data-student-id="${student.id}" title="Delete"><i class="fas fa-trash"></i></button>
