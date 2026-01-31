@@ -668,20 +668,21 @@ tbody tr:hover {
     gap: 8px;
 }
 
-/* Make Actions column wider for students page */
+/* Columns fit content width */
 th:last-child,
 td:last-child {
-    min-width: 90px;
     text-align: right;
 }
 
-/* Make Notes column narrower on students page */
-#students table th:nth-child(8),
-#students table td:nth-child(8) {
-    max-width: 150px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+/* Notes column: full width with min constraint */
+#students table th:nth-child(10),
+#students table td:nth-child(10),
+#cohorts table th:nth-child(10),
+#cohorts table td:nth-child(10),
+#status table th:nth-child(10),
+#status table td:nth-child(10) {
+    min-width: 150px;
+    width: 100%;
 }
 
 .btn-edit {
@@ -1609,19 +1610,10 @@ button {
         min-width: 100%;
     }
 
-    /* Make name column wider on mobile */
-    tbody tr td:first-child,
-    thead tr th:first-child {
-        /* min-width: 150px; */
-    }
-
-    /* Keep Status and Notes column widths same as desktop */
-    th:nth-child(3), td:nth-child(3) {
-        min-width: 140px;
-    }
-
-    th:nth-child(8), td:nth-child(8) {
-        min-width: 180px;
+    /* Columns fit content - Notes column maintains full width */
+    th:nth-child(10), td:nth-child(10) {
+        min-width: 150px;
+        width: 100%;
     }
 }
 
@@ -1737,19 +1729,10 @@ button {
         min-width: 100%;
     }
 
-    /* Make name column wider on mobile */
-    tbody tr td:first-child,
-    thead tr th:first-child {
-        /* min-width: 210px; */
-    }
-
-    /* Keep Status and Notes column widths same as desktop */
-    th:nth-child(3), td:nth-child(3) {
-        min-width: 158px;
-    }
-
-    th:nth-child(8), td:nth-child(8) {
-        min-width: 180px;
+    /* Columns fit content - Notes column maintains full width */
+    th:nth-child(10), td:nth-child(10) {
+        min-width: 150px;
+        width: 100%;
     }
 }
 
@@ -2378,195 +2361,171 @@ button {
 .students-data-table th.col-id,
 .students-data-table td.col-id {
     display: table-cell;
-    width: 40px;
     text-align: left;
-    min-width: 40px;
 }
 
 .students-data-table th.col-name,
 .students-data-table td.col-name {
     display: table-cell;
-    width: 50%;
     text-align: left;
-    min-width: 170px;
+    white-space: nowrap;
 }
 
 .students-data-table th.col-email,
 .students-data-table td.col-email {
     display: table-cell;
-    min-width: 150px;
+    white-space: nowrap;
 }
 
 .students-data-table th.col-status,
 .students-data-table td.col-status {
     display: table-cell;
-    width: auto;
     text-align: left;
-    min-width: 166px;
+    white-space: nowrap;
 }
 
 .students-data-table th.col-location,
 .students-data-table td.col-location {
     display: table-cell;
-    min-width: 100px;
 }
 
 .students-data-table th.col-language,
 .students-data-table td.col-language {
     display: table-cell;
-    min-width: 80px;
 }
 
 .students-data-table th.col-linkedin,
 .students-data-table td.col-linkedin {
     display: table-cell;
-    min-width: 40px;
     text-align: center;
 }
 
 .students-data-table th.col-whatsapp,
 .students-data-table td.col-whatsapp {
     display: table-cell;
-    min-width: 80px;
 }
 
 .students-data-table th.col-notes,
 .students-data-table td.col-notes {
     display: table-cell;
-    min-width: 100px;
+    min-width: 150px;
+    width: 100%;
 }
 
 .students-data-table th.col-actions,
 .students-data-table td.col-actions {
     display: table-cell;
-    width: auto;
     text-align: center;
-    min-width: 90px;
+    white-space: nowrap;
 }
 
-/* Tablet (min-width: 768px) - Add: Email, Status visible */
+/* Tablet (min-width: 768px) - Columns fit content */
 @media (min-width: 768px) {
-    .students-data-table th.col-email,
-    .students-data-table td.col-email {
-        display: table-cell;
-        width: 25%;
-    }
-    
-    .students-data-table th.col-name,
-    .students-data-table td.col-name {
-        width: 25%;
-    }
-    
-    .students-data-table th.col-status,
-    .students-data-table td.col-status {
-        width: auto;
-    }
+    /* Columns automatically size to content */
 }
 
-/* Medium Desktop (min-width: 1024px) - Add: Location, Language */
+/* Medium Desktop (min-width: 1024px) - Columns fit content */
 @media (min-width: 1024px) {
-    .students-data-table th.col-id,
-    .students-data-table td.col-id {
-        width: 5%;
-    }
-    
-    .students-data-table th.col-name,
-    .students-data-table td.col-name {
-        width: 15%;
-    }
-    
-    .students-data-table th.col-email,
-    .students-data-table td.col-email {
-        width: 20%;
-    }
-    
-    .students-data-table th.col-status,
-    .students-data-table td.col-status {
-        width: 12%;
-    }
-    
-    .students-data-table th.col-location,
-    .students-data-table td.col-location {
-        display: table-cell;
-        width: 12%;
-    }
-    
-    .students-data-table th.col-language,
-    .students-data-table td.col-language {
-        display: table-cell;
-        width: 10%;
-    }
-    
-    .students-data-table th.col-linkedin,
-    .students-data-table td.col-linkedin {
-        display: table-cell;
-        width: 5%;
-    }
-    
-    .students-data-table th.col-whatsapp,
-    .students-data-table td.col-whatsapp {
-        display: table-cell;
-        width: 10%;
-    }
-    
-    .students-data-table th.col-actions,
-    .students-data-table td.col-actions {
-        width: 8%;
-    }
+    /* Columns automatically size to content */
 }
 
-/* Large Desktop (min-width: 1400px) - Show: All columns including Notes */
+/* Large Desktop (min-width: 1400px) - Columns fit content */
 @media (min-width: 1400px) {
-    .students-data-table th.col-id,
-    .students-data-table td.col-id {
-        width: 2%;
-    }
-    
-    .students-data-table th.col-name,
-    .students-data-table td.col-name {
-        width: 11%;
-    }
-    
-    .students-data-table th.col-email,
-    .students-data-table td.col-email {
-        width: 15%;
-    }
-    
-    .students-data-table th.col-status,
-    .students-data-table td.col-status {
-        width: 9%;
-    }
-    
-    .students-data-table th.col-location,
-    .students-data-table td.col-location {
-        width: 6%;
-    }
-    
-    .students-data-table th.col-language,
-    .students-data-table td.col-language {
-        width: 4%;
-    }
-    
-    .students-data-table th.col-linkedin,
-    .students-data-table td.col-linkedin {
-        width: 5%;
-    }
-    
-    .students-data-table th.col-whatsapp,
-    .students-data-table td.col-whatsapp {
-        width: 8%;
-    }
-    
-    .students-data-table th.col-notes,
-    .students-data-table td.col-notes {
-        display: table-cell;
-        width: 20%;
-    }
-    
-    .students-data-table th.col-actions,
-    .students-data-table td.col-actions {
-        width: 6%;
-    }
+    /* Columns automatically size to content, Notes column maintains full width */
+}
+
+/* === COHORTS AND STATUS TABLES === */
+
+/* Cohorts and Status table columns - use .students-table wrapper since all tables use same class */
+.students-table table th.col-id,
+.students-table table td.col-id {
+    display: table-cell;
+    text-align: left;
+}
+
+.students-table table th.col-name,
+.students-table table td.col-name {
+    display: table-cell;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.students-table table th.col-email,
+.students-table table td.col-email {
+    display: table-cell;
+    white-space: nowrap;
+}
+
+.students-table table th.col-figmaEmail,
+.students-table table td.col-figmaEmail {
+    display: table-cell;
+    white-space: nowrap;
+}
+
+.students-table table th.col-status,
+.students-table table td.col-status {
+    display: table-cell;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.students-table table th.col-location,
+.students-table table td.col-location {
+    display: table-cell;
+}
+
+.students-table table th.col-language,
+.students-table table td.col-language {
+    display: table-cell;
+}
+
+.students-table table th.col-linkedin,
+.students-table table td.col-linkedin {
+    display: table-cell;
+    text-align: center;
+}
+
+.students-table table th.col-whatsapp,
+.students-table table td.col-whatsapp {
+    display: table-cell;
+}
+
+.students-table table th.col-notes,
+.students-table table td.col-notes {
+    display: table-cell;
+    min-width: 150px;
+    width: 100%;
+}
+
+.students-table table th.col-onboarding,
+.students-table table td.col-onboarding {
+    display: table-cell;
+    white-space: nowrap;
+}
+
+.students-table table th.col-postcourse,
+.students-table table td.col-postcourse {
+    display: table-cell;
+    white-space: nowrap;
+}
+
+.students-table table th.col-paid,
+.students-table table td.col-paid {
+    display: table-cell;
+    white-space: nowrap;
+}
+
+.students-table table th.col-remaining,
+.students-table table td.col-remaining {
+    display: table-cell;
+    white-space: nowrap;
+}
+
+.students-table table th.col-actions,
+.students-table table td.col-actions {
+    display: table-cell;
+    text-align: center;
+    white-space: nowrap;
 }
 
 /* === EMAIL TEMPLATES TABLE === */
@@ -2575,21 +2534,18 @@ button {
 .email-templates-table th.col-template-name,
 .email-templates-table td.col-template-name {
     display: table-cell;
-    width: 65%;
     text-align: left;
-    min-width: 120px;
+    white-space: nowrap;
 }
 
 .email-templates-table th.col-button-label,
 .email-templates-table td.col-button-label {
     display: none;
-    min-width: 100px;
 }
 
 .email-templates-table th.col-subject,
 .email-templates-table td.col-subject {
     display: none;
-    min-width: 150px;
     white-space: normal;
     word-wrap: break-word;
     overflow-wrap: break-word;
@@ -2598,62 +2554,33 @@ button {
 .email-templates-table th.col-actions,
 .email-templates-table td.col-actions {
     display: table-cell;
-    width: 35%;
     text-align: right;
-    min-width: 80px;
+    white-space: nowrap;
 }
 
-/* Tablet (min-width: 768px) - Add: Subject, hide Button Label */
+/* Tablet (min-width: 768px) - Columns fit content */
 @media (min-width: 768px) {
-    .email-templates-table th.col-template-name,
-    .email-templates-table td.col-template-name {
-        width: 30%;
-    }
-    
-    .email-templates-table th.col-button-label,
-    .email-templates-table td.col-button-label {
-        display: none;
-    }
-    
     .email-templates-table th.col-subject,
     .email-templates-table td.col-subject {
         display: table-cell;
-        width: 55%;
         white-space: normal;
         word-wrap: break-word;
         overflow-wrap: break-word;
-    }
-    
-    .email-templates-table th.col-actions,
-    .email-templates-table td.col-actions {
-        width: 15%;
     }
 }
 
-/* Desktop (min-width: 1024px) - Show: All columns */
+/* Desktop (min-width: 1024px) - Show all columns */
 @media (min-width: 1024px) {
-    .email-templates-table th.col-template-name,
-    .email-templates-table td.col-template-name {
-        width: 15%;
-    }
-    
     .email-templates-table th.col-button-label,
     .email-templates-table td.col-button-label {
         display: table-cell;
-        width: 15%;
     }
     
     .email-templates-table th.col-subject,
     .email-templates-table td.col-subject {
-        width: 45%;
         white-space: normal;
         word-wrap: break-word;
         overflow-wrap: break-word;
-    }
-    
-    .email-templates-table th.col-actions,
-    .email-templates-table td.col-actions {
-        width: 15%;
     }
 }
 
