@@ -75,6 +75,8 @@ const STANDARD_COLUMNS = [
     { id: 'col-notes', label: 'Notes' },
     { id: 'col-onboarding', label: 'Onboarding' },
     { id: 'col-postcourse', label: 'Post-Course' },
+    { id: 'col-paid', label: 'Paid' },
+    { id: 'col-remaining', label: 'Remaining' },
     { id: 'col-actions', label: 'Actions' }
 ];
 
@@ -93,6 +95,8 @@ const PAGE_COLUMNS = {
         { id: 'col-notes', label: 'Notes' },
         { id: 'col-onboarding', label: 'Onboarding' },
         { id: 'col-postcourse', label: 'Post-Course' },
+        { id: 'col-paid', label: 'Paid' },
+        { id: 'col-remaining', label: 'Remaining' },
         { id: 'col-actions', label: 'Actions' }
     ],
     cohort: [
@@ -108,6 +112,8 @@ const PAGE_COLUMNS = {
         { id: 'col-notes', label: 'Notes' },
         { id: 'col-onboarding', label: 'Onboarding' },
         { id: 'col-postcourse', label: 'Post-Course' },
+        { id: 'col-paid', label: 'Paid' },
+        { id: 'col-remaining', label: 'Remaining' },
         { id: 'col-actions', label: 'Actions' }
     ],
     status: [
@@ -123,6 +129,8 @@ const PAGE_COLUMNS = {
         { id: 'col-notes', label: 'Notes' },
         { id: 'col-onboarding', label: 'Onboarding' },
         { id: 'col-postcourse', label: 'Post-Course' },
+        { id: 'col-paid', label: 'Paid' },
+        { id: 'col-remaining', label: 'Remaining' },
         { id: 'col-actions', label: 'Actions' }
     ]
 };
@@ -941,6 +949,8 @@ function renderStudentsTable() {
             <td class="col-notes">${student.note || '-'}</td>
             <td class="col-onboarding">-</td>
             <td class="col-postcourse">-</td>
+            <td class="col-paid">-</td>
+            <td class="col-remaining">-</td>
             <td class="col-actions">
                 <button class="btn-small btn-edit" data-student-id="${student.id}" title="Edit"><i class="fas fa-pencil-alt"></i></button>
                 <button class="btn-small btn-danger btn-delete" data-student-id="${student.id}" title="Delete"><i class="fas fa-trash"></i></button>
@@ -1058,6 +1068,8 @@ function renderCohortPage(cohortId) {
                         <th class="col-notes">Notes</th>
                         <th class="col-onboarding">Onboarding</th>
                         <th class="col-postcourse">Post-Course</th>
+                        <th class="col-paid">Paid</th>
+                        <th class="col-remaining">Remaining</th>
                         <th class="col-actions">Actions</th>
                     </tr>
                 </thead>
@@ -1083,6 +1095,8 @@ function renderCohortPage(cohortId) {
                             <td class="col-notes">${student.note || '-'}</td>
                             <td class="col-onboarding">${calculateChecklistProgress(student)}%</td>
                             <td class="col-postcourse">${postCoursePct}</td>
+                            <td class="col-paid">-</td>
+                            <td class="col-remaining">-</td>
                             <td class="col-actions">
                                 <button class="btn-small btn-edit" data-student-id="${student.id}" title="Edit"><i class="fas fa-pencil-alt"></i></button>
                                 <button class="btn-small btn-danger btn-delete" data-student-id="${student.id}" title="Delete"><i class="fas fa-trash"></i></button>
@@ -1247,6 +1261,8 @@ function renderStatusPage(status) {
                         <th class="col-notes">Notes</th>
                         <th class="col-onboarding">Onboarding</th>
                         <th class="col-postcourse">Post-Course</th>
+                        <th class="col-paid">Paid</th>
+                        <th class="col-remaining">Remaining</th>
                         <th class="col-actions">Actions</th>
                     </tr>
                 </thead>
@@ -1272,6 +1288,8 @@ function renderStatusPage(status) {
                             <td class="col-notes">${student.note || '-'}</td>
                             <td class="col-onboarding">${calculateChecklistProgress(student)}%</td>
                             <td class="col-postcourse">${postCoursePct}</td>
+                            <td class="col-paid">-</td>
+                            <td class="col-remaining">-</td>
                             <td class="col-actions">
                                 <button class="btn-small btn-edit" data-student-id="${student.id}" title="Edit"><i class="fas fa-pencil-alt"></i></button>
                                 <button class="btn-small btn-danger btn-delete" data-student-id="${student.id}" title="Delete"><i class="fas fa-trash"></i></button>
