@@ -2387,6 +2387,7 @@ button {
 .students-data-table th.col-location,
 .students-data-table td.col-location {
     display: table-cell;
+    white-space: nowrap;
 }
 
 .students-data-table th.col-language,
@@ -2472,6 +2473,7 @@ button {
 .students-table table th.col-location,
 .students-table table td.col-location {
     display: table-cell;
+    white-space: nowrap;
 }
 
 .students-table table th.col-language,
