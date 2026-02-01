@@ -518,9 +518,7 @@ function attachEyeToggleListeners() {
 }
 
 // Attach listeners on page load
-document.addEventListener('DOMContentLoaded', () => {
-    attachEyeToggleListeners();
-});
+// Removed duplicate DOMContentLoaded - handled in main initialization at line 357
 
 // Copy email to clipboard
 function copyEmailToClipboard(email) {
@@ -1033,7 +1031,7 @@ function renderCohortPage(cohortId) {
     const tableHtml = `
         <div class="controls" style="margin-bottom: 20px; display: flex; gap: 10px;">
             <input type="text" id="searchCohort-${cohortId}" placeholder="Search student..." style="flex: 1; padding: 12px 14px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
-            <button class="column-control-button" onclick="createColumnControlModal('${cohortId}', '${cohort}')" title="Column visibility settings"><i class="fas fa-sliders-h"></i> Columns</button>
+            <button class="column-control-button" data-cohort-id="${cohortId}" data-cohort-name="${cohort.replace(/"/g, '&quot;')}" title="Column visibility settings"><i class="fas fa-sliders-h"></i> Columns</button>
         </div>
 
         <div class="cohort-stats-mini">
@@ -1203,6 +1201,16 @@ function attachCohortButtonListeners(page) {
         });
     });
     
+    // Attach listener to column control button
+    page.querySelectorAll('.column-control-button').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const cohortId = btn.dataset.cohortId;
+            const cohortName = btn.dataset.cohortName;
+            createColumnControlModal(cohortId, cohortName);
+        });
+    });
+    
     // Attach eye toggle listeners for mini-stat money displays
     attachEyeToggleListeners();
 }
@@ -1234,7 +1242,7 @@ function renderStatusPage(status) {
     const tableHtml = `
         <div class="controls" style="margin-bottom: 20px; display: flex; gap: 10px;">
             <input type="text" id="searchStatus-${pageId}" placeholder="Search student..." style="flex: 1; padding: 12px 14px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
-            <button class="column-control-button" onclick="createColumnControlModal('${pageId}', '${status}')" title="Column visibility settings"><i class="fas fa-sliders-h"></i> Columns</button>
+            <button class="column-control-button" data-page-id="${pageId}" data-status="${status.replace(/"/g, '&quot;')}" title="Column visibility settings"><i class="fas fa-sliders-h"></i> Columns</button>
         </div>
 
         <div class="cohort-stats-mini">
@@ -1401,6 +1409,16 @@ function attachStatusButtonListeners(page) {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
             deleteStudent(btn.dataset.studentId);
+        });
+    });
+    
+    // Attach listener to column control button
+    page.querySelectorAll('.column-control-button').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const pageId = btn.dataset.pageId;
+            const status = btn.dataset.status;
+            createColumnControlModal(pageId, status);
         });
     });
     
