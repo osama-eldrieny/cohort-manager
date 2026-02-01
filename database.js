@@ -746,17 +746,20 @@ export async function deleteCohort(id) {
 // Email Template Categories
 export async function getEmailTemplateCategories() {
     try {
-        const categoriesPath = path.join(__dirname, 'email_template_categories.json');
-        
-        try {
-            const data = fs.readFileSync(categoriesPath, 'utf-8');
-            const categories = JSON.parse(data);
-            console.log('✅ Loaded email template categories from file');
-            return categories;
-        } catch (err) {
-            console.log('ℹ️  No email template categories file found, using defaults');
-            return ['Setup Templates', 'Resources & Tools', 'Payments & Completion'];
+        if (!supabase) {
+            throw new Error('Supabase not initialized');
         }
+
+        const { data, error } = await supabase
+            .from('email_template_categories')
+            .select('name')
+            .order('created_at', { ascending: true });
+
+        if (error) throw error;
+        
+        const categories = data.map(row => row.name);
+        console.log(`✅ Loaded ${categories.length} email template categories from Supabase`);
+        return categories;
     } catch (error) {
         console.error('❌ Error getting email template categories:', error.message);
         return ['Setup Templates', 'Resources & Tools', 'Payments & Completion'];
@@ -765,9 +768,12 @@ export async function getEmailTemplateCategories() {
 
 export async function saveEmailTemplateCategories(categories) {
     try {
-        const categoriesPath = path.join(__dirname, 'email_template_categories.json');
-        fs.writeFileSync(categoriesPath, JSON.stringify(categories, null, 2));
-        console.log('✅ Email template categories saved to database');
+        if (!supabase) {
+            throw new Error('Supabase not initialized');
+        }
+
+        // This function is deprecated - use addEmailTemplateCategory instead
+        console.log('⚠️  saveEmailTemplateCategories is deprecated, use addEmailTemplateCategory');
         return categories;
     } catch (error) {
         console.error('❌ Error saving email template categories:', error.message);
@@ -777,19 +783,21 @@ export async function saveEmailTemplateCategories(categories) {
 
 export async function addEmailTemplateCategory(categoryName) {
     try {
+        if (!supabase) {
+            throw new Error('Supabase not initialized');
+        }
+
         if (!categoryName || typeof categoryName !== 'string') {
             throw new Error('Invalid category name');
         }
 
-        const categories = await getEmailTemplateCategories();
-        
-        if (categories.includes(categoryName)) {
-            throw new Error('Category already exists');
-        }
+        const { error } = await supabase
+            .from('email_template_categories')
+            .insert({ name: categoryName });
 
-        categories.push(categoryName);
-        await saveEmailTemplateCategories(categories);
+        if (error) throw error;
         
+        const categories = await getEmailTemplateCategories();
         console.log(`✅ Added new category: "${categoryName}"`);
         return categories;
     } catch (error) {
@@ -800,22 +808,24 @@ export async function addEmailTemplateCategory(categoryName) {
 
 export async function deleteEmailTemplateCategory(categoryName) {
     try {
+        if (!supabase) {
+            throw new Error('Supabase not initialized');
+        }
+
         if (!categoryName || typeof categoryName !== 'string') {
             throw new Error('Invalid category name');
         }
 
-        const categories = await getEmailTemplateCategories();
-        
-        if (!categories.includes(categoryName)) {
-            throw new Error('Category does not exist');
-        }
+        const { error } = await supabase
+            .from('email_template_categories')
+            .delete()
+            .eq('name', categoryName);
 
-        // Remove the category
-        const updatedCategories = categories.filter(c => c !== categoryName);
-        await saveEmailTemplateCategories(updatedCategories);
+        if (error) throw error;
         
+        const categories = await getEmailTemplateCategories();
         console.log(`✅ Deleted category: "${categoryName}"`);
-        return updatedCategories;
+        return categories;
     } catch (error) {
         console.error('❌ Error deleting email template category:', error.message);
         throw error;
@@ -824,49 +834,35 @@ export async function deleteEmailTemplateCategory(categoryName) {
 
 export async function updateEmailTemplateCategory(oldCategoryName, newCategoryName) {
     try {
+        if (!supabase) {
+            throw new Error('Supabase not initialized');
+        }
+
         if (!oldCategoryName || !newCategoryName || typeof oldCategoryName !== 'string' || typeof newCategoryName !== 'string') {
             throw new Error('Invalid category names');
         }
 
-        const categories = await getEmailTemplateCategories();
-        
-        if (!categories.includes(oldCategoryName)) {
-            throw new Error('Category does not exist');
-        }
-
         if (oldCategoryName === newCategoryName) {
-            return categories;
+            return await getEmailTemplateCategories();
         }
 
-        if (categories.includes(newCategoryName)) {
-            throw new Error('New category name already exists');
-        }
+        // Update in email_template_categories table
+        const { error: updateError } = await supabase
+            .from('email_template_categories')
+            .update({ name: newCategoryName })
+            .eq('name', oldCategoryName);
 
-        // Update the category name
-        const index = categories.indexOf(oldCategoryName);
-        categories[index] = newCategoryName;
-        await saveEmailTemplateCategories(categories);
+        if (updateError) throw updateError;
 
-        // Update all templates using this category
-        const templatesPath = path.join(__dirname, 'email_templates.json');
-        if (fs.existsSync(templatesPath)) {
-            try {
-                const templatesData = fs.readFileSync(templatesPath, 'utf-8');
-                const templates = JSON.parse(templatesData);
-                
-                templates.forEach(template => {
-                    if (template.category === oldCategoryName) {
-                        template.category = newCategoryName;
-                    }
-                });
+        // Also update templates that reference this category
+        const { error: templateError } = await supabase
+            .from('email_templates')
+            .update({ category: newCategoryName })
+            .eq('category', oldCategoryName);
 
-                fs.writeFileSync(templatesPath, JSON.stringify(templates, null, 2));
-                console.log(`✅ Updated ${templates.filter(t => t.category === newCategoryName).length} templates to new category name`);
-            } catch (err) {
-                console.warn('⚠️  Could not update templates in JSON file:', err.message);
-            }
-        }
+        if (templateError) throw templateError;
         
+        const categories = await getEmailTemplateCategories();
         console.log(`✅ Renamed category: "${oldCategoryName}" → "${newCategoryName}"`);
         return categories;
     } catch (error) {
