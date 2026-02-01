@@ -14,5 +14,3 @@
    GET  /api/health - Health check
 ✅ Column preferences table ready
 🔧 Database initialization complete
-⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
-⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache

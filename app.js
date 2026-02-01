@@ -8,6 +8,9 @@ let originalEditingEmail = null; // Track original email when editing
 let emailWasChanged = false;
 let charts = {};
 
+// Hardcoded cohorts - will be gradually migrated to database
+const HARDCODED_COHORTS = ['Cohort 0', 'Cohort 1 - Cradis', 'Cohort 1 - Zomra', 'Cohort 2', 'Cohort 3', 'English 1'];
+
 // Global color palette for consistent colors across all charts
 const COLOR_PALETTE = [
     '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
@@ -591,11 +594,19 @@ function renderPage(pageId) {
     let title = '';
     let subtitle = '';
     
-    if (pageId.startsWith('cohort-')) {
+    if (pageId.startsWith('cohort-legacy-')) {
+        // Legacy hardcoded cohort
+        const legacyName = pageId.replace('cohort-legacy-', '').replace(/-/g, ' ');
+        title = HARDCODED_COHORTS.find(c => c.toLowerCase() === legacyName.toLowerCase()) || legacyName;
+        subtitle = `Students in ${title} (legacy)`;
+    } else if (pageId.startsWith('cohort-')) {
+        // New database cohort
         const cohortId = parseInt(pageId.split('-')[1]);
-        const cohort = cohorts.find(c => c.id === cohortId);
-        title = cohort ? cohort.name : pageId;
-        subtitle = `Students in ${title}`;
+        if (!isNaN(cohortId)) {
+            const cohort = cohorts.find(c => c.id === cohortId);
+            title = cohort ? cohort.name : pageId;
+            subtitle = `Students in ${title}`;
+        }
     } else {
         // Legacy cohort mapping for backward compatibility
         const legacyCohortMap = {
@@ -1057,13 +1068,20 @@ function renderCohortPage(pageId) {
     // Handle both dynamic and legacy cohort page IDs
     let cohortName = null;
     
+    // If it's a legacy hardcoded ID
+    if (pageId.startsWith('cohort-legacy-')) {
+        const legacyName = pageId.replace('cohort-legacy-', '').replace(/-/g, ' ');
+        cohortName = HARDCODED_COHORTS.find(c => c.toLowerCase() === legacyName.toLowerCase()) || legacyName;
+    }
     // If it's a dynamic cohort ID (e.g., cohort-1), find the cohort name
-    if (pageId.startsWith('cohort-')) {
+    else if (pageId.startsWith('cohort-')) {
         const cohortId = parseInt(pageId.split('-')[1]);
-        const cohort = cohorts.find(c => c.id === cohortId);
-        cohortName = cohort ? cohort.name : null;
+        if (!isNaN(cohortId)) {
+            const cohort = cohorts.find(c => c.id === cohortId);
+            cohortName = cohort ? cohort.name : null;
+        }
     } else {
-        // Legacy cohort mapping for backward compatibility
+        // Original page IDs for backward compatibility
         const cohortMap = {
             'cohort0': 'Cohort 0',
             'cohort1': 'Cohort 1',
@@ -3436,16 +3454,35 @@ function populateSidebarCohorts() {
         sidebarCohortsList.appendChild(manageCohortItem);
     }
     
-    // Add dynamic cohort links
-    cohorts.forEach(cohort => {
+    // Track which cohorts we've added to avoid duplicates
+    const addedCohorts = new Set();
+    
+    // Add hardcoded cohorts first (legacy support)
+    HARDCODED_COHORTS.forEach(cohortName => {
+        addedCohorts.add(cohortName);
         const li = document.createElement('li');
         const a = document.createElement('a');
         a.className = 'nav-link';
-        a.setAttribute('data-page', `cohort-${cohort.id}`);
-        a.innerHTML = `<i class="fas fa-map-pin"></i> ${escapeHtml(cohort.name)}`;
+        a.setAttribute('data-page', `cohort-legacy-${cohortName.toLowerCase().replace(/\s+/g, '-')}`);
+        a.innerHTML = `<i class="fas fa-map-pin"></i> ${escapeHtml(cohortName)} <span style="font-size: 11px; opacity: 0.6;">(legacy)</span>`;
         
         li.appendChild(a);
         sidebarCohortsList.appendChild(li);
+    });
+    
+    // Add database cohorts
+    cohorts.forEach(cohort => {
+        // Skip if already added as hardcoded
+        if (!addedCohorts.has(cohort.name)) {
+            const li = document.createElement('li');
+            const a = document.createElement('a');
+            a.className = 'nav-link';
+            a.setAttribute('data-page', `cohort-${cohort.id}`);
+            a.innerHTML = `<i class="fas fa-map-pin"></i> ${escapeHtml(cohort.name)}`;
+            
+            li.appendChild(a);
+            sidebarCohortsList.appendChild(li);
+        }
     });
 }
 
@@ -3528,12 +3565,23 @@ function updateStatusDropdown() {
         statusSelect.appendChild(option);
     });
     
-    // Add cohorts as options
-    cohorts.forEach(cohort => {
+    // Add hardcoded cohorts first (legacy)
+    HARDCODED_COHORTS.forEach(cohortName => {
         const option = document.createElement('option');
-        option.value = cohort.name;
-        option.textContent = cohort.name;
+        option.value = cohortName;
+        option.textContent = cohortName + ' (legacy)';
         statusSelect.appendChild(option);
+    });
+    
+    // Add database cohorts
+    cohorts.forEach(cohort => {
+        // Skip if it matches a hardcoded cohort
+        if (!HARDCODED_COHORTS.includes(cohort.name)) {
+            const option = document.createElement('option');
+            option.value = cohort.name;
+            option.textContent = cohort.name;
+            statusSelect.appendChild(option);
+        }
     });
     
     // Restore selected value
@@ -3562,15 +3610,29 @@ function updateStatusFilterStudents() {
         filterSelect.appendChild(option);
     });
     
-    // Add cohorts as options
-    cohorts.forEach(cohort => {
+    // Add hardcoded cohorts first (legacy)
+    HARDCODED_COHORTS.forEach(cohortName => {
         const option = document.createElement('option');
-        option.value = cohort.name;
-        option.textContent = cohort.name;
-        if (selectedValues.includes(cohort.name)) {
+        option.value = cohortName;
+        option.textContent = cohortName + ' (legacy)';
+        if (selectedValues.includes(cohortName)) {
             option.selected = true;
         }
         filterSelect.appendChild(option);
+    });
+    
+    // Add database cohorts
+    cohorts.forEach(cohort => {
+        // Skip if it matches a hardcoded cohort
+        if (!HARDCODED_COHORTS.includes(cohort.name)) {
+            const option = document.createElement('option');
+            option.value = cohort.name;
+            option.textContent = cohort.name;
+            if (selectedValues.includes(cohort.name)) {
+                option.selected = true;
+            }
+            filterSelect.appendChild(option);
+        }
     });
 }
 
@@ -3583,12 +3645,23 @@ function updateEmailTemplateGroupSelect() {
     // Clear and rebuild options
     groupSelect.innerHTML = '<option value="">Select Group...</option>';
     
-    // Add cohorts
-    cohorts.forEach(cohort => {
+    // Add hardcoded cohorts first (legacy)
+    HARDCODED_COHORTS.forEach(cohortName => {
         const option = document.createElement('option');
-        option.value = cohort.name;
-        option.textContent = cohort.name;
+        option.value = cohortName;
+        option.textContent = cohortName + ' (legacy)';
         groupSelect.appendChild(option);
+    });
+    
+    // Add database cohorts
+    cohorts.forEach(cohort => {
+        // Skip if it matches a hardcoded cohort
+        if (!HARDCODED_COHORTS.includes(cohort.name)) {
+            const option = document.createElement('option');
+            option.value = cohort.name;
+            option.textContent = cohort.name;
+            groupSelect.appendChild(option);
+        }
     });
     
     groupSelect.value = currentValue;
