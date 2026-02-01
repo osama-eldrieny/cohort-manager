@@ -7,7 +7,6 @@ let currentEditingId = null;
 let originalEditingEmail = null; // Track original email when editing
 let emailWasChanged = false;
 let charts = {};
-const COHORTS = ['Cohort 0', 'Cohort 1 - Cradis', 'Cohort 1 - Zomra', 'Cohort 2', 'Cohort 3', 'English 1'];
 
 // Global color palette for consistent colors across all charts
 const COLOR_PALETTE = [
@@ -426,20 +425,23 @@ function setupEventListeners() {
         sidebarOverlay.addEventListener('click', closeSidebar);
     }
     
-    // Close sidebar when a nav link is clicked
-    document.querySelectorAll('.nav-link').forEach(link => {
-        link.addEventListener('click', () => {
-            closeSidebar();
-        });
-    });
-    
-    // Navigation
-    document.querySelectorAll('.nav-link').forEach(link => {
-        link.addEventListener('click', (e) => {
+    // Navigation - Use event delegation instead of attaching to each link
+    // This allows dynamically added cohort links to work automatically
+    document.addEventListener('click', (e) => {
+        const navLink = e.target.closest('.nav-link');
+        if (navLink) {
             e.preventDefault();
-            const page = e.currentTarget.dataset.page;
+            const page = navLink.dataset.page;
             navigatePage(page);
-        });
+            
+            // Close sidebar
+            const sidebar = document.getElementById('sidebar');
+            const hamburgerBtn = document.getElementById('hamburgerBtn');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.remove('active');
+            hamburgerBtn.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+        }
     });
     // Filters
     document.getElementById('cohortFilter') && document.getElementById('cohortFilter').addEventListener('change', renderStudentsTable);
@@ -558,21 +560,24 @@ function navigatePage(pageId) {
 function renderPage(pageId) {
     // Hide all pages
     document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
-    document.getElementById(pageId).classList.add('active');
+    
+    // Get or create page element
+    let pageElement = document.getElementById(pageId);
+    if (!pageElement) {
+        // Create page if it doesn't exist (for dynamic cohorts)
+        const container = document.querySelector('.content-wrapper');
+        pageElement = document.createElement('div');
+        pageElement.id = pageId;
+        pageElement.className = 'page cohort-page';
+        container.appendChild(pageElement);
+    }
+    pageElement.classList.add('active');
 
-    // Update header
+    // Update header with title
     const titles = {
         'overview': { title: 'Overview', subtitle: 'Dashboard overview and key metrics' },
         'students': { title: 'Students', subtitle: 'Manage all students' },
         'cohortmanager': { title: 'Manage Cohorts', subtitle: 'Create and manage course cohorts' },
-        'cohort0': { title: 'Cohort 0', subtitle: 'Students in Cohort 0' },
-        'cohort1': { title: 'Cohort 1', subtitle: 'Students in Cohort 1' },
-        'cohort1cradis': { title: 'Cohort 1 - Cradis', subtitle: 'Students in Cohort 1 - Cradis' },
-        'cohort1zomra': { title: 'Cohort 1 - Zomra', subtitle: 'Students in Cohort 1 - Zomra' },
-        'cohortfree': { title: 'Cohort - Free', subtitle: 'Students in Cohort - Free' },
-        'cohort2': { title: 'Cohort 2', subtitle: 'Students in Cohort 2' },
-        'cohort3': { title: 'Cohort 3', subtitle: 'Students in Cohort 3' },
-        'english1': { title: 'English 1', subtitle: 'Students in English 1' },
         'waitinglist': { title: 'Waiting List', subtitle: 'Students in waiting list' },
         'cantreach': { title: "Can't Reach", subtitle: "Students that can't be reached" },
         'nextcohort': { title: 'Next Cohort', subtitle: 'Students in next cohort' },
@@ -581,9 +586,41 @@ function renderPage(pageId) {
         'emailtemplates': { title: 'Email Templates', subtitle: 'Manage email templates' },
         'settings': { title: 'Settings', subtitle: 'Application settings' }
     };
+    
+    // Check for dynamic cohort pages
+    let title = '';
+    let subtitle = '';
+    
+    if (pageId.startsWith('cohort-')) {
+        const cohortId = parseInt(pageId.split('-')[1]);
+        const cohort = cohorts.find(c => c.id === cohortId);
+        title = cohort ? cohort.name : pageId;
+        subtitle = `Students in ${title}`;
+    } else {
+        // Legacy cohort mapping for backward compatibility
+        const legacyCohortMap = {
+            'cohort0': 'Cohort 0',
+            'cohort1': 'Cohort 1',
+            'cohort1cradis': 'Cohort 1 - Cradis',
+            'cohort1zomra': 'Cohort 1 - Zomra',
+            'cohort2': 'Cohort 2',
+            'cohort3': 'Cohort 3',
+            'english1': 'English 1'
+        };
+        
+        if (legacyCohortMap[pageId]) {
+            title = legacyCohortMap[pageId];
+            subtitle = `Students in ${title}`;
+        } else if (titles[pageId]) {
+            title = titles[pageId].title;
+            subtitle = titles[pageId].subtitle;
+        } else {
+            title = pageId;
+            subtitle = '';
+        }
+    }
 
-    const info = titles[pageId] || { title: pageId, subtitle: '' };
-    document.querySelector('.page-title').textContent = info.title;
+    document.querySelector('.page-title').textContent = title;
 
     // Render specific pages
     if (pageId === 'overview') {
@@ -592,7 +629,7 @@ function renderPage(pageId) {
         renderStudentsTable();
     } else if (pageId === 'cohortmanager') {
         renderCohortManager();
-    } else if (pageId.startsWith('cohort') || pageId === 'english1') {
+    } else if (pageId.startsWith('cohort')) {
         renderCohortPage(pageId);
     } else if (pageId === 'waitinglist') {
         renderStatusPage('Waiting list');
@@ -1016,31 +1053,50 @@ function renderStudentsTable() {
 // COHORT PAGES
 // ============================================
 
-function renderCohortPage(cohortId) {
-    // Map page IDs to cohort names
-    const cohortMap = {
-        'cohort0': 'Cohort 0',
-        'cohort1': 'Cohort 1',
-        'cohort1cradis': 'Cohort 1 - Cradis',
-        'cohort1zomra': 'Cohort 1 - Zomra',
-        'cohort2': 'Cohort 2',
-        'cohort3': 'Cohort 3',
-        'english1': 'English 1'
-    };
+function renderCohortPage(pageId) {
+    // Handle both dynamic and legacy cohort page IDs
+    let cohortName = null;
     
-    const cohort = cohortMap[cohortId] || cohortId;
-    const page = document.getElementById(cohortId);
+    // If it's a dynamic cohort ID (e.g., cohort-1), find the cohort name
+    if (pageId.startsWith('cohort-')) {
+        const cohortId = parseInt(pageId.split('-')[1]);
+        const cohort = cohorts.find(c => c.id === cohortId);
+        cohortName = cohort ? cohort.name : null;
+    } else {
+        // Legacy cohort mapping for backward compatibility
+        const cohortMap = {
+            'cohort0': 'Cohort 0',
+            'cohort1': 'Cohort 1',
+            'cohort1cradis': 'Cohort 1 - Cradis',
+            'cohort1zomra': 'Cohort 1 - Zomra',
+            'cohort2': 'Cohort 2',
+            'cohort3': 'Cohort 3',
+            'english1': 'English 1'
+        };
+        cohortName = cohortMap[pageId] || pageId;
+    }
+    
+    const page = document.getElementById(pageId);
+    if (!page) {
+        // Create the page container if it doesn't exist
+        const container = document.querySelector('.content-wrapper');
+        const newPage = document.createElement('div');
+        newPage.id = pageId;
+        newPage.className = 'page cohort-page active';
+        container.appendChild(newPage);
+        return;
+    }
     
     // Store cohort data for search
-    page.cohortName = cohort;
+    page.cohortName = cohortName;
     
     // Filter by cohort field first, fallback to status field for backward compatibility
-    let cohortStudents = students.filter(s => s.cohort === cohort || s.status === cohort);
+    let cohortStudents = students.filter(s => s.cohort === cohortName || s.status === cohortName);
 
     if (cohortStudents.length === 0) {
         page.innerHTML = `
             <div class="empty-message">
-                <p>No students in ${cohort} yet</p>
+                <p>No students in ${cohortName} yet</p>
             </div>
         `;
         return;
@@ -3362,10 +3418,35 @@ async function loadCohorts() {
             console.log('✅ Loaded cohorts:', cohorts);
             updateCohortsTable();
             updateCohortDropdowns();
+            populateSidebarCohorts();
         }
     } catch (error) {
         console.error('❌ Error loading cohorts:', error);
     }
+}
+
+function populateSidebarCohorts() {
+    const sidebarCohortsList = document.getElementById('sidebar-cohorts-list');
+    if (!sidebarCohortsList) return;
+    
+    // Keep the Manage Cohorts link, remove all other cohort links
+    const manageCohortItem = sidebarCohortsList.querySelector('li:first-child');
+    sidebarCohortsList.innerHTML = '';
+    if (manageCohortItem) {
+        sidebarCohortsList.appendChild(manageCohortItem);
+    }
+    
+    // Add dynamic cohort links
+    cohorts.forEach(cohort => {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.className = 'nav-link';
+        a.setAttribute('data-page', `cohort-${cohort.id}`);
+        a.innerHTML = `<i class="fas fa-map-pin"></i> ${escapeHtml(cohort.name)}`;
+        
+        li.appendChild(a);
+        sidebarCohortsList.appendChild(li);
+    });
 }
 
 function renderCohortManager() {
@@ -3422,6 +3503,9 @@ function updateCohortDropdowns() {
     // Update status dropdown for students
     updateStatusDropdown();
     
+    // Update status filter for students table
+    updateStatusFilterStudents();
+    
     // Update email template group selector
     updateEmailTemplateGroupSelect();
 }
@@ -3435,6 +3519,15 @@ function updateStatusDropdown() {
     // Clear existing options, keep the default
     statusSelect.innerHTML = '<option value="">Select Status</option>';
     
+    // Add static status options first
+    const staticStatuses = ['Waiting list', "Can't reach", 'Next Cohort', 'Standby'];
+    staticStatuses.forEach(status => {
+        const option = document.createElement('option');
+        option.value = status;
+        option.textContent = status;
+        statusSelect.appendChild(option);
+    });
+    
     // Add cohorts as options
     cohorts.forEach(cohort => {
         const option = document.createElement('option');
@@ -3445,6 +3538,40 @@ function updateStatusDropdown() {
     
     // Restore selected value
     statusSelect.value = currentValue;
+}
+
+function updateStatusFilterStudents() {
+    const filterSelect = document.getElementById('statusFilterStudents');
+    if (!filterSelect) return;
+    
+    // Store currently selected values
+    const selectedValues = Array.from(filterSelect.selectedOptions).map(opt => opt.value);
+    
+    // Clear all options
+    filterSelect.innerHTML = '';
+    
+    // Add static status options first
+    const staticStatuses = ['Waiting list', "Can't reach", 'Next Cohort', 'Standby'];
+    staticStatuses.forEach(status => {
+        const option = document.createElement('option');
+        option.value = status;
+        option.textContent = status;
+        if (selectedValues.includes(status)) {
+            option.selected = true;
+        }
+        filterSelect.appendChild(option);
+    });
+    
+    // Add cohorts as options
+    cohorts.forEach(cohort => {
+        const option = document.createElement('option');
+        option.value = cohort.name;
+        option.textContent = cohort.name;
+        if (selectedValues.includes(cohort.name)) {
+            option.selected = true;
+        }
+        filterSelect.appendChild(option);
+    });
 }
 
 function updateEmailTemplateGroupSelect() {
