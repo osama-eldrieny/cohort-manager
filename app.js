@@ -4061,17 +4061,8 @@ function renderCohortManager() {
 function updateCohortsTable() {
     const tbody = document.getElementById('cohortsTableBody');
     
-    // Show all active cohorts (both hardcoded and dynamic)
-    const activeHardcoded = getActiveHardcodedCohorts();
-    const allCohorts = [
-        ...activeHardcoded.map(name => ({
-            name,
-            icon: 'fa-map-pin',
-            color: COHORT_COLORS[name] || '#4ECDC4',
-            isHardcoded: true
-        })),
-        ...cohorts.filter(cohort => !COHORTS.includes(cohort.name))
-    ];
+    // Show all dynamic cohorts from Supabase (no more hardcoded cohorts filtering)
+    const allCohorts = cohorts || [];
     
     if (allCohorts.length === 0) {
         tbody.innerHTML = '<tr><td colspan="4" class="empty-cell">No cohorts available.</td></tr>';
@@ -4087,20 +4078,21 @@ function updateCohortsTable() {
                 <div style="width: 30px; height: 30px; background-color: ${cohort.color || '#4ECDC4'}; border-radius: 4px;"></div>
             </td>
             <td style="color: #999; font-size: 12px;">
-                ${cohort.isHardcoded ? 'Hardcoded' : 'Dynamic'}
+                Dynamic
             </td>
             <td>
                 <div class="cohort-actions-cell">
-                    ${!cohort.isHardcoded ? `<button class="btn-edit cohort-edit-btn" data-cohort-id="${cohort.id}" data-cohort-name="${escapeHtml(cohort.name)}" data-cohort-icon="${cohort.icon || 'fa-map-pin'}" data-cohort-color="${cohort.color || '#4ECDC4'}">
+                    <button class="btn-edit cohort-edit-btn" data-cohort-id="${cohort.id}" data-cohort-name="${escapeHtml(cohort.name)}" data-cohort-icon="${cohort.icon || 'fa-map-pin'}" data-cohort-color="${cohort.color || '#4ECDC4'}">
                         <i class="fas fa-edit"></i> Edit
-                    </button>` : ''}
-                    <button class="btn-delete cohort-delete-btn" data-cohort-id="${cohort.isHardcoded ? 'hardcoded-' + cohort.name : cohort.id}" data-is-hardcoded="${cohort.isHardcoded || false}">
+                    </button>
+                    <button class="btn-danger cohort-delete-btn" data-cohort-id="${cohort.id}">
                         <i class="fas fa-trash"></i> Delete
                     </button>
                 </div>
             </td>
         </tr>
     `).join('');
+}
 }
 
 function handleCohortTableClick(event) {
@@ -4132,25 +4124,8 @@ function updateSidebarDynamicCohorts() {
     const container = document.getElementById('dynamicCohortsContainer');
     if (!container) return;
     
-    // Hide hardcoded cohort links
-    const cohortMap = {
-        'cohort0': 'Cohort 0',
-        'cohort1cradis': 'Cohort 1 - Cradis',
-        'cohort1zomra': 'Cohort 1 - Zomra',
-        'cohort2': 'Cohort 2',
-        'cohort3': 'Cohort 3',
-        'english1': 'English 1'
-    };
-    
-    Object.entries(cohortMap).forEach(([pageId, cohortName]) => {
-        const link = document.querySelector(`[data-page="${pageId}"]`);
-        if (link) {
-            link.parentElement.style.display = 'none';
-        }
-    });
-    
-    // Filter to show only dynamic cohorts (exclude hardcoded ones)
-    const dynamicCohorts = cohorts.filter(cohort => !COHORTS.includes(cohort.name));
+    // Show all dynamic cohorts from Supabase (no filtering based on hardcoded names)
+    const dynamicCohorts = cohorts || [];
     
     // Clear existing dynamic cohorts
     container.innerHTML = '';
