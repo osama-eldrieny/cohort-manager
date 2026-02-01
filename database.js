@@ -64,14 +64,7 @@ function convertStudentFromDatabase(student) {
 export async function getAllStudents() {
     try {
         if (!supabase) {
-            // Fallback to JSON file
-            try {
-                const data = fs.readFileSync(STUDENTS_JSON, 'utf-8');
-                return JSON.parse(data);
-            } catch (err) {
-                console.log('ℹ️  No students data found');
-                return [];
-            }
+            throw new Error('Supabase not initialized. Cannot fetch students.');
         }
 
         const { data, error } = await supabase
@@ -92,11 +85,7 @@ export async function getAllStudents() {
 export async function saveAllStudents(students) {
     try {
         if (!supabase) {
-            // Fallback to JSON file
-            const studentsPath = path.join(__dirname, 'students.json');
-            fs.writeFileSync(studentsPath, JSON.stringify(students, null, 2));
-            console.log(`✅ Saved ${students.length} students to JSON file (local fallback)`);
-            return { count: students.length };
+            throw new Error('Supabase not initialized. Cannot save students.');
         }
 
         // Deduplicate by email - keep the last occurrence
@@ -146,12 +135,11 @@ export async function saveAllStudents(students) {
         // UPSERT: Match on ID first (for existing records), then fall back to email for new records
         const { error: upsertError } = await supabase
             .from('students')
-            .upsert(studentsData, { onConflict: 'id' }); // Changed from 'email' to 'id'
+            .upsert(studentsData, { onConflict: 'id' });
 
         if (upsertError) throw upsertError;
 
         console.log(`✅ Saved ${deduplicatedStudents.length} students to Supabase (deduplicated from ${students.length})`);
-        console.log(`📝 Upsert strategy: Matching on ID (for updates including email changes), fallback to email for new records`);
         return { count: deduplicatedStudents.length };
     } catch (error) {
         console.error('❌ Error saving students:', error.message);
@@ -163,25 +151,8 @@ export async function saveAllStudents(students) {
 export async function deleteStudent(id) {
     try {
         if (!supabase) {
-            // Fallback to JSON file
-            const studentsPath = path.join(__dirname, 'students.json');
-            let students = [];
-
-            try {
-                const data = fs.readFileSync(studentsPath, 'utf-8');
-                students = JSON.parse(data);
-            } catch {
-                students = [];
-            }
-
-            // Handle both string and numeric IDs
-            const numericId = parseInt(id, 10);
-            students = students.filter(s => {
-                const studentId = typeof s.id === 'number' ? s.id : parseInt(s.id, 10);
-                const searchId = isNaN(numericId) ? id : numericId;
-                return s.id !== searchId && String(s.id) !== String(id);
-            });
-            fs.writeFileSync(studentsPath, JSON.stringify(students, null, 2));
+            throw new Error('Supabase not initialized. Cannot delete student.');
+        }
             console.log(`✅ Student deleted from JSON file (local fallback) - ID: ${id}`);
             return;
         }
@@ -262,23 +233,8 @@ export async function exportData() {
 // Get all email templates
 export async function getAllEmailTemplates() {
     try {
-        // Always prioritize JSON file for email templates (contains category field)
-        try {
-            const templatesPath = path.join(__dirname, 'email_templates.json');
-            const data = fs.readFileSync(templatesPath, 'utf-8');
-            const templates = JSON.parse(data);
-            if (templates && templates.length > 0) {
-                console.log(`✅ Loaded ${templates.length} email templates from JSON file`);
-                return templates;
-            }
-        } catch (err) {
-            console.log('ℹ️  No email templates found in JSON file, trying Supabase...');
-        }
-
-        // Fallback to Supabase if JSON file is empty or doesn't exist
         if (!supabase) {
-            console.log('ℹ️  No Supabase connection and no JSON templates');
-            return [];
+            throw new Error('Supabase not initialized. Cannot fetch email templates.');
         }
 
         const { data, error } = await supabase
@@ -291,14 +247,7 @@ export async function getAllEmailTemplates() {
         return data || [];
     } catch (error) {
         console.error('❌ Error fetching email templates:', error.message);
-        // Final fallback to JSON file
-        try {
-            const templatesPath = path.join(__dirname, 'email_templates.json');
-            const data = fs.readFileSync(templatesPath, 'utf-8');
-            return JSON.parse(data);
-        } catch {
-            return [];
-        }
+        throw error;
     }
 }
 
@@ -306,109 +255,24 @@ export async function getAllEmailTemplates() {
 export async function saveEmailTemplate(id, name, category, button_label, subject, body) {
     try {
         if (!supabase) {
-            // Fallback to JSON file
-            const templatesPath = path.join(__dirname, 'email_templates.json');
-            let templates = [];
+            throw new Error('Supabase not initialized. Cannot save email template.');
+        }
 
-            try {
-                const data = fs.readFileSync(templatesPath, 'utf-8');
-                templates = JSON.parse(data);
-            } catch {
-                templates = [];
-            }
-
-            const existingIndex = templates.findIndex(t => t.id === id);
-            const newTemplate = {
+        const { error } = await supabase
+            .from('email_templates')
+            .upsert({
                 id,
                 name,
                 category,
                 button_label,
                 subject,
-                body,
-                updated_at: new Date().toISOString(),
-                created_at: existingIndex >= 0 ? templates[existingIndex].created_at : new Date().toISOString()
-            };
+                body
+            }, {
+                onConflict: 'id'
+            });
 
-            if (existingIndex >= 0) {
-                templates[existingIndex] = newTemplate;
-            } else {
-                templates.push(newTemplate);
-            }
-
-            fs.writeFileSync(templatesPath, JSON.stringify(templates, null, 2));
-            console.log('✅ Email template saved to JSON file (local fallback)');
-            return;
-        }
-
-        // Try to save to Supabase, but if category column doesn't exist, skip it
-        try {
-            const { error } = await supabase
-                .from('email_templates')
-                .upsert({
-                    id,
-                    name,
-                    category,
-                    button_label,
-                    subject,
-                    body
-                }, {
-                    onConflict: 'id'
-                });
-
-            if (error) throw error;
-            console.log(`✅ Email template "${name}" saved to Supabase with category`);
-        } catch (supabaseError) {
-            // If error mentions category column doesn't exist, try without it
-            if (supabaseError.message && supabaseError.message.includes('category')) {
-                console.log('⚠️  Category column not found in Supabase, saving without category field...');
-                const { error } = await supabase
-                    .from('email_templates')
-                    .upsert({
-                        id,
-                        name,
-                        button_label,
-                        subject,
-                        body
-                    }, {
-                        onConflict: 'id'
-                    });
-                
-                if (error) throw error;
-                console.log(`✅ Email template "${name}" saved to Supabase without category`);
-            } else {
-                throw supabaseError;
-            }
-        }
-
-        // Always also save to JSON file for backup/fallback
-        const templatesPath = path.join(__dirname, 'email_templates.json');
-        let templates = [];
-        try {
-            const data = fs.readFileSync(templatesPath, 'utf-8');
-            templates = JSON.parse(data);
-        } catch {
-            templates = [];
-        }
-
-        const existingIndex = templates.findIndex(t => t.id === id);
-        const newTemplate = {
-            id,
-            name,
-            category,
-            button_label,
-            subject,
-            body,
-            updated_at: new Date().toISOString(),
-            created_at: existingIndex >= 0 ? templates[existingIndex].created_at : new Date().toISOString()
-        };
-
-        if (existingIndex >= 0) {
-            templates[existingIndex] = newTemplate;
-        } else {
-            templates.push(newTemplate);
-        }
-
-        fs.writeFileSync(templatesPath, JSON.stringify(templates, null, 2));
+        if (error) throw error;
+        console.log(`✅ Email template "${name}" saved to Supabase`);
     } catch (error) {
         console.error('❌ Error saving email template:', error.message);
         throw error;
@@ -419,21 +283,7 @@ export async function saveEmailTemplate(id, name, category, button_label, subjec
 export async function deleteEmailTemplate(id) {
     try {
         if (!supabase) {
-            // Fallback to JSON file
-            const templatesPath = path.join(__dirname, 'email_templates.json');
-            let templates = [];
-
-            try {
-                const data = fs.readFileSync(templatesPath, 'utf-8');
-                templates = JSON.parse(data);
-            } catch {
-                templates = [];
-            }
-
-            templates = templates.filter(t => t.id !== id);
-            fs.writeFileSync(templatesPath, JSON.stringify(templates, null, 2));
-            console.log('✅ Email template deleted from JSON file (local fallback)');
-            return;
+            throw new Error('Supabase not initialized. Cannot delete email template.');
         }
 
         const { error } = await supabase
