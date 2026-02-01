@@ -1050,12 +1050,7 @@ export async function updateEmailTemplateCategory(oldCategoryName, newCategoryNa
 export async function getChecklistItems() {
     try {
         if (!supabase) {
-            const checklistPath = path.join(__dirname, 'checklist_items.json');
-            if (fs.existsSync(checklistPath)) {
-                const data = fs.readFileSync(checklistPath, 'utf-8');
-                return JSON.parse(data);
-            }
-            return [];
+            throw new Error('Supabase not initialized');
         }
 
         const { data, error } = await supabase
@@ -1064,30 +1059,14 @@ export async function getChecklistItems() {
             .order('sort_position', { ascending: true });
 
         if (error) {
-            // Fallback to JSON if Supabase table doesn't exist
-            console.log('📄 Supabase table not available, using JSON fallback');
-            const checklistPath = path.join(__dirname, 'checklist_items.json');
-            if (fs.existsSync(checklistPath)) {
-                const fileData = fs.readFileSync(checklistPath, 'utf-8');
-                return JSON.parse(fileData);
-            }
-            return [];
+            console.error('❌ Error fetching checklist items from Supabase:', error.message);
+            throw error;
         }
         
         return data || [];
     } catch (error) {
         console.error('❌ Error fetching checklist items:', error.message);
-        // Fallback to JSON file
-        try {
-            const checklistPath = path.join(__dirname, 'checklist_items.json');
-            if (fs.existsSync(checklistPath)) {
-                const data = fs.readFileSync(checklistPath, 'utf-8');
-                return JSON.parse(data);
-            }
-        } catch (fallbackError) {
-            console.error('❌ Could not read JSON fallback:', fallbackError.message);
-        }
-        return [];
+        throw error;
     }
 }
 
@@ -1112,19 +1091,7 @@ export async function addChecklistItem(category, label, sortPosition = 999) {
         }
 
         if (!supabase) {
-            // JSON fallback
-            const items = await getChecklistItems();
-            const newId = Math.max(...items.map(i => i.id || 0), 0) + 1;
-            const newItem = {
-                id: newId,
-                category,
-                label,
-                sort_position: sortPosition,
-                created_at: new Date().toISOString()
-            };
-            items.push(newItem);
-            await saveChecklistItems(items);
-            return newItem;
+            throw new Error('Supabase not initialized');
         }
 
         const { data, error } = await supabase
@@ -1138,20 +1105,8 @@ export async function addChecklistItem(category, label, sortPosition = 999) {
             .select();
 
         if (error) {
-            // Fallback to JSON for Supabase errors
-            console.log('📄 Supabase insert failed, using JSON fallback');
-            const items = await getChecklistItems();
-            const newId = Math.max(...items.map(i => i.id || 0), 0) + 1;
-            const newItem = {
-                id: newId,
-                category,
-                label,
-                sort_position: sortPosition,
-                created_at: new Date().toISOString()
-            };
-            items.push(newItem);
-            await saveChecklistItems(items);
-            return newItem;
+            console.error('❌ Error inserting checklist item:', error.message);
+            throw error;
         }
         
         console.log(`✅ Added checklist item: "${label}"`);
@@ -1258,13 +1213,7 @@ export async function deleteChecklistItem(id) {
 export async function getStudentChecklistCompletion(studentId) {
     try {
         if (!supabase) {
-            const completionPath = path.join(__dirname, 'student_checklist_completion.json');
-            if (fs.existsSync(completionPath)) {
-                const data = fs.readFileSync(completionPath, 'utf-8');
-                const completions = JSON.parse(data);
-                return completions.filter(c => c.student_id === studentId) || [];
-            }
-            return [];
+            throw new Error('Supabase not initialized');
         }
 
         const { data, error } = await supabase
@@ -1273,32 +1222,14 @@ export async function getStudentChecklistCompletion(studentId) {
             .eq('student_id', studentId);
 
         if (error) {
-            // Fallback to JSON
-            console.log('📄 Supabase table not available, using JSON fallback');
-            const completionPath = path.join(__dirname, 'student_checklist_completion.json');
-            if (fs.existsSync(completionPath)) {
-                const fileData = fs.readFileSync(completionPath, 'utf-8');
-                const completions = JSON.parse(fileData);
-                return completions.filter(c => c.student_id === studentId) || [];
-            }
-            return [];
+            console.error('❌ Error fetching from Supabase:', error.message);
+            throw error;
         }
         
         return data || [];
     } catch (error) {
         console.error('❌ Error fetching student checklist completion:', error.message);
-        // Fallback to JSON
-        try {
-            const completionPath = path.join(__dirname, 'student_checklist_completion.json');
-            if (fs.existsSync(completionPath)) {
-                const data = fs.readFileSync(completionPath, 'utf-8');
-                const completions = JSON.parse(data);
-                return completions.filter(c => c.student_id === studentId) || [];
-            }
-        } catch (fallbackError) {
-            console.error('❌ Could not read JSON fallback:', fallbackError.message);
-        }
-        return [];
+        throw error;
     }
 }
 
@@ -1306,133 +1237,46 @@ export async function getStudentChecklistCompletion(studentId) {
 export async function saveStudentChecklistCompletion(studentId, completedItemIds) {
     try {
         if (!supabase) {
-            const completionPath = path.join(__dirname, 'student_checklist_completion.json');
-            let completions = [];
-            
-            if (fs.existsSync(completionPath)) {
-                const data = fs.readFileSync(completionPath, 'utf-8');
-                completions = JSON.parse(data);
-            }
-
-            // Remove old entries for this student
-            completions = completions.filter(c => c.student_id !== studentId);
-
-            // Add new entries
-            completedItemIds.forEach(itemId => {
-                completions.push({
-                    student_id: studentId,
-                    checklist_item_id: itemId,
-                    completed_at: new Date().toISOString()
-                });
-            });
-
-            fs.writeFileSync(completionPath, JSON.stringify(completions, null, 2));
-            return completions.filter(c => c.student_id === studentId);
+            throw new Error('Supabase not initialized. Check SUPABASE_URL and SUPABASE_KEY environment variables.');
         }
 
-        // Remove old entries
+        // Delete old entries for this student
         const { error: deleteError } = await supabase
             .from('student_checklist_completion')
             .delete()
             .eq('student_id', studentId);
 
         if (deleteError) {
-            // Fallback to JSON for delete error
-            console.log('📄 Supabase delete failed, using JSON fallback');
-            const completionPath = path.join(__dirname, 'student_checklist_completion.json');
-            let completions = [];
-            
-            if (fs.existsSync(completionPath)) {
-                const data = fs.readFileSync(completionPath, 'utf-8');
-                completions = JSON.parse(data);
-            }
-
-            // Remove old entries for this student
-            completions = completions.filter(c => c.student_id !== studentId);
-
-            // Add new entries
-            completedItemIds.forEach(itemId => {
-                completions.push({
-                    student_id: studentId,
-                    checklist_item_id: itemId,
-                    completed_at: new Date().toISOString()
-                });
-            });
-
-            fs.writeFileSync(completionPath, JSON.stringify(completions, null, 2));
-            return completions.filter(c => c.student_id === studentId);
+            console.error('❌ Error deleting old checklist entries:', deleteError.message);
+            throw deleteError;
         }
 
-        // Add new entries
+        // Insert new entries
         const newCompletions = completedItemIds.map(itemId => ({
             student_id: studentId,
             checklist_item_id: itemId,
             completed_at: new Date().toISOString()
         }));
 
-        if (newCompletions.length > 0) {
-            const { data, error } = await supabase
-                .from('student_checklist_completion')
-                .insert(newCompletions)
-                .select();
-
-            if (error) {
-                // Fallback to JSON for insert error
-                console.log('📄 Supabase insert failed, using JSON fallback');
-                const completionPath = path.join(__dirname, 'student_checklist_completion.json');
-                let completions = [];
-                
-                if (fs.existsSync(completionPath)) {
-                    const data = fs.readFileSync(completionPath, 'utf-8');
-                    completions = JSON.parse(data);
-                }
-
-                // Remove old entries for this student
-                completions = completions.filter(c => c.student_id !== studentId);
-
-                // Add new entries
-                newCompletions.forEach(comp => {
-                    completions.push(comp);
-                });
-
-                fs.writeFileSync(completionPath, JSON.stringify(completions, null, 2));
-                return completions.filter(c => c.student_id === studentId);
-            }
-            
-            return data || [];
+        if (newCompletions.length === 0) {
+            return [];
         }
 
-        return [];
+        const { data, error: insertError } = await supabase
+            .from('student_checklist_completion')
+            .insert(newCompletions)
+            .select();
+
+        if (insertError) {
+            console.error('❌ Error inserting new checklist entries:', insertError.message);
+            throw insertError;
+        }
+        
+        console.log(`✅ Saved checklist completion for student ${studentId}`);
+        return data || [];
     } catch (error) {
         console.error('❌ Error saving student checklist completion:', error.message);
-        // Fallback to JSON
-        try {
-            const completionPath = path.join(__dirname, 'student_checklist_completion.json');
-            let completions = [];
-            
-            if (fs.existsSync(completionPath)) {
-                const data = fs.readFileSync(completionPath, 'utf-8');
-                completions = JSON.parse(data);
-            }
-
-            // Remove old entries for this student
-            completions = completions.filter(c => c.student_id !== studentId);
-
-            // Add new entries
-            completedItemIds.forEach(itemId => {
-                completions.push({
-                    student_id: studentId,
-                    checklist_item_id: itemId,
-                    completed_at: new Date().toISOString()
-                });
-            });
-
-            fs.writeFileSync(completionPath, JSON.stringify(completions, null, 2));
-            return completions.filter(c => c.student_id === studentId);
-        } catch (fallbackError) {
-            console.error('❌ Could not save to JSON fallback:', fallbackError.message);
-            throw error;
-        }
+        throw error;
     }
 }
 

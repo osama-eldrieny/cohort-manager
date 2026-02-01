@@ -1407,51 +1407,31 @@
   {
     "student_id": "1769959344",
     "checklist_item_id": 1,
-    "completed_at": "2026-02-01T18:56:54.016Z"
+    "completed_at": "2026-02-01T19:13:25.111Z"
   },
   {
     "student_id": "1769959344",
     "checklist_item_id": 2,
-    "completed_at": "2026-02-01T18:56:54.016Z"
+    "completed_at": "2026-02-01T19:13:25.111Z"
   },
   {
     "student_id": "1769959344",
     "checklist_item_id": 3,
-    "completed_at": "2026-02-01T18:56:54.016Z"
+    "completed_at": "2026-02-01T19:13:25.111Z"
   },
   {
     "student_id": "1769959344",
     "checklist_item_id": 4,
-    "completed_at": "2026-02-01T18:56:54.016Z"
-  },
-  {
-    "student_id": "1769959344",
-    "checklist_item_id": 5,
-    "completed_at": "2026-02-01T18:56:54.016Z"
-  },
-  {
-    "student_id": "1769959344",
-    "checklist_item_id": 6,
-    "completed_at": "2026-02-01T18:56:54.016Z"
-  },
-  {
-    "student_id": "1769959344",
-    "checklist_item_id": 7,
-    "completed_at": "2026-02-01T18:56:54.016Z"
-  },
-  {
-    "student_id": "1769959344",
-    "checklist_item_id": 8,
-    "completed_at": "2026-02-01T18:56:54.016Z"
+    "completed_at": "2026-02-01T19:13:25.111Z"
   },
   {
     "student_id": "1769959344",
     "checklist_item_id": 15,
-    "completed_at": "2026-02-01T18:56:54.016Z"
+    "completed_at": "2026-02-01T19:13:25.111Z"
   },
   {
     "student_id": "1769959344",
     "checklist_item_id": 17,
-    "completed_at": "2026-02-01T18:56:54.016Z"
+    "completed_at": "2026-02-01T19:13:25.111Z"
   }
 ]
