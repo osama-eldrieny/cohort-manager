@@ -3369,7 +3369,14 @@ async function loadCohorts() {
 }
 
 function renderCohortManager() {
+    const page = document.getElementById('cohortmanager');
     updateCohortsTable();
+    
+    // Attach event delegation listener to the page for cohort table clicks
+    const tbody = page.querySelector('#cohortsTableBody');
+    if (tbody) {
+        tbody.addEventListener('click', handleCohortTableClick);
+    }
 }
 
 function updateCohortsTable() {
@@ -3395,9 +3402,6 @@ function updateCohortsTable() {
             </td>
         </tr>
     `).join('');
-    
-    // Attach event listeners using event delegation
-    tbody.addEventListener('click', handleCohortTableClick);
 }
 
 function handleCohortTableClick(event) {
