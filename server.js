@@ -28,7 +28,19 @@ import {
     getAllCohorts,
     createCohort,
     updateCohort,
-    deleteCohort
+    deleteCohort,
+    getEmailTemplateCategories,
+    saveEmailTemplateCategories,
+    addEmailTemplateCategory,
+    deleteEmailTemplateCategory,
+    updateEmailTemplateCategory,
+    getChecklistItems,
+    saveChecklistItems,
+    addChecklistItem,
+    updateChecklistItem,
+    deleteChecklistItem,
+    getStudentChecklistCompletion,
+    saveStudentChecklistCompletion
 } from './database.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -272,15 +284,15 @@ app.get('/api/email-templates', async (req, res) => {
 // POST /api/email-templates - Save email template
 app.post('/api/email-templates', async (req, res) => {
     try {
-        const { id, name, button_label, subject, body } = req.body;
+        const { id, name, category, button_label, subject, body } = req.body;
         
         if (!id || !name || !button_label || !subject || !body) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
         
-        console.log(`📝 Saving email template: ${name} (ID: ${id})`);
+        console.log(`📝 Saving email template: ${name} (ID: ${id}) in category: ${category}`);
         
-        await saveEmailTemplate(id, name, button_label, subject, body);
+        await saveEmailTemplate(id, name, category, button_label, subject, body);
         
         // Auto-export to JSON after saving
         try {
@@ -314,6 +326,166 @@ app.delete('/api/email-templates/:id', async (req, res) => {
     } catch (error) {
         console.error('❌ Error deleting email template:', error.message, error.stack);
         res.status(500).json({ error: 'Failed to delete email template: ' + error.message });
+    }
+});
+
+// GET /api/email-template-categories - Get all email template categories
+app.get('/api/email-template-categories', async (req, res) => {
+    try {
+        const categories = await getEmailTemplateCategories();
+        res.json(categories);
+    } catch (error) {
+        console.error('❌ Error fetching email template categories:', error.message);
+        res.status(500).json({ error: 'Failed to fetch email template categories' });
+    }
+});
+
+// POST /api/email-template-categories - Add new email template category
+app.post('/api/email-template-categories', async (req, res) => {
+    try {
+        const { categoryName } = req.body;
+        
+        if (!categoryName || !categoryName.trim()) {
+            return res.status(400).json({ error: 'Category name is required' });
+        }
+        
+        const categories = await addEmailTemplateCategory(categoryName.trim());
+        res.json({ success: true, categories });
+    } catch (error) {
+        console.error('❌ Error adding email template category:', error.message);
+        res.status(500).json({ error: error.message || 'Failed to add email template category' });
+    }
+});
+
+// DELETE /api/email-template-categories/:categoryName - Delete email template category
+app.delete('/api/email-template-categories/:categoryName', async (req, res) => {
+    try {
+        const { categoryName } = req.params;
+        
+        if (!categoryName) {
+            return res.status(400).json({ error: 'Category name is required' });
+        }
+        
+        const categories = await deleteEmailTemplateCategory(decodeURIComponent(categoryName));
+        res.json({ success: true, categories });
+    } catch (error) {
+        console.error('❌ Error deleting email template category:', error.message);
+        res.status(500).json({ error: error.message || 'Failed to delete email template category' });
+    }
+});
+
+// PUT /api/email-template-categories/:oldName - Update email template category name
+app.put('/api/email-template-categories/:oldName', async (req, res) => {
+    try {
+        const { oldName } = req.params;
+        const { newName } = req.body;
+        
+        if (!oldName || !newName || !newName.trim()) {
+            return res.status(400).json({ error: 'Category names are required' });
+        }
+        
+        const categories = await updateEmailTemplateCategory(decodeURIComponent(oldName), newName.trim());
+        res.json({ success: true, categories });
+    } catch (error) {
+        console.error('❌ Error updating email template category:', error.message);
+        res.status(500).json({ error: error.message || 'Failed to update email template category' });
+    }
+});
+
+// ============================================
+// STUDENT CHECKLIST API ENDPOINTS
+// ============================================
+
+// GET /api/checklist-items - Get all checklist items
+app.get('/api/checklist-items', async (req, res) => {
+    try {
+        const items = await getChecklistItems();
+        res.json(items);
+    } catch (error) {
+        console.error('❌ Error fetching checklist items:', error.message);
+        res.status(500).json({ error: 'Failed to fetch checklist items' });
+    }
+});
+
+// POST /api/checklist-items - Add new checklist item
+app.post('/api/checklist-items', async (req, res) => {
+    try {
+        const { category, label, sort_position } = req.body;
+        
+        if (!category || !label) {
+            return res.status(400).json({ error: 'Category and label are required' });
+        }
+        
+        const item = await addChecklistItem(category, label, sort_position);
+        res.json({ success: true, item });
+    } catch (error) {
+        console.error('❌ Error adding checklist item:', error.message);
+        res.status(500).json({ error: error.message || 'Failed to add checklist item' });
+    }
+});
+
+// PUT /api/checklist-items/:id - Update checklist item
+app.put('/api/checklist-items/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { category, label, sort_position } = req.body;
+        
+        if (!id) {
+            return res.status(400).json({ error: 'Item ID is required' });
+        }
+        
+        const item = await updateChecklistItem(parseInt(id), category, label, sort_position);
+        res.json({ success: true, item });
+    } catch (error) {
+        console.error('❌ Error updating checklist item:', error.message);
+        res.status(500).json({ error: error.message || 'Failed to update checklist item' });
+    }
+});
+
+// DELETE /api/checklist-items/:id - Delete checklist item
+app.delete('/api/checklist-items/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        if (!id) {
+            return res.status(400).json({ error: 'Item ID is required' });
+        }
+        
+        await deleteChecklistItem(parseInt(id));
+        res.json({ success: true });
+    } catch (error) {
+        console.error('❌ Error deleting checklist item:', error.message);
+        res.status(500).json({ error: error.message || 'Failed to delete checklist item' });
+    }
+});
+
+// GET /api/students/:id/checklist-completion - Get student checklist completion
+app.get('/api/students/:id/checklist-completion', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const completion = await getStudentChecklistCompletion(id);
+        res.json(completion);
+    } catch (error) {
+        console.error('❌ Error fetching checklist completion:', error.message);
+        res.status(500).json({ error: 'Failed to fetch checklist completion' });
+    }
+});
+
+// POST /api/students/:id/checklist-completion - Save student checklist completion
+app.post('/api/students/:id/checklist-completion', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { completedItemIds } = req.body;
+        
+        if (!Array.isArray(completedItemIds)) {
+            return res.status(400).json({ error: 'completedItemIds must be an array' });
+        }
+        
+        const completion = await saveStudentChecklistCompletion(id, completedItemIds);
+        res.json({ success: true, completion });
+    } catch (error) {
+        console.error('❌ Error saving checklist completion:', error.message);
+        res.status(500).json({ error: error.message || 'Failed to save checklist completion' });
     }
 });
 
@@ -495,13 +667,13 @@ app.get('/api/cohorts', async (req, res) => {
 // Create a new cohort
 app.post('/api/cohorts', async (req, res) => {
     try {
-        const { name, description } = req.body;
+        const { name, description, icon, color } = req.body;
         
         if (!name || name.trim() === '') {
             return res.status(400).json({ error: 'Cohort name is required' });
         }
         
-        const newCohort = await createCohort(name, description || '');
+        const newCohort = await createCohort(name, description || '', icon || 'fa-map-pin', color || '#4ECDC4');
         res.status(201).json(newCohort);
     } catch (error) {
         console.error('❌ Error creating cohort:', error);
@@ -513,13 +685,13 @@ app.post('/api/cohorts', async (req, res) => {
 app.put('/api/cohorts/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, description } = req.body;
+        const { name, description, icon, color } = req.body;
         
         if (!name || name.trim() === '') {
             return res.status(400).json({ error: 'Cohort name is required' });
         }
         
-        const updated = await updateCohort(parseInt(id), name, description || '');
+        const updated = await updateCohort(parseInt(id), name, description || '', icon || 'fa-map-pin', color || '#4ECDC4');
         if (!updated) {
             return res.status(404).json({ error: 'Cohort not found' });
         }

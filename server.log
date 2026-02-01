@@ -14,3 +14,137 @@
    GET  /api/health - Health check
 ✅ Column preferences table ready
 🔧 Database initialization complete
+⚠️  Update error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+✅ Saved 1 students to Supabase (deduplicated from 1)
+📝 Upsert strategy: Matching on ID (for updates including email changes), fallback to email for new records
+✅ Auto-saved 1 students to database
+⚠️  Update error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Insert error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+✅ Saved 1 students to Supabase (deduplicated from 1)
+📝 Upsert strategy: Matching on ID (for updates including email changes), fallback to email for new records
+✅ Auto-saved 1 students to database
+✅ Saved 1 students to Supabase (deduplicated from 1)
+📝 Upsert strategy: Matching on ID (for updates including email changes), fallback to email for new records
+✅ Auto-saved 1 students to database
+✅ Saved 1 students to Supabase (deduplicated from 1)
+📝 Upsert strategy: Matching on ID (for updates including email changes), fallback to email for new records
+✅ Auto-saved 1 students to database
+✅ Saved 1 students to Supabase (deduplicated from 1)
+📝 Upsert strategy: Matching on ID (for updates including email changes), fallback to email for new records
+✅ Auto-saved 1 students to database
+✅ Saved 1 students to Supabase (deduplicated from 1)
+📝 Upsert strategy: Matching on ID (for updates including email changes), fallback to email for new records
+✅ Auto-saved 1 students to database
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Update error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Update error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Insert error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+✅ Saved 1 students to Supabase (deduplicated from 1)
+📝 Upsert strategy: Matching on ID (for updates including email changes), fallback to email for new records
+✅ Auto-saved 1 students to database
+✅ Saved 1 students to Supabase (deduplicated from 1)
+📝 Upsert strategy: Matching on ID (for updates including email changes), fallback to email for new records
+✅ Auto-saved 1 students to database
+✅ Saved 1 students to Supabase (deduplicated from 1)
+📝 Upsert strategy: Matching on ID (for updates including email changes), fallback to email for new records
+✅ Auto-saved 1 students to database
+✅ Saved 1 students to Supabase (deduplicated from 1)
+📝 Upsert strategy: Matching on ID (for updates including email changes), fallback to email for new records
+✅ Auto-saved 1 students to database
+✅ Saved 1 students to Supabase (deduplicated from 1)
+📝 Upsert strategy: Matching on ID (for updates including email changes), fallback to email for new records
+✅ Auto-saved 1 students to database
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Insert error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+✅ Saved 1 students to Supabase (deduplicated from 1)
+📝 Upsert strategy: Matching on ID (for updates including email changes), fallback to email for new records
+✅ Auto-saved 1 students to database
+✅ Saved 1 students to Supabase (deduplicated from 1)
+📝 Upsert strategy: Matching on ID (for updates including email changes), fallback to email for new records
+✅ Auto-saved 1 students to database
+✅ Saved 1 students to Supabase (deduplicated from 1)
+📝 Upsert strategy: Matching on ID (for updates including email changes), fallback to email for new records
+✅ Auto-saved 1 students to database
+✅ Saved 1 students to Supabase (deduplicated from 1)
+📝 Upsert strategy: Matching on ID (for updates including email changes), fallback to email for new records
+✅ Auto-saved 1 students to database
+✅ Saved 1 students to Supabase (deduplicated from 1)
+📝 Upsert strategy: Matching on ID (for updates including email changes), fallback to email for new records
+✅ Auto-saved 1 students to database
+✅ Saved 1 students to Supabase (deduplicated from 1)
+📝 Upsert strategy: Matching on ID (for updates including email changes), fallback to email for new records
+✅ Auto-saved 1 students to database
+✅ Saved 1 students to Supabase (deduplicated from 1)
+📝 Upsert strategy: Matching on ID (for updates including email changes), fallback to email for new records
+✅ Auto-saved 1 students to database
+✅ Saved 1 students to Supabase (deduplicated from 1)
+📝 Upsert strategy: Matching on ID (for updates including email changes), fallback to email for new records
+✅ Auto-saved 1 students to database
+✅ Saved 1 students to Supabase (deduplicated from 1)
+📝 Upsert strategy: Matching on ID (for updates including email changes), fallback to email for new records
+✅ Auto-saved 1 students to database
+✅ Saved 1 students to Supabase (deduplicated from 1)
+📝 Upsert strategy: Matching on ID (for updates including email changes), fallback to email for new records
+✅ Auto-saved 1 students to database
+✅ Saved 1 students to Supabase (deduplicated from 1)
+📝 Upsert strategy: Matching on ID (for updates including email changes), fallback to email for new records
+✅ Auto-saved 1 students to database
+✅ Saved 1 students to Supabase (deduplicated from 1)
+📝 Upsert strategy: Matching on ID (for updates including email changes), fallback to email for new records
+✅ Auto-saved 1 students to database
+✅ Saved 1 students to Supabase (deduplicated from 1)
+📝 Upsert strategy: Matching on ID (for updates including email changes), fallback to email for new records
+✅ Auto-saved 1 students to database
+✅ Saved 1 students to Supabase (deduplicated from 1)
+📝 Upsert strategy: Matching on ID (for updates including email changes), fallback to email for new records
+✅ Auto-saved 1 students to database
+✅ Saved 1 students to Supabase (deduplicated from 1)
+📝 Upsert strategy: Matching on ID (for updates including email changes), fallback to email for new records
+✅ Auto-saved 1 students to database
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Insert error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache
+⚠️  Cohorts table error, using JSON fallback: Could not find the table 'public.cohorts' in the schema cache

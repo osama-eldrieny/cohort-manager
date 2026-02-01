@@ -262,16 +262,23 @@ export async function exportData() {
 // Get all email templates
 export async function getAllEmailTemplates() {
     try {
-        if (!supabase) {
-            // Fallback to JSON file
-            try {
-                const templatesPath = path.join(__dirname, 'email_templates.json');
-                const data = fs.readFileSync(templatesPath, 'utf-8');
-                return JSON.parse(data);
-            } catch (err) {
-                console.log('ℹ️  No email templates found');
-                return [];
+        // Always prioritize JSON file for email templates (contains category field)
+        try {
+            const templatesPath = path.join(__dirname, 'email_templates.json');
+            const data = fs.readFileSync(templatesPath, 'utf-8');
+            const templates = JSON.parse(data);
+            if (templates && templates.length > 0) {
+                console.log(`✅ Loaded ${templates.length} email templates from JSON file`);
+                return templates;
             }
+        } catch (err) {
+            console.log('ℹ️  No email templates found in JSON file, trying Supabase...');
+        }
+
+        // Fallback to Supabase if JSON file is empty or doesn't exist
+        if (!supabase) {
+            console.log('ℹ️  No Supabase connection and no JSON templates');
+            return [];
         }
 
         const { data, error } = await supabase
@@ -280,15 +287,23 @@ export async function getAllEmailTemplates() {
             .order('created_at', { ascending: true });
 
         if (error) throw error;
+        console.log(`✅ Loaded ${data?.length || 0} email templates from Supabase`);
         return data || [];
     } catch (error) {
         console.error('❌ Error fetching email templates:', error.message);
-        throw error;
+        // Final fallback to JSON file
+        try {
+            const templatesPath = path.join(__dirname, 'email_templates.json');
+            const data = fs.readFileSync(templatesPath, 'utf-8');
+            return JSON.parse(data);
+        } catch {
+            return [];
+        }
     }
 }
 
 // Save email template
-export async function saveEmailTemplate(id, name, button_label, subject, body) {
+export async function saveEmailTemplate(id, name, category, button_label, subject, body) {
     try {
         if (!supabase) {
             // Fallback to JSON file
@@ -306,6 +321,7 @@ export async function saveEmailTemplate(id, name, button_label, subject, body) {
             const newTemplate = {
                 id,
                 name,
+                category,
                 button_label,
                 subject,
                 body,
@@ -324,20 +340,75 @@ export async function saveEmailTemplate(id, name, button_label, subject, body) {
             return;
         }
 
-        const { error } = await supabase
-            .from('email_templates')
-            .upsert({
-                id,
-                name,
-                button_label,
-                subject,
-                body
-            }, {
-                onConflict: 'id'
-            });
+        // Try to save to Supabase, but if category column doesn't exist, skip it
+        try {
+            const { error } = await supabase
+                .from('email_templates')
+                .upsert({
+                    id,
+                    name,
+                    category,
+                    button_label,
+                    subject,
+                    body
+                }, {
+                    onConflict: 'id'
+                });
 
-        if (error) throw error;
-        console.log(`✅ Email template "${name}" saved to Supabase (UPSERT on ID to prevent duplicates when name changes)`);
+            if (error) throw error;
+            console.log(`✅ Email template "${name}" saved to Supabase with category`);
+        } catch (supabaseError) {
+            // If error mentions category column doesn't exist, try without it
+            if (supabaseError.message && supabaseError.message.includes('category')) {
+                console.log('⚠️  Category column not found in Supabase, saving without category field...');
+                const { error } = await supabase
+                    .from('email_templates')
+                    .upsert({
+                        id,
+                        name,
+                        button_label,
+                        subject,
+                        body
+                    }, {
+                        onConflict: 'id'
+                    });
+                
+                if (error) throw error;
+                console.log(`✅ Email template "${name}" saved to Supabase without category`);
+            } else {
+                throw supabaseError;
+            }
+        }
+
+        // Always also save to JSON file for backup/fallback
+        const templatesPath = path.join(__dirname, 'email_templates.json');
+        let templates = [];
+        try {
+            const data = fs.readFileSync(templatesPath, 'utf-8');
+            templates = JSON.parse(data);
+        } catch {
+            templates = [];
+        }
+
+        const existingIndex = templates.findIndex(t => t.id === id);
+        const newTemplate = {
+            id,
+            name,
+            category,
+            button_label,
+            subject,
+            body,
+            updated_at: new Date().toISOString(),
+            created_at: existingIndex >= 0 ? templates[existingIndex].created_at : new Date().toISOString()
+        };
+
+        if (existingIndex >= 0) {
+            templates[existingIndex] = newTemplate;
+        } else {
+            templates.push(newTemplate);
+        }
+
+        fs.writeFileSync(templatesPath, JSON.stringify(templates, null, 2));
     } catch (error) {
         console.error('❌ Error saving email template:', error.message);
         throw error;
@@ -678,7 +749,7 @@ export async function getAllCohorts() {
     }
 }
 
-export async function createCohort(name, description = '') {
+export async function createCohort(name, description = '', icon = 'fa-map-pin', color = '#4ECDC4') {
     try {
         if (!supabase) {
             console.log('⚠️  Creating cohort in JSON fallback');
@@ -692,6 +763,8 @@ export async function createCohort(name, description = '') {
                 id: cohorts.length > 0 ? Math.max(...cohorts.map(c => c.id)) + 1 : 1,
                 name,
                 description,
+                icon,
+                color,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
             };
@@ -702,7 +775,7 @@ export async function createCohort(name, description = '') {
 
         const { data, error } = await supabase
             .from('cohorts')
-            .insert([{ name, description }])
+            .insert([{ name, description, icon, color }])
             .select();
 
         if (error) {
@@ -717,6 +790,8 @@ export async function createCohort(name, description = '') {
                 id: cohorts.length > 0 ? Math.max(...cohorts.map(c => c.id)) + 1 : 1,
                 name,
                 description,
+                icon,
+                color,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
             };
@@ -732,7 +807,7 @@ export async function createCohort(name, description = '') {
     }
 }
 
-export async function updateCohort(id, name, description = '') {
+export async function updateCohort(id, name, description = '', icon = 'fa-map-pin', color = '#4ECDC4') {
     try {
         if (!supabase) {
             console.log('⚠️  Updating cohort in JSON fallback');
@@ -748,6 +823,8 @@ export async function updateCohort(id, name, description = '') {
                     ...cohorts[index],
                     name,
                     description,
+                    icon,
+                    color,
                     updated_at: new Date().toISOString()
                 };
                 fs.writeFileSync(cohortsFile, JSON.stringify(cohorts, null, 2));
@@ -758,7 +835,7 @@ export async function updateCohort(id, name, description = '') {
 
         const { data, error } = await supabase
             .from('cohorts')
-            .update({ name, description, updated_at: new Date().toISOString() })
+            .update({ name, description, icon, color, updated_at: new Date().toISOString() })
             .eq('id', id)
             .select();
 
@@ -776,6 +853,8 @@ export async function updateCohort(id, name, description = '') {
                     ...cohorts[index],
                     name,
                     description,
+                    icon,
+                    color,
                     updated_at: new Date().toISOString()
                 };
                 fs.writeFileSync(cohortsFile, JSON.stringify(cohorts, null, 2));
@@ -831,8 +910,535 @@ export async function deleteCohort(id) {
     }
 }
 
+// Email Template Categories
+export async function getEmailTemplateCategories() {
+    try {
+        const categoriesPath = path.join(__dirname, 'email_template_categories.json');
+        
+        try {
+            const data = fs.readFileSync(categoriesPath, 'utf-8');
+            const categories = JSON.parse(data);
+            console.log('✅ Loaded email template categories from file');
+            return categories;
+        } catch (err) {
+            console.log('ℹ️  No email template categories file found, using defaults');
+            return ['Setup Templates', 'Resources & Tools', 'Payments & Completion'];
+        }
+    } catch (error) {
+        console.error('❌ Error getting email template categories:', error.message);
+        return ['Setup Templates', 'Resources & Tools', 'Payments & Completion'];
+    }
+}
+
+export async function saveEmailTemplateCategories(categories) {
+    try {
+        const categoriesPath = path.join(__dirname, 'email_template_categories.json');
+        fs.writeFileSync(categoriesPath, JSON.stringify(categories, null, 2));
+        console.log('✅ Email template categories saved to database');
+        return categories;
+    } catch (error) {
+        console.error('❌ Error saving email template categories:', error.message);
+        throw error;
+    }
+}
+
+export async function addEmailTemplateCategory(categoryName) {
+    try {
+        if (!categoryName || typeof categoryName !== 'string') {
+            throw new Error('Invalid category name');
+        }
+
+        const categories = await getEmailTemplateCategories();
+        
+        if (categories.includes(categoryName)) {
+            throw new Error('Category already exists');
+        }
+
+        categories.push(categoryName);
+        await saveEmailTemplateCategories(categories);
+        
+        console.log(`✅ Added new category: "${categoryName}"`);
+        return categories;
+    } catch (error) {
+        console.error('❌ Error adding email template category:', error.message);
+        throw error;
+    }
+}
+
+export async function deleteEmailTemplateCategory(categoryName) {
+    try {
+        if (!categoryName || typeof categoryName !== 'string') {
+            throw new Error('Invalid category name');
+        }
+
+        const categories = await getEmailTemplateCategories();
+        
+        if (!categories.includes(categoryName)) {
+            throw new Error('Category does not exist');
+        }
+
+        // Remove the category
+        const updatedCategories = categories.filter(c => c !== categoryName);
+        await saveEmailTemplateCategories(updatedCategories);
+        
+        console.log(`✅ Deleted category: "${categoryName}"`);
+        return updatedCategories;
+    } catch (error) {
+        console.error('❌ Error deleting email template category:', error.message);
+        throw error;
+    }
+}
+
+export async function updateEmailTemplateCategory(oldCategoryName, newCategoryName) {
+    try {
+        if (!oldCategoryName || !newCategoryName || typeof oldCategoryName !== 'string' || typeof newCategoryName !== 'string') {
+            throw new Error('Invalid category names');
+        }
+
+        const categories = await getEmailTemplateCategories();
+        
+        if (!categories.includes(oldCategoryName)) {
+            throw new Error('Category does not exist');
+        }
+
+        if (oldCategoryName === newCategoryName) {
+            return categories;
+        }
+
+        if (categories.includes(newCategoryName)) {
+            throw new Error('New category name already exists');
+        }
+
+        // Update the category name
+        const index = categories.indexOf(oldCategoryName);
+        categories[index] = newCategoryName;
+        await saveEmailTemplateCategories(categories);
+
+        // Update all templates using this category
+        const templatesPath = path.join(__dirname, 'email_templates.json');
+        if (fs.existsSync(templatesPath)) {
+            try {
+                const templatesData = fs.readFileSync(templatesPath, 'utf-8');
+                const templates = JSON.parse(templatesData);
+                
+                templates.forEach(template => {
+                    if (template.category === oldCategoryName) {
+                        template.category = newCategoryName;
+                    }
+                });
+
+                fs.writeFileSync(templatesPath, JSON.stringify(templates, null, 2));
+                console.log(`✅ Updated ${templates.filter(t => t.category === newCategoryName).length} templates to new category name`);
+            } catch (err) {
+                console.warn('⚠️  Could not update templates in JSON file:', err.message);
+            }
+        }
+        
+        console.log(`✅ Renamed category: "${oldCategoryName}" → "${newCategoryName}"`);
+        return categories;
+    } catch (error) {
+        console.error('❌ Error updating email template category:', error.message);
+        throw error;
+    }
+}
+
+// ============================================
+// STUDENT CHECKLIST MANAGEMENT
+// ============================================
+
+// Get all checklist items
+export async function getChecklistItems() {
+    try {
+        if (!supabase) {
+            const checklistPath = path.join(__dirname, 'checklist_items.json');
+            if (fs.existsSync(checklistPath)) {
+                const data = fs.readFileSync(checklistPath, 'utf-8');
+                return JSON.parse(data);
+            }
+            return [];
+        }
+
+        const { data, error } = await supabase
+            .from('checklist_items')
+            .select('*')
+            .order('sort_position', { ascending: true });
+
+        if (error) {
+            // Fallback to JSON if Supabase table doesn't exist
+            console.log('📄 Supabase table not available, using JSON fallback');
+            const checklistPath = path.join(__dirname, 'checklist_items.json');
+            if (fs.existsSync(checklistPath)) {
+                const fileData = fs.readFileSync(checklistPath, 'utf-8');
+                return JSON.parse(fileData);
+            }
+            return [];
+        }
+        
+        return data || [];
+    } catch (error) {
+        console.error('❌ Error fetching checklist items:', error.message);
+        // Fallback to JSON file
+        try {
+            const checklistPath = path.join(__dirname, 'checklist_items.json');
+            if (fs.existsSync(checklistPath)) {
+                const data = fs.readFileSync(checklistPath, 'utf-8');
+                return JSON.parse(data);
+            }
+        } catch (fallbackError) {
+            console.error('❌ Could not read JSON fallback:', fallbackError.message);
+        }
+        return [];
+    }
+}
+
+// Save checklist items (for JSON fallback)
+export async function saveChecklistItems(items) {
+    try {
+        const checklistPath = path.join(__dirname, 'checklist_items.json');
+        fs.writeFileSync(checklistPath, JSON.stringify(items, null, 2));
+        console.log(`✅ Saved ${items.length} checklist items`);
+        return items;
+    } catch (error) {
+        console.error('❌ Error saving checklist items:', error.message);
+        throw error;
+    }
+}
+
+// Add new checklist item
+export async function addChecklistItem(category, label, sortPosition = 999) {
+    try {
+        if (!category || !label) {
+            throw new Error('Category and label are required');
+        }
+
+        if (!supabase) {
+            // JSON fallback
+            const items = await getChecklistItems();
+            const newId = Math.max(...items.map(i => i.id || 0), 0) + 1;
+            const newItem = {
+                id: newId,
+                category,
+                label,
+                sort_position: sortPosition,
+                created_at: new Date().toISOString()
+            };
+            items.push(newItem);
+            await saveChecklistItems(items);
+            return newItem;
+        }
+
+        const { data, error } = await supabase
+            .from('checklist_items')
+            .insert([{
+                category,
+                label,
+                sort_position: sortPosition,
+                created_at: new Date().toISOString()
+            }])
+            .select();
+
+        if (error) {
+            // Fallback to JSON for Supabase errors
+            console.log('📄 Supabase insert failed, using JSON fallback');
+            const items = await getChecklistItems();
+            const newId = Math.max(...items.map(i => i.id || 0), 0) + 1;
+            const newItem = {
+                id: newId,
+                category,
+                label,
+                sort_position: sortPosition,
+                created_at: new Date().toISOString()
+            };
+            items.push(newItem);
+            await saveChecklistItems(items);
+            return newItem;
+        }
+        
+        console.log(`✅ Added checklist item: "${label}"`);
+        return data?.[0];
+    } catch (error) {
+        console.error('❌ Error adding checklist item:', error.message);
+        throw error;
+    }
+}
+
+// Update checklist item
+export async function updateChecklistItem(id, category, label, sortPosition) {
+    try {
+        if (!id) {
+            throw new Error('Item ID is required');
+        }
+
+        if (!supabase) {
+            // JSON fallback
+            const items = await getChecklistItems();
+            const itemIndex = items.findIndex(i => i.id === id);
+            if (itemIndex === -1) throw new Error('Item not found');
+            
+            if (category) items[itemIndex].category = category;
+            if (label) items[itemIndex].label = label;
+            if (sortPosition !== undefined) items[itemIndex].sort_position = sortPosition;
+            
+            await saveChecklistItems(items);
+            return items[itemIndex];
+        }
+
+        const updates = {};
+        if (category) updates.category = category;
+        if (label) updates.label = label;
+        if (sortPosition !== undefined) updates.sort_position = sortPosition;
+
+        const { data, error } = await supabase
+            .from('checklist_items')
+            .update(updates)
+            .eq('id', id)
+            .select();
+
+        if (error) {
+            // Fallback to JSON for Supabase errors
+            console.log('📄 Supabase update failed, using JSON fallback');
+            const items = await getChecklistItems();
+            const itemIndex = items.findIndex(i => i.id === id);
+            if (itemIndex === -1) throw new Error('Item not found');
+            
+            if (category) items[itemIndex].category = category;
+            if (label) items[itemIndex].label = label;
+            if (sortPosition !== undefined) items[itemIndex].sort_position = sortPosition;
+            
+            await saveChecklistItems(items);
+            return items[itemIndex];
+        }
+        
+        console.log(`✅ Updated checklist item: "${label}"`);
+        return data?.[0];
+    } catch (error) {
+        console.error('❌ Error updating checklist item:', error.message);
+        throw error;
+    }
+}
+
+// Delete checklist item
+export async function deleteChecklistItem(id) {
+    try {
+        if (!id) {
+            throw new Error('Item ID is required');
+        }
+
+        if (!supabase) {
+            // JSON fallback
+            const items = await getChecklistItems();
+            const filtered = items.filter(i => i.id !== id);
+            await saveChecklistItems(filtered);
+            return true;
+        }
+
+        const { error } = await supabase
+            .from('checklist_items')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            // Fallback to JSON for Supabase errors
+            console.log('📄 Supabase delete failed, using JSON fallback');
+            const items = await getChecklistItems();
+            const filtered = items.filter(i => i.id !== id);
+            await saveChecklistItems(filtered);
+            return true;
+        }
+        
+        console.log(`✅ Deleted checklist item with ID: ${id}`);
+        return true;
+    } catch (error) {
+        console.error('❌ Error deleting checklist item:', error.message);
+        throw error;
+    }
+}
+
+// Get student checklist completion
+export async function getStudentChecklistCompletion(studentId) {
+    try {
+        if (!supabase) {
+            const completionPath = path.join(__dirname, 'student_checklist_completion.json');
+            if (fs.existsSync(completionPath)) {
+                const data = fs.readFileSync(completionPath, 'utf-8');
+                const completions = JSON.parse(data);
+                return completions.filter(c => c.student_id === studentId) || [];
+            }
+            return [];
+        }
+
+        const { data, error } = await supabase
+            .from('student_checklist_completion')
+            .select('*')
+            .eq('student_id', studentId);
+
+        if (error) {
+            // Fallback to JSON
+            console.log('📄 Supabase table not available, using JSON fallback');
+            const completionPath = path.join(__dirname, 'student_checklist_completion.json');
+            if (fs.existsSync(completionPath)) {
+                const fileData = fs.readFileSync(completionPath, 'utf-8');
+                const completions = JSON.parse(fileData);
+                return completions.filter(c => c.student_id === studentId) || [];
+            }
+            return [];
+        }
+        
+        return data || [];
+    } catch (error) {
+        console.error('❌ Error fetching student checklist completion:', error.message);
+        // Fallback to JSON
+        try {
+            const completionPath = path.join(__dirname, 'student_checklist_completion.json');
+            if (fs.existsSync(completionPath)) {
+                const data = fs.readFileSync(completionPath, 'utf-8');
+                const completions = JSON.parse(data);
+                return completions.filter(c => c.student_id === studentId) || [];
+            }
+        } catch (fallbackError) {
+            console.error('❌ Could not read JSON fallback:', fallbackError.message);
+        }
+        return [];
+    }
+}
+
+// Save student checklist completion
+export async function saveStudentChecklistCompletion(studentId, completedItemIds) {
+    try {
+        if (!supabase) {
+            const completionPath = path.join(__dirname, 'student_checklist_completion.json');
+            let completions = [];
+            
+            if (fs.existsSync(completionPath)) {
+                const data = fs.readFileSync(completionPath, 'utf-8');
+                completions = JSON.parse(data);
+            }
+
+            // Remove old entries for this student
+            completions = completions.filter(c => c.student_id !== studentId);
+
+            // Add new entries
+            completedItemIds.forEach(itemId => {
+                completions.push({
+                    student_id: studentId,
+                    checklist_item_id: itemId,
+                    completed_at: new Date().toISOString()
+                });
+            });
+
+            fs.writeFileSync(completionPath, JSON.stringify(completions, null, 2));
+            return completions.filter(c => c.student_id === studentId);
+        }
+
+        // Remove old entries
+        const { error: deleteError } = await supabase
+            .from('student_checklist_completion')
+            .delete()
+            .eq('student_id', studentId);
+
+        if (deleteError) {
+            // Fallback to JSON for delete error
+            console.log('📄 Supabase delete failed, using JSON fallback');
+            const completionPath = path.join(__dirname, 'student_checklist_completion.json');
+            let completions = [];
+            
+            if (fs.existsSync(completionPath)) {
+                const data = fs.readFileSync(completionPath, 'utf-8');
+                completions = JSON.parse(data);
+            }
+
+            // Remove old entries for this student
+            completions = completions.filter(c => c.student_id !== studentId);
+
+            // Add new entries
+            completedItemIds.forEach(itemId => {
+                completions.push({
+                    student_id: studentId,
+                    checklist_item_id: itemId,
+                    completed_at: new Date().toISOString()
+                });
+            });
+
+            fs.writeFileSync(completionPath, JSON.stringify(completions, null, 2));
+            return completions.filter(c => c.student_id === studentId);
+        }
+
+        // Add new entries
+        const newCompletions = completedItemIds.map(itemId => ({
+            student_id: studentId,
+            checklist_item_id: itemId,
+            completed_at: new Date().toISOString()
+        }));
+
+        if (newCompletions.length > 0) {
+            const { data, error } = await supabase
+                .from('student_checklist_completion')
+                .insert(newCompletions)
+                .select();
+
+            if (error) {
+                // Fallback to JSON for insert error
+                console.log('📄 Supabase insert failed, using JSON fallback');
+                const completionPath = path.join(__dirname, 'student_checklist_completion.json');
+                let completions = [];
+                
+                if (fs.existsSync(completionPath)) {
+                    const data = fs.readFileSync(completionPath, 'utf-8');
+                    completions = JSON.parse(data);
+                }
+
+                // Remove old entries for this student
+                completions = completions.filter(c => c.student_id !== studentId);
+
+                // Add new entries
+                newCompletions.forEach(comp => {
+                    completions.push(comp);
+                });
+
+                fs.writeFileSync(completionPath, JSON.stringify(completions, null, 2));
+                return completions.filter(c => c.student_id === studentId);
+            }
+            
+            return data || [];
+        }
+
+        return [];
+    } catch (error) {
+        console.error('❌ Error saving student checklist completion:', error.message);
+        // Fallback to JSON
+        try {
+            const completionPath = path.join(__dirname, 'student_checklist_completion.json');
+            let completions = [];
+            
+            if (fs.existsSync(completionPath)) {
+                const data = fs.readFileSync(completionPath, 'utf-8');
+                completions = JSON.parse(data);
+            }
+
+            // Remove old entries for this student
+            completions = completions.filter(c => c.student_id !== studentId);
+
+            // Add new entries
+            completedItemIds.forEach(itemId => {
+                completions.push({
+                    student_id: studentId,
+                    checklist_item_id: itemId,
+                    completed_at: new Date().toISOString()
+                });
+            });
+
+            fs.writeFileSync(completionPath, JSON.stringify(completions, null, 2));
+            return completions.filter(c => c.student_id === studentId);
+        } catch (fallbackError) {
+            console.error('❌ Could not save to JSON fallback:', fallbackError.message);
+            throw error;
+        }
+    }
+}
+
 // Close database connection
 export function closeDatabase() {
     // Supabase client doesn't need explicit closing
     console.log('✅ Supabase connection closed');
 }
+

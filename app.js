@@ -7,9 +7,36 @@ let currentEditingId = null;
 let originalEditingEmail = null; // Track original email when editing
 let emailWasChanged = false;
 let charts = {};
+const COHORTS = ['Cohort 0', 'Cohort 1 - Cradis', 'Cohort 1 - Zomra', 'Cohort 2', 'Cohort 3', 'English 1'];
 
-// Hardcoded cohorts - will be gradually migrated to database
-const HARDCODED_COHORTS = ['Cohort 0', 'Cohort 1 - Cradis', 'Cohort 1 - Zomra', 'Cohort 2', 'Cohort 3', 'English 1'];
+// Track deleted hardcoded cohorts
+let deletedHardcodedCohorts = [];
+
+// Load deleted cohorts from localStorage on startup
+function loadDeletedCohorts() {
+    const stored = localStorage.getItem('deletedHardcodedCohorts');
+    deletedHardcodedCohorts = stored ? JSON.parse(stored) : [];
+}
+
+// Save deleted cohorts to localStorage
+function saveDeletedCohorts() {
+    localStorage.setItem('deletedHardcodedCohorts', JSON.stringify(deletedHardcodedCohorts));
+}
+
+// Get active (non-deleted) hardcoded cohorts
+function getActiveHardcodedCohorts() {
+    return COHORTS.filter(name => !deletedHardcodedCohorts.includes(name));
+}
+
+// Color mapping for hardcoded cohorts
+const COHORT_COLORS = {
+    'Cohort 0': '#FF6B6B',
+    'Cohort 1 - Cradis': '#4ECDC4',
+    'Cohort 1 - Zomra': '#45B7D1',
+    'Cohort 2': '#FFA07A',
+    'Cohort 3': '#98D8C8',
+    'English 1': '#F7DC6F'
+};
 
 // Global color palette for consistent colors across all charts
 const COLOR_PALETTE = [
@@ -56,6 +83,72 @@ function escapeHtml(text) {
         "'": '&#039;'
     };
     return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+// Lighten a hex color by a percentage amount (0-1)
+function lightenColor(hexColor, amount = 0.8) {
+    // Default to primary teal if no color provided
+    if (!hexColor) hexColor = '#4ECDC4';
+    
+    // Remove # if present
+    hexColor = hexColor.replace('#', '');
+    
+    // Parse hex to RGB
+    let r = parseInt(hexColor.substring(0, 2), 16);
+    let g = parseInt(hexColor.substring(2, 4), 16);
+    let b = parseInt(hexColor.substring(4, 6), 16);
+    
+    // Convert RGB to HSL
+    r /= 255;
+    g /= 255;
+    b /= 255;
+    
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    let h, s, l = (max + min) / 2;
+    
+    if (max === min) {
+        h = s = 0;
+    } else {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        
+        switch (max) {
+            case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+            case g: h = ((b - r) / d + 2) / 6; break;
+            case b: h = ((r - g) / d + 4) / 6; break;
+        }
+    }
+    
+    // Apply lightening: increase lightness
+    l = Math.min(1, l + (1 - l) * amount);
+    
+    // Convert HSL back to RGB
+    const c = (1 - Math.abs(2 * l - 1)) * s;
+    const x = c * (1 - Math.abs((h * 6) % 2 - 1));
+    const m = l - c / 2;
+    
+    let rgb = [0, 0, 0];
+    
+    if (h < 1 / 6) {
+        rgb = [c, x, 0];
+    } else if (h < 2 / 6) {
+        rgb = [x, c, 0];
+    } else if (h < 3 / 6) {
+        rgb = [0, c, x];
+    } else if (h < 4 / 6) {
+        rgb = [0, x, c];
+    } else if (h < 5 / 6) {
+        rgb = [x, 0, c];
+    } else {
+        rgb = [c, 0, x];
+    }
+    
+    r = Math.round((rgb[0] + m) * 255);
+    g = Math.round((rgb[1] + m) * 255);
+    b = Math.round((rgb[2] + m) * 255);
+    
+    return `#${[r, g, b].map(x => x.toString(16).padStart(2, '0')).join('')}`;
 }
 
 // ============================================
@@ -358,10 +451,14 @@ async function resetColumnPreferences(pageId) {
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('🔄 DOMContentLoaded event fired');
+    loadDeletedCohorts(); // Load deleted cohorts from localStorage
+    loadEmailTemplateCategories(); // Load email template categories from localStorage
     await loadStudents();
     console.log(`✅ Loaded ${students.length} students`);
     await loadEmailTemplates();
     console.log('✅ Loaded email templates');
+    await loadChecklistItems();
+    console.log('✅ Loaded checklist items');
     await loadCohorts();
     console.log(`✅ Loaded ${cohorts.length} cohorts`);
     setupEventListeners();
@@ -387,6 +484,33 @@ function handleRouteChange() {
             link.classList.add('active');
         } else {
             link.classList.remove('active');
+        }
+    });
+    
+    // Hide deleted hardcoded cohorts from sidebar
+    updateSidebarVisibility();
+}
+
+// Hide/show sidebar links for deleted hardcoded cohorts
+function updateSidebarVisibility() {
+    const cohortMap = {
+        'cohort0': 'Cohort 0',
+        'cohort1cradis': 'Cohort 1 - Cradis',
+        'cohort1zomra': 'Cohort 1 - Zomra',
+        'cohort2': 'Cohort 2',
+        'cohort3': 'Cohort 3',
+        'english1': 'English 1'
+    };
+    
+    // Hide deleted cohort links
+    Object.entries(cohortMap).forEach(([pageId, cohortName]) => {
+        const link = document.querySelector(`[data-page="${pageId}"]`);
+        if (link) {
+            if (deletedHardcodedCohorts.includes(cohortName)) {
+                link.parentElement.style.display = 'none';
+            } else {
+                link.parentElement.style.display = '';
+            }
         }
     });
 }
@@ -428,23 +552,20 @@ function setupEventListeners() {
         sidebarOverlay.addEventListener('click', closeSidebar);
     }
     
-    // Navigation - Use event delegation instead of attaching to each link
-    // This allows dynamically added cohort links to work automatically
-    document.addEventListener('click', (e) => {
-        const navLink = e.target.closest('.nav-link');
-        if (navLink) {
+    // Close sidebar when a nav link is clicked
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+            closeSidebar();
+        });
+    });
+    
+    // Navigation
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', (e) => {
             e.preventDefault();
-            const page = navLink.dataset.page;
+            const page = e.currentTarget.dataset.page;
             navigatePage(page);
-            
-            // Close sidebar
-            const sidebar = document.getElementById('sidebar');
-            const hamburgerBtn = document.getElementById('hamburgerBtn');
-            const sidebarOverlay = document.getElementById('sidebarOverlay');
-            sidebar.classList.remove('active');
-            hamburgerBtn.classList.remove('active');
-            sidebarOverlay.classList.remove('active');
-        }
+        });
     });
     // Filters
     document.getElementById('cohortFilter') && document.getElementById('cohortFilter').addEventListener('change', renderStudentsTable);
@@ -495,6 +616,26 @@ function setupEventListeners() {
     
     // Revenue Eye Toggle - Cohort Revenue Cards
     // Don't attach listeners here - will be attached after page render
+    
+    // Icon Picker Event Listeners
+    document.querySelectorAll('.icon-option').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.querySelectorAll('.icon-option').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            document.getElementById('cohortIcon').value = btn.dataset.icon;
+        });
+    });
+    
+    // Color Picker Event Listeners
+    document.querySelectorAll('.color-option').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.querySelectorAll('.color-option').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            document.getElementById('cohortColor').value = btn.dataset.color;
+        });
+    });
 }
 
 // Function to attach eye toggle listeners - must be called after elements are created
@@ -564,23 +705,32 @@ function renderPage(pageId) {
     // Hide all pages
     document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
     
-    // Get or create page element
-    let pageElement = document.getElementById(pageId);
+    // For dynamic cohorts, ensure the page container exists
+    if (pageId.startsWith('cohort-') && !document.getElementById(pageId)) {
+        createDynamicCohortPage(pageId);
+    }
+    
+    const pageElement = document.getElementById(pageId);
     if (!pageElement) {
-        // Create page if it doesn't exist (for dynamic cohorts)
-        const container = document.querySelector('.content-wrapper');
-        pageElement = document.createElement('div');
-        pageElement.id = pageId;
-        pageElement.className = 'page cohort-page';
-        container.appendChild(pageElement);
+        console.error(`❌ Page container not found for: ${pageId}`);
+        return;
     }
     pageElement.classList.add('active');
 
-    // Update header with title
+    // Update header
     const titles = {
         'overview': { title: 'Overview', subtitle: 'Dashboard overview and key metrics' },
         'students': { title: 'Students', subtitle: 'Manage all students' },
         'cohortmanager': { title: 'Manage Cohorts', subtitle: 'Create and manage course cohorts' },
+        'managechecklists': { title: 'Manage Checklists', subtitle: 'Create and manage checklist items' },
+        'cohort0': { title: 'Cohort 0', subtitle: 'Students in Cohort 0' },
+        'cohort1': { title: 'Cohort 1', subtitle: 'Students in Cohort 1' },
+        'cohort1cradis': { title: 'Cohort 1 - Cradis', subtitle: 'Students in Cohort 1 - Cradis' },
+        'cohort1zomra': { title: 'Cohort 1 - Zomra', subtitle: 'Students in Cohort 1 - Zomra' },
+        'cohortfree': { title: 'Cohort - Free', subtitle: 'Students in Cohort - Free' },
+        'cohort2': { title: 'Cohort 2', subtitle: 'Students in Cohort 2' },
+        'cohort3': { title: 'Cohort 3', subtitle: 'Students in Cohort 3' },
+        'english1': { title: 'English 1', subtitle: 'Students in English 1' },
         'waitinglist': { title: 'Waiting List', subtitle: 'Students in waiting list' },
         'cantreach': { title: "Can't Reach", subtitle: "Students that can't be reached" },
         'nextcohort': { title: 'Next Cohort', subtitle: 'Students in next cohort' },
@@ -589,49 +739,9 @@ function renderPage(pageId) {
         'emailtemplates': { title: 'Email Templates', subtitle: 'Manage email templates' },
         'settings': { title: 'Settings', subtitle: 'Application settings' }
     };
-    
-    // Check for dynamic cohort pages
-    let title = '';
-    let subtitle = '';
-    
-    if (pageId.startsWith('cohort-legacy-')) {
-        // Legacy hardcoded cohort
-        const legacyName = pageId.replace('cohort-legacy-', '').replace(/-/g, ' ');
-        title = HARDCODED_COHORTS.find(c => c.toLowerCase() === legacyName.toLowerCase()) || legacyName;
-        subtitle = `Students in ${title} (legacy)`;
-    } else if (pageId.startsWith('cohort-')) {
-        // New database cohort
-        const cohortId = parseInt(pageId.split('-')[1]);
-        if (!isNaN(cohortId)) {
-            const cohort = cohorts.find(c => c.id === cohortId);
-            title = cohort ? cohort.name : pageId;
-            subtitle = `Students in ${title}`;
-        }
-    } else {
-        // Legacy cohort mapping for backward compatibility
-        const legacyCohortMap = {
-            'cohort0': 'Cohort 0',
-            'cohort1': 'Cohort 1',
-            'cohort1cradis': 'Cohort 1 - Cradis',
-            'cohort1zomra': 'Cohort 1 - Zomra',
-            'cohort2': 'Cohort 2',
-            'cohort3': 'Cohort 3',
-            'english1': 'English 1'
-        };
-        
-        if (legacyCohortMap[pageId]) {
-            title = legacyCohortMap[pageId];
-            subtitle = `Students in ${title}`;
-        } else if (titles[pageId]) {
-            title = titles[pageId].title;
-            subtitle = titles[pageId].subtitle;
-        } else {
-            title = pageId;
-            subtitle = '';
-        }
-    }
 
-    document.querySelector('.page-title').textContent = title;
+    const info = titles[pageId] || { title: pageId, subtitle: '' };
+    document.querySelector('.page-title').textContent = info.title;
 
     // Render specific pages
     if (pageId === 'overview') {
@@ -640,7 +750,9 @@ function renderPage(pageId) {
         renderStudentsTable();
     } else if (pageId === 'cohortmanager') {
         renderCohortManager();
-    } else if (pageId.startsWith('cohort')) {
+    } else if (pageId === 'managechecklists') {
+        renderChecklistItemsTable();
+    } else if (pageId.startsWith('cohort') || pageId === 'english1') {
         renderCohortPage(pageId);
     } else if (pageId === 'waitinglist') {
         renderStatusPage('Waiting list');
@@ -1002,13 +1114,28 @@ function renderStudentsTable() {
     }
 
     tbody.innerHTML = filtered.map((student, index) => {
+        // Get color for this student's cohort/status
+        let cohortColor = '#4ECDC4'; // default
+        const cohortName = student.status;
+        
+        // Check hardcoded cohorts first
+        if (COHORT_COLORS[cohortName]) {
+            cohortColor = COHORT_COLORS[cohortName];
+        } else {
+            // Check dynamic cohorts
+            const dynamicCohort = cohorts.find(c => c.name === cohortName);
+            if (dynamicCohort && dynamicCohort.color) {
+                cohortColor = dynamicCohort.color;
+            }
+        }
+        
         return `
         <tr>
             <td class="col-id" style="padding-right: 0px;"><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
             <td class="col-name"><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" class="student-name-link" data-student-id="${student.id}" title="Click to view details">${student.name}</strong></td>
             <td class="col-email"><span class="copy-email" title="Click to copy">${student.email}</span></td>
             <td class="col-figmaEmail">${student.figmaEmail ? `<span class="copy-email" title="Click to copy">${student.figmaEmail}</span>` : '-'}</td>
-            <td class="col-status"><span class="status-badge status-${(student.status || 'unknown').toLowerCase().replace(/\s+/g, '-')}">${student.status || 'Unknown'}</span></td>
+            <td class="col-status"><span class="status-badge status-${(student.status || 'unknown').toLowerCase().replace(/\s+/g, '-')}" style="background-color: ${cohortColor}; color: white; font-weight: 600;">${student.status || 'Unknown'}</span></td>
             <td class="col-location">${student.location || '-'}</td>
             <td class="col-language">${student.language || '-'}</td>
             <td class="col-linkedin">
@@ -1018,8 +1145,8 @@ function renderStudentsTable() {
                 ${student.whatsapp ? `<a href="https://wa.me/${student.whatsapp.replace(/\D/g, '')}" target="_blank" title="Send WhatsApp message" style="color: #25D366; text-decoration: none; display: flex; align-items: center; gap: 4px;"><i class="fab fa-whatsapp"></i> ${student.whatsapp}</a>` : '-'}
             </td>
             <td class="col-notes">${student.note || '-'}</td>
-            <td class="col-onboarding">-</td>
-            <td class="col-postcourse">-</td>
+            <td class="col-onboarding">${calculateChecklistProgress(student)}%</td>
+            <td class="col-postcourse">${calculatePostCourseProgress(student)}%</td>
             <td class="col-paid">${student.paidAmount != null ? `$${student.paidAmount.toFixed(2)}` : '-'}</td>
             <td class="col-remaining">${student.remaining != null ? `$${student.remaining.toFixed(2)}` : '-'}</td>
             <td class="col-actions">
@@ -1064,57 +1191,49 @@ function renderStudentsTable() {
 // COHORT PAGES
 // ============================================
 
-function renderCohortPage(pageId) {
-    // Handle both dynamic and legacy cohort page IDs
-    let cohortName = null;
+function renderCohortPage(cohortId) {
+    // Map page IDs to cohort names
+    const cohortMap = {
+        'cohort0': 'Cohort 0',
+        'cohort1': 'Cohort 1',
+        'cohort1cradis': 'Cohort 1 - Cradis',
+        'cohort1zomra': 'Cohort 1 - Zomra',
+        'cohort2': 'Cohort 2',
+        'cohort3': 'Cohort 3',
+        'english1': 'English 1'
+    };
     
-    // If it's a legacy hardcoded ID
-    if (pageId.startsWith('cohort-legacy-')) {
-        const legacyName = pageId.replace('cohort-legacy-', '').replace(/-/g, ' ');
-        cohortName = HARDCODED_COHORTS.find(c => c.toLowerCase() === legacyName.toLowerCase()) || legacyName;
-    }
-    // If it's a dynamic cohort ID (e.g., cohort-1), find the cohort name
-    else if (pageId.startsWith('cohort-')) {
-        const cohortId = parseInt(pageId.split('-')[1]);
-        if (!isNaN(cohortId)) {
-            const cohort = cohorts.find(c => c.id === cohortId);
-            cohortName = cohort ? cohort.name : null;
-        }
-    } else {
-        // Original page IDs for backward compatibility
-        const cohortMap = {
-            'cohort0': 'Cohort 0',
-            'cohort1': 'Cohort 1',
-            'cohort1cradis': 'Cohort 1 - Cradis',
-            'cohort1zomra': 'Cohort 1 - Zomra',
-            'cohort2': 'Cohort 2',
-            'cohort3': 'Cohort 3',
-            'english1': 'English 1'
-        };
-        cohortName = cohortMap[pageId] || pageId;
+    // For dynamic cohorts (like 'cohort-10'), look up the cohort name and color from the cohorts array
+    let cohort = cohortMap[cohortId];
+    let cohortColor = '#4ECDC4'; // default color
+    
+    // If hardcoded cohort, use the COHORT_COLORS mapping
+    if (cohort && COHORT_COLORS[cohort]) {
+        cohortColor = COHORT_COLORS[cohort];
     }
     
-    const page = document.getElementById(pageId);
-    if (!page) {
-        // Create the page container if it doesn't exist
-        const container = document.querySelector('.content-wrapper');
-        const newPage = document.createElement('div');
-        newPage.id = pageId;
-        newPage.className = 'page cohort-page active';
-        container.appendChild(newPage);
-        return;
+    if (!cohort && cohortId.startsWith('cohort-')) {
+        const cohortId_numeric = parseInt(cohortId.replace('cohort-', ''));
+        const dynamicCohort = cohorts.find(c => c.id === cohortId_numeric);
+        cohort = dynamicCohort ? dynamicCohort.name : null;
+        cohortColor = dynamicCohort ? (dynamicCohort.color || '#4ECDC4') : '#4ECDC4';
     }
+    if (!cohort) {
+        cohort = cohortId;
+    }
+    const page = document.getElementById(cohortId);
     
     // Store cohort data for search
-    page.cohortName = cohortName;
+    page.cohortName = cohort;
+    page.cohortColor = cohortColor;
     
     // Filter by cohort field first, fallback to status field for backward compatibility
-    let cohortStudents = students.filter(s => s.cohort === cohortName || s.status === cohortName);
+    let cohortStudents = students.filter(s => s.cohort === cohort || s.status === cohort);
 
     if (cohortStudents.length === 0) {
         page.innerHTML = `
             <div class="empty-message">
-                <p>No students in ${cohortName} yet</p>
+                <p>No students in ${cohort} yet</p>
             </div>
         `;
         return;
@@ -1180,15 +1299,14 @@ function renderCohortPage(pageId) {
                 </thead>
                 <tbody id="cohortTableBody-${cohortId}">
                     ${cohortStudents.map((student, index) => {
-                        const postCourseItems = student.checklist ? [student.checklist.sharedFeedbackForm, student.checklist.submittedCourseFeedback, student.checklist.issuedCertificate].filter(Boolean).length : 0;
-                        const postCoursePct = Math.round((postCourseItems / 3) * 100) + '%';
+                        const postCoursePct = calculatePostCourseProgress(student) + '%';
                         return `
                         <tr>
                             <td class="col-id" style="padding-right: 0px;"><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
                             <td class="col-name"><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" class="student-name-link" data-student-id="${student.id}" title="Click to view details">${student.name}</strong></td>
                             <td class="col-email"><span class="copy-email" title="Click to copy">${student.email}</span></td>
                             <td class="col-figmaEmail">${student.figmaEmail ? `<span class="copy-email" title="Click to copy">${student.figmaEmail}</span>` : '-'}</td>
-                            <td class="col-status"><span class="status-badge status-${(student.status || 'unknown').toLowerCase().replace(/\s+/g, '-')}">${student.status || 'Unknown'}</span></td>
+                            <td class="col-status"><span class="status-badge status-${(student.status || 'unknown').toLowerCase().replace(/\s+/g, '-')}" style="background-color: ${cohortColor}; color: white; font-weight: 600;">${student.status || 'Unknown'}</span></td>
                             <td class="col-location">${student.location || '-'}</td>
                             <td class="col-language">${student.language || '-'}</td>
                             <td class="col-linkedin">
@@ -1235,15 +1353,14 @@ function renderCohortPage(pageId) {
                 tbody.innerHTML = `<tr><td colspan="13" class="empty">No students found</td></tr>`;
             } else {
                 tbody.innerHTML = filtered.map((student, index) => {
-                    const postCourseItems = student.checklist ? [student.checklist.sharedFeedbackForm, student.checklist.submittedCourseFeedback, student.checklist.issuedCertificate].filter(Boolean).length : 0;
-                    const postCoursePct = Math.round((postCourseItems / 3) * 100) + '%';
+                    const postCoursePct = calculatePostCourseProgress(student) + '%';
                     return `
                     <tr>
                         <td class="col-id" style="padding-right: 0px;"><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
                         <td class="col-name"><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" class="student-name-link" data-student-id="${student.id}" title="Click to view details">${student.name}</strong></td>
                         <td class="col-email"><span class="copy-email" title="Click to copy">${student.email}</span></td>
                         <td class="col-figmaEmail">${student.figmaEmail ? `<span class="copy-email" title="Click to copy">${student.figmaEmail}</span>` : '-'}</td>
-                        <td class="col-status"><span class="status-badge status-${(student.status || 'unknown').toLowerCase().replace(/\s+/g, '-')}">${student.status || 'Unknown'}</span></td>
+                        <td class="col-status"><span class="status-badge status-${(student.status || 'unknown').toLowerCase().replace(/\s+/g, '-')}" style="background-color: ${cohortColor}; color: white; font-weight: 600;">${student.status || 'Unknown'}</span></td>
                         <td class="col-location">${student.location || '-'}</td>
                         <td class="col-language">${student.language || '-'}</td>
                         <td class="col-linkedin">
@@ -1391,15 +1508,14 @@ function renderStatusPage(status) {
                 </thead>
                 <tbody id="statusTableBody-${pageId}">
                     ${statusStudents.map((student, index) => {
-                        const postCourseItems = student.checklist ? [student.checklist.sharedFeedbackForm, student.checklist.submittedCourseFeedback, student.checklist.issuedCertificate].filter(Boolean).length : 0;
-                        const postCoursePct = Math.round((postCourseItems / 3) * 100) + '%';
+                        const postCoursePct = calculatePostCourseProgress(student) + '%';
                         return `
                         <tr>
                             <td class="col-id" style="padding-right: 0px;"><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
                             <td class="col-name"><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" class="student-name-link" data-student-id="${student.id}" title="Click to view details">${student.name}</strong></td>
                             <td class="col-email"><span class="copy-email" title="Click to copy">${student.email}</span></td>
                             <td class="col-figmaEmail">${student.figmaEmail ? `<span class="copy-email" title="Click to copy">${student.figmaEmail}</span>` : '-'}</td>
-                            <td class="col-status"><span class="status-badge status-${(student.status || 'unknown').toLowerCase().replace(/\s+/g, '-')}">${student.status || 'Unknown'}</span></td>
+                            <td class="col-status"><span class="status-badge status-${(student.status || 'unknown').toLowerCase().replace(/\s+/g, '-')}" style="background-color: ${cohortColor}; color: white; font-weight: 600;">${student.status || 'Unknown'}</span></td>
                             <td class="col-location">${student.location || '-'}</td>
                             <td class="col-language">${student.language || '-'}</td>
                             <td class="col-linkedin">
@@ -1446,15 +1562,14 @@ function renderStatusPage(status) {
                 tbody.innerHTML = '<tr><td colspan="13" class="empty">No students found</td></tr>';
             } else {
                 tbody.innerHTML = filtered.map((student, index) => {
-                    const postCourseItems = student.checklist ? [student.checklist.sharedFeedbackForm, student.checklist.submittedCourseFeedback, student.checklist.issuedCertificate].filter(Boolean).length : 0;
-                    const postCoursePct = Math.round((postCourseItems / 3) * 100) + '%';
+                    const postCoursePct = calculatePostCourseProgress(student) + '%';
                     return `
                     <tr>
                         <td class="col-id" style="padding-right: 0px;"><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
                         <td class="col-name"><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" class="student-name-link" data-student-id="${student.id}" title="Click to view details">${student.name}</strong></td>
                         <td class="col-email"><span class="copy-email" title="Click to copy">${student.email}</span></td>
                         <td class="col-figmaEmail">${student.figmaEmail ? `<span class="copy-email" title="Click to copy">${student.figmaEmail}</span>` : '-'}</td>
-                        <td class="col-status"><span class="status-badge status-${(student.status || 'unknown').toLowerCase().replace(/\s+/g, '-')}">${student.status || 'Unknown'}</span></td>
+                        <td class="col-status"><span class="status-badge status-${(student.status || 'unknown').toLowerCase().replace(/\s+/g, '-')}" style="background-color: ${cohortColor}; color: white; font-weight: 600;">${student.status || 'Unknown'}</span></td>
                         <td class="col-location">${student.location || '-'}</td>
                         <td class="col-language">${student.language || '-'}</td>
                         <td class="col-linkedin">
@@ -1691,7 +1806,9 @@ function openAddModal() {
     currentEditingId = null;
     document.getElementById('modalTitle').textContent = 'Add New Student';
     document.getElementById('studentForm').reset();
-    document.getElementById('checklistSection').style.display = 'none';
+    // Always show checklist now - no more conditional display
+    document.getElementById('checklistSection').style.display = 'block';
+    renderDynamicChecklist(null);
     updateStatusDropdown(); // Refresh status dropdown with current cohorts
     document.getElementById('studentModal').style.display = 'block';
 }
@@ -1733,37 +1850,11 @@ function editStudent(id) {
     document.getElementById('note').value = student.note || '';
     document.getElementById('paymentMethod').value = student.paymentMethod || '';
 
-    if (student.status === 'Cohort 0' || student.status === 'Cohort 1' || student.status === 'Cohort 2' || student.status === 'Cohort 3' || student.status === 'Cohort 1 - Cradis' || student.status === 'Cohort 1 - Zomra' || student.status === 'Cohort - Free' || student.status === 'English 1') {
-        toggleChecklistSection();
-        const addedCommunityEl = document.getElementById('addedCommunity');
-        const sharedAgreementEl = document.getElementById('sharedAgreement');
-        const respondStudentGroupingEl = document.getElementById('respondStudentGrouping');
-        const sharedDriveEl = document.getElementById('sharedDrive');
-        const sharedMasterFigmaEl = document.getElementById('sharedMasterFigma');
-        const signedAgreementEl = document.getElementById('signedAgreement');
-        const respondedStudentGroupingEl = document.getElementById('respondedStudentGrouping');
-        const createdFigmaEl = document.getElementById('createdFigma');
-        const sharedFeedbackFormEl = document.getElementById('sharedFeedbackForm');
-        const submittedCourseFeedbackEl = document.getElementById('submittedCourseFeedback');
-        const issuedCertificateEl = document.getElementById('issuedCertificate');
-        
-        if (addedCommunityEl) addedCommunityEl.checked = student.checklist?.addedCommunity || false;
-        if (sharedAgreementEl) sharedAgreementEl.checked = student.checklist?.sharedAgreement || false;
-        if (respondStudentGroupingEl) respondStudentGroupingEl.checked = student.checklist?.respondStudentGrouping || false;
-        if (sharedDriveEl) sharedDriveEl.checked = student.checklist?.sharedDrive || false;
-        if (sharedMasterFigmaEl) sharedMasterFigmaEl.checked = student.checklist?.sharedMasterFigma || false;
-        if (signedAgreementEl) signedAgreementEl.checked = student.checklist?.signedAgreement || false;
-        if (respondedStudentGroupingEl) respondedStudentGroupingEl.checked = student.checklist?.respondedStudentGrouping || false;
-        if (createdFigmaEl) createdFigmaEl.checked = student.checklist?.createdFigma || false;
-        if (sharedFeedbackFormEl) sharedFeedbackFormEl.checked = student.checklist?.sharedFeedbackForm || false;
-        if (submittedCourseFeedbackEl) submittedCourseFeedbackEl.checked = student.checklist?.submittedCourseFeedback || false;
-        if (issuedCertificateEl) issuedCertificateEl.checked = student.checklist?.issuedCertificate || false;
-
-        if (student.checklist?.figmaStatus) {
-            const figmaStatusEl = document.getElementById(`figma${student.checklist.figmaStatus}`);
-            if (figmaStatusEl) figmaStatusEl.checked = true;
-        }
-    }
+    // Always show checklist now
+    document.getElementById('checklistSection').style.display = 'block';
+    loadStudentChecklistCompletion(student.id).then(() => {
+        renderDynamicChecklist(student);
+    });
 
     calculateRemaining();
     
@@ -1863,25 +1954,102 @@ function calculateRemaining() {
     document.getElementById('remaining').value = (total - paid).toFixed(2);
 }
 
+// Render dynamic checklist items
+function renderDynamicChecklist(student) {
+    const checklistSection = document.getElementById('checklistSection');
+    if (!checklistSection) return;
+
+    // Clear existing content except the title
+    const checklistContent = checklistSection.querySelector('.checklist-content');
+    if (!checklistContent) {
+        console.error('⚠️ Checklist content container not found');
+        return;
+    }
+
+    // Filter out placeholder items (those starting with ~)
+    const visibleItems = checklistItems.filter(item => !item.label.startsWith('~'));
+
+    // Group items by category
+    const groupedByCategory = {};
+    visibleItems.forEach(item => {
+        if (!groupedByCategory[item.category]) {
+            groupedByCategory[item.category] = [];
+        }
+        groupedByCategory[item.category].push(item);
+    });
+
+    // Get completed item IDs for this student
+    const completedItemIds = new Set(currentStudentChecklistCompletion.map(c => c.checklist_item_id));
+
+    let html = '';
+    Object.entries(groupedByCategory).forEach(([category, items]) => {
+        html += `<div class="checklist-group">
+            <div class="checklist-group-title">${category}</div>`;
+        
+        items.forEach(item => {
+            const isChecked = completedItemIds.has(item.id);
+            html += `
+                <div class="checklist-item">
+                    <input type="checkbox" id="checklistItem_${item.id}" class="checklist-checkbox" data-item-id="${item.id}" ${isChecked ? 'checked' : ''}>
+                    <label for="checklistItem_${item.id}">${item.label}</label>
+                </div>
+            `;
+        });
+
+        html += `</div>`;
+    });
+
+    checklistContent.innerHTML = html;
+    console.log('✅ Rendered dynamic checklist with', visibleItems.length, 'items');
+}
+
+// Get selected checklist items
+function getSelectedChecklistItems() {
+    const selected = [];
+    document.querySelectorAll('.checklist-checkbox:checked').forEach(checkbox => {
+        selected.push(parseInt(checkbox.dataset.itemId));
+    });
+    return selected;
+}
+
 function calculateChecklistProgress(student) {
-    if (!student.checklist) return 0;
+    if (!student || !student.id) return 0;
     
-    // Only count onboarding items, NOT post-course items
-    const checklistItems = [
-        'addedCommunity',
-        'sharedAgreement',
-        'respondStudentGrouping',
-        'sharedDrive',
-        'sharedMasterFigma',
-        'signedAgreement',
-        'respondedStudentGrouping',
-        'createdFigma'
-    ];
+    // Find all "Onboarding Checklist" items from the dynamic checklist (excluding placeholders)
+    const onboardingItems = checklistItems.filter(item => 
+        item.category === 'Onboarding Checklist' && !item.label.startsWith('~')
+    );
+    if (onboardingItems.length === 0) return 0;
     
-    const completedItems = checklistItems.filter(item => student.checklist[item]).length;
+    // Count how many onboarding items are completed for this student
+    const completionMap = {};
+    student.checklistCompletion?.forEach(completion => {
+        completionMap[completion.checklist_item_id] = true;
+    });
     
-    const totalItems = checklistItems.length;
-    const percentage = Math.round((completedItems / totalItems) * 100);
+    const completedOnboardingItems = onboardingItems.filter(item => completionMap[item.id]).length;
+    const percentage = Math.round((completedOnboardingItems / onboardingItems.length) * 100);
+    return percentage;
+}
+
+// Calculate post-course progress percentage
+function calculatePostCourseProgress(student) {
+    if (!student || !student.id) return 0;
+    
+    // Find all "Post-Course Actions" items from the dynamic checklist (excluding placeholders)
+    const postCourseItems = checklistItems.filter(item => 
+        item.category === 'Post-Course Actions' && !item.label.startsWith('~')
+    );
+    if (postCourseItems.length === 0) return 0;
+    
+    // Count how many post-course items are completed for this student
+    const completionMap = {};
+    student.checklistCompletion?.forEach(completion => {
+        completionMap[completion.checklist_item_id] = true;
+    });
+    
+    const completedPostCourseItems = postCourseItems.filter(item => completionMap[item.id]).length;
+    const percentage = Math.round((completedPostCourseItems / postCourseItems.length) * 100);
     return percentage;
 }
 
@@ -1984,25 +2152,6 @@ function saveStudent(event) {
     console.log('📝 Saving student:', student.name, '| Status:', student.status, '| ID:', student.id, '| Email:', student.email);
     console.log('💰 Payment: Method=' + student.paymentMethod + ', Total=' + student.totalAmount + ', Paid=' + student.paidAmount, ', Remaining=' + student.remaining);
 
-    // Add checklist for any cohort-related status
-    const isCohortStatus = student.status && (student.status.startsWith('Cohort') || student.status === 'Next Cohort' || student.status === 'English 1');
-    if (isCohortStatus) {
-        student.checklist = {
-            addedCommunity: document.getElementById('addedCommunity').checked,
-            sharedAgreement: document.getElementById('sharedAgreement').checked,
-            respondStudentGrouping: document.getElementById('respondStudentGrouping').checked,
-            sharedDrive: document.getElementById('sharedDrive').checked,
-            sharedMasterFigma: document.getElementById('sharedMasterFigma').checked,
-            signedAgreement: document.getElementById('signedAgreement').checked,
-            respondedStudentGrouping: document.getElementById('respondedStudentGrouping').checked,
-            createdFigma: document.getElementById('createdFigma').checked,
-            figmaStatus: document.querySelector('input[name="figmaStatus"]:checked')?.value || 'Not started',
-            sharedFeedbackForm: document.getElementById('sharedFeedbackForm')?.checked || false,
-            submittedCourseFeedback: document.getElementById('submittedCourseFeedback')?.checked || false,
-            issuedCertificate: document.getElementById('issuedCertificate')?.checked || false
-        };
-    }
-
     if (currentEditingId) {
         // Use type-safe comparison for string/int IDs from Supabase
         const numericId = parseInt(currentEditingId, 10) || currentEditingId;
@@ -2018,6 +2167,10 @@ function saveStudent(event) {
         console.log('➕ CREATE: Adding new student to local array');
         students.push(student);
     }
+
+    // Get selected checklist items and save them
+    const selectedChecklistItems = getSelectedChecklistItems();
+    console.log(`✓ Selected ${selectedChecklistItems.length} checklist items`);
 
     // ⭐ IMPORTANT: Collect email templates BEFORE closing modal (which resets the form)
     const selectedTemplateCheckboxes = document.querySelectorAll('.email-template-checkbox:checked');
@@ -2047,14 +2200,38 @@ function saveStudent(event) {
     console.log(`💾 Saving student to server (${actionType}): ${newEmail}`);
     
     saveToStorage(student).then(() => {
+        // Save checklist completion separately
+        if (selectedChecklistItems.length > 0 || currentEditingId) {
+            fetch(`${API_BASE_URL}/api/students/${student.id}/checklist-completion`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ completedItemIds: selectedChecklistItems })
+            }).then(response => {
+                if (response.ok) {
+                    console.log('✅ Saved checklist completion for student', student.id);
+                } else {
+                    console.warn('⚠️ Failed to save checklist completion');
+                }
+            }).catch(error => {
+                console.error('❌ Error saving checklist completion:', error);
+            });
+        }
+        
         loadStudents().then(() => {
-            renderPage(document.querySelector('.page.active').id);
+            // Determine success message
+            let successMessage = 'Student created successfully!';
             if (currentEditingId && originalEditingEmail && originalEditingEmail !== newEmail) {
-                showToast('Student email updated successfully!', 'success');
+                successMessage = 'Student email updated successfully!';
             } else if (currentEditingId) {
-                showToast('Student updated successfully!', 'success');
-            } else {
-                showToast('Student created successfully!', 'success');
+                successMessage = 'Student updated successfully!';
+            }
+            
+            // Show success message with loading state
+            showPersistentToast(successMessage, 'success');
+            
+            const activePage = document.querySelector('.page.active');
+            if (activePage) {
+                renderPage(activePage.id);
             }
             
             // Send selected email templates with delay
@@ -2198,6 +2375,10 @@ async function loadStudents() {
             if (serverStudents && Array.isArray(serverStudents) && serverStudents.length > 0) {
                 students = serverStudents;
                 console.log(`✅ Loaded ${students.length} students from Supabase`);
+                
+                // Load checklist completion data in the background (non-blocking)
+                loadChecklistCompletionForAllStudents();
+                
                 logStudentStats();
                 return;
             }
@@ -2211,6 +2392,10 @@ async function loadStudents() {
     // Fallback to sample data if server unavailable
     students = getSampleData();
     console.log(`⚠️ Server unavailable - Loaded ${students.length} students from sample data (local fallback)`);
+    
+    // Still try to load checklist completion data even with fallback (non-blocking)
+    loadChecklistCompletionForAllStudents();
+    
     logStudentStats();
 }
 
@@ -2655,6 +2840,122 @@ window.onclick = function(event) {
 // ============================================
 
 let emailTemplates = [];
+let emailTemplateCategories = ['Setup Templates', 'Resources & Tools', 'Payments & Completion'];
+
+// ============================================
+// STUDENT CHECKLIST MANAGEMENT
+// ============================================
+
+let checklistItems = [];
+let currentStudentChecklistCompletion = [];
+
+// Load checklist items from API
+async function loadChecklistItems() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/checklist-items`);
+        if (response.ok) {
+            checklistItems = await response.json();
+            console.log('✅ Loaded checklist items:', checklistItems.length, 'items');
+        } else {
+            throw new Error('Failed to load checklist items');
+        }
+    } catch (error) {
+        console.error('❌ Error loading checklist items:', error.message);
+        checklistItems = [];
+    }
+}
+
+// Load checklist completion for a student
+async function loadStudentChecklistCompletion(studentId) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/students/${studentId}/checklist-completion`);
+        if (response.ok) {
+            currentStudentChecklistCompletion = await response.json();
+            console.log(`✅ Loaded checklist completion for student ${studentId}:`, currentStudentChecklistCompletion);
+        } else {
+            currentStudentChecklistCompletion = [];
+        }
+    } catch (error) {
+        console.warn(`⚠️  Could not load checklist completion: ${error.message}`);
+        currentStudentChecklistCompletion = [];
+    }
+}
+
+// Load checklist completion for all students
+async function loadChecklistCompletionForAllStudents() {
+    try {
+        console.log('📋 Loading checklist completion for all students...');
+        
+        // Load all in parallel with Promise.all instead of sequential loop
+        const completionPromises = students.map(student =>
+            fetch(`${API_BASE_URL}/api/students/${student.id}/checklist-completion`)
+                .then(response => response.ok ? response.json() : [])
+                .then(completion => {
+                    student.checklistCompletion = completion;
+                })
+                .catch(error => {
+                    console.warn(`⚠️  Could not load checklist for student ${student.id}:`, error.message);
+                    student.checklistCompletion = [];
+                })
+        );
+        
+        await Promise.all(completionPromises);
+        console.log(`✅ Loaded checklist completion for all ${students.length} students`);
+        
+        // Dismiss persistent success toast
+        dismissPersistentToast();
+        
+        // Re-render the current page after checklist data loads to update progress percentages
+        const activePage = document.querySelector('.page.active');
+        if (activePage) {
+            const pageId = activePage.id;
+            console.log(`🔄 Re-rendering page: ${pageId} with updated checklist data`);
+            renderPage(pageId);
+        }
+    } catch (error) {
+        console.error('❌ Error loading checklist completion for all students:', error);
+    }
+}
+
+// Load categories from API
+async function loadEmailTemplateCategories() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/email-template-categories`);
+        if (response.ok) {
+            emailTemplateCategories = await response.json();
+            console.log('✅ Loaded categories from API:', emailTemplateCategories);
+        } else {
+            throw new Error('Failed to load categories');
+        }
+    } catch (error) {
+        console.warn('⚠️  Could not load categories from API, using defaults:', error.message);
+        emailTemplateCategories = ['Setup Templates', 'Resources & Tools', 'Payments & Completion'];
+    }
+}
+
+// Save new category to API
+async function saveNewCategoryToAPI(categoryName) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/email-template-categories`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ categoryName })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to save category');
+        }
+
+        const result = await response.json();
+        emailTemplateCategories = result.categories;
+        console.log('✅ Category saved to database:', emailTemplateCategories);
+        return result.categories;
+    } catch (error) {
+        console.error('❌ Error saving category:', error.message);
+        throw error;
+    }
+}
 
 async function loadEmailTemplates() {
     try {
@@ -2687,31 +2988,97 @@ async function loadEmailTemplates() {
 }
 
 function renderEmailTemplatesList() {
-    // Categorize templates
-    const setupTemplateNames = ['Waiting list', 'Community Invitation', 'Roles & Agreement', 'Cohort Grouping Form', 'Camp Feedback', 'Upcoming Rounds'];
-    const resourceTemplateNames = ['Google Drive link', 'Shared Figma file'];
+    // Map for hardcoded HTML sections
+    const categoryMap = {
+        'New Students': { sectionId: 'newStudentsSection', bodyId: 'newStudentsBody' },
+        'Setup Templates': { sectionId: 'setupTemplatesSection', bodyId: 'setupTemplatesBody' },
+        'Resources & Tools': { sectionId: 'resourcesTemplatesSection', bodyId: 'resourcesTemplatesBody' },
+        'Payments & Completion': { sectionId: 'paymentsTemplatesSection', bodyId: 'paymentsTemplatesBody' }
+    };
     
-    const setupTemplates = emailTemplates.filter(t => setupTemplateNames.includes(t.name));
-    const resourceTemplates = emailTemplates.filter(t => resourceTemplateNames.includes(t.name));
-    const paymentsTemplates = emailTemplates.filter(t => !setupTemplateNames.includes(t.name) && !resourceTemplateNames.includes(t.name));
+    // First, assign default categories to templates that don't have them
+    const categorizedTemplates = emailTemplates.map(template => {
+        if (!template.category) {
+            template.category = 'Setup Templates';
+        }
+        return template;
+    });
     
-    // Render each section
-    renderTemplateSection('setupTemplatesSection', 'setupTemplatesBody', setupTemplates);
-    renderTemplateSection('resourcesTemplatesSection', 'resourcesTemplatesBody', resourceTemplates);
-    renderTemplateSection('paymentsTemplatesSection', 'paymentsTemplatesBody', paymentsTemplates);
+    // Render all categories from the database
+    emailTemplateCategories.forEach(category => {
+        let sectionId, bodyId;
+        
+        if (categoryMap[category]) {
+            // Use hardcoded HTML section if it exists
+            sectionId = categoryMap[category].sectionId;
+            bodyId = categoryMap[category].bodyId;
+        } else {
+            // Create dynamic section for categories without HTML sections
+            sectionId = `section-${category.replace(/\s+/g, '-').toLowerCase()}`;
+            bodyId = `body-${category.replace(/\s+/g, '-').toLowerCase()}`;
+            createDynamicCategorySection(sectionId, bodyId, category);
+        }
+        
+        const templatesInCategory = categorizedTemplates.filter(t => t.category === category);
+        renderTemplateSection(sectionId, bodyId, templatesInCategory);
+    });
+}
+
+function createDynamicCategorySection(sectionId, bodyId, categoryName) {
+    // Check if section already exists
+    if (document.getElementById(sectionId)) {
+        return;
+    }
+    
+    // Find the email templates container
+    const emailTemplatesPage = document.getElementById('emailtemplates');
+    if (!emailTemplatesPage) return;
+    
+    // Create new section
+    const newSection = document.createElement('div');
+    newSection.id = sectionId;
+    newSection.style.marginBottom = '40px';
+    newSection.innerHTML = `
+        <h3 style="color: #333; margin-bottom: 16px; font-size: 16px; font-weight: 600; display: flex; align-items: center;">
+            <i class="fas fa-folder" style="margin-right: 8px; color: #4ECDC4;"></i> ${categoryName}
+        </h3>
+        <div class="students-table">
+            <table class="email-templates-table">
+                <thead>
+                    <tr>
+                        <th class="col-template-name">Template Name</th>
+                        <th class="col-button-label">Button Label</th>
+                        <th class="col-subject">Subject</th>
+                        <th class="col-actions">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="${bodyId}">
+                    <tr><td colspan="4" class="empty-templates-cell">No templates yet</td></tr>
+                </tbody>
+            </table>
+        </div>
+    `;
+    
+    emailTemplatesPage.appendChild(newSection);
 }
 
 function renderTemplateSection(sectionId, bodyId, templates) {
     const section = document.getElementById(sectionId);
     const tbody = document.getElementById(bodyId);
     
-    if (templates.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px; color: #999;">No templates in this section</td></tr>';
-        section.style.display = 'none';
+    if (!section || !tbody) {
+        console.warn(`Section ${sectionId} or body ${bodyId} not found`);
         return;
     }
     
+    // Always show the section, even if empty
     section.style.display = 'block';
+    
+    if (templates.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px; color: #999;">No templates in this section</td></tr>';
+        return;
+    }
+    
     tbody.innerHTML = templates.map(template => `
         <tr>
             <td class="col-template-name"><strong>${template.name}</strong></td>
@@ -2750,6 +3117,16 @@ function openEmailTemplateModal(templateId = null) {
     const modal = document.getElementById('emailTemplateModal');
     const form = document.getElementById('emailTemplateForm');
     const title = document.getElementById('emailModalTitle');
+    const categorySelect = document.getElementById('templateCategory');
+    
+    // Populate category dropdown
+    categorySelect.innerHTML = '<option value="">Select Category</option>';
+    emailTemplateCategories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = category;
+        categorySelect.appendChild(option);
+    });
     
     if (templateId) {
         // Convert to number to match Supabase ID type
@@ -2764,6 +3141,7 @@ function openEmailTemplateModal(templateId = null) {
         
         title.textContent = 'Edit Email Template';
         document.getElementById('templateName').value = template.name;
+        document.getElementById('templateCategory').value = template.category || '';
         document.getElementById('buttonLabel').value = template.button_label;
         document.getElementById('emailSubject').value = template.subject;
         document.getElementById('emailBody').value = template.body;
@@ -2782,6 +3160,166 @@ function closeEmailTemplateModal() {
     document.getElementById('emailTemplateForm').reset();
 }
 
+function openAddCategoryModal() {
+    document.getElementById('addCategoryModal').style.display = 'block';
+}
+
+function closeAddCategoryModal() {
+    document.getElementById('addCategoryModal').style.display = 'none';
+    document.getElementById('addCategoryForm').reset();
+}
+
+function openManageCategoriesModal() {
+    document.getElementById('manageCategoriesModal').style.display = 'block';
+    renderCategoriesList();
+}
+
+function closeManageCategoriesModal() {
+    document.getElementById('manageCategoriesModal').style.display = 'none';
+}
+
+function openEditCategoryModal(categoryName) {
+    document.getElementById('editCategoryOldName').value = categoryName;
+    document.getElementById('editCategoryName').value = categoryName;
+    document.getElementById('editCategoryModal').style.display = 'block';
+}
+
+function closeEditCategoryModal() {
+    document.getElementById('editCategoryModal').style.display = 'none';
+    document.getElementById('editCategoryForm').reset();
+}
+
+function renderCategoriesList() {
+    const tbody = document.getElementById('categoriesListBody');
+    
+    tbody.innerHTML = emailTemplateCategories.map(category => `
+        <tr style="border-bottom: 1px solid #e0e0e0;">
+            <td style="padding: 12px;">${category}</td>
+            <td style="padding: 12px; text-align: right;">
+                <button class="btn-small btn-edit" onclick="openEditCategoryModal('${category}')" title="Edit"><i class="fas fa-pencil-alt"></i></button>
+                <button class="btn-small btn-danger" onclick="deleteCategoryConfirm('${category}')" title="Delete"><i class="fas fa-trash"></i></button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function deleteCategoryConfirm(categoryName) {
+    if (!confirm(`Are you sure you want to delete the category "${categoryName}"?`)) {
+        return;
+    }
+    deleteCategory(categoryName);
+}
+
+async function deleteCategory(categoryName) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/email-template-categories/${encodeURIComponent(categoryName)}`, {
+            method: 'DELETE'
+        });
+
+        if (response.ok) {
+            await loadEmailTemplateCategories();
+            renderCategoriesList();
+            renderEmailTemplatesList();
+            showToast(`Category "${categoryName}" deleted successfully!`, 'success');
+        } else {
+            const errorData = await response.json();
+            showToast(errorData.error || 'Failed to delete category', 'error');
+        }
+    } catch (error) {
+        console.error('Error deleting category:', error);
+        showToast('Failed to delete category: ' + error.message, 'error');
+    }
+}
+
+async function saveEditedCategory(event) {
+    event.preventDefault();
+    
+    const oldName = document.getElementById('editCategoryOldName').value;
+    const newName = document.getElementById('editCategoryName').value.trim();
+    
+    if (!newName) {
+        showToast('Please enter a category name', 'error');
+        return;
+    }
+    
+    if (oldName === newName) {
+        closeEditCategoryModal();
+        return;
+    }
+    
+    if (emailTemplateCategories.includes(newName)) {
+        showToast('This category already exists', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/email-template-categories/${encodeURIComponent(oldName)}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ newName })
+        });
+
+        if (response.ok) {
+            await loadEmailTemplateCategories();
+            renderCategoriesList();
+            renderEmailTemplatesList();
+            closeEditCategoryModal();
+            showToast(`Category renamed to "${newName}" successfully!`, 'success');
+        } else {
+            const errorData = await response.json();
+            showToast(errorData.error || 'Failed to rename category', 'error');
+        }
+    } catch (error) {
+        console.error('Error renaming category:', error);
+        showToast('Failed to rename category: ' + error.message, 'error');
+    }
+}
+
+function saveNewCategory(event) {
+    event.preventDefault();
+    const categoryName = document.getElementById('categoryName').value.trim();
+    
+    if (!categoryName) {
+        showToast('Please enter a category name', 'error');
+        return;
+    }
+    
+    if (emailTemplateCategories.includes(categoryName)) {
+        showToast('This category already exists', 'error');
+        return;
+    }
+    
+    // Save to API
+    saveNewCategoryToAPI(categoryName)
+        .then(() => {
+            showToast(`Category "${categoryName}" added successfully!`, 'success');
+            closeAddCategoryModal();
+            
+            // Refresh the category dropdown in the template form
+            const categorySelect = document.getElementById('templateCategory');
+            if (categorySelect) {
+                const currentValue = categorySelect.value;
+                categorySelect.innerHTML = '<option value="">Select Category</option>';
+                emailTemplateCategories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category;
+                    option.textContent = category;
+                    categorySelect.appendChild(option);
+                });
+                categorySelect.value = currentValue;
+            }
+            
+            // Refresh categories list if modal is open
+            const tbody = document.getElementById('categoriesListBody');
+            if (tbody) {
+                renderCategoriesList();
+            }
+        })
+        .catch(error => {
+            showToast('Failed to add category: ' + error.message, 'error');
+        });
+}
+
 async function saveEmailTemplate(event) {
     event.preventDefault();
     
@@ -2789,6 +3327,7 @@ async function saveEmailTemplate(event) {
     // Convert template ID to integer - use timestamp as numeric ID
     const id = form.dataset.templateId ? parseInt(form.dataset.templateId, 10) : Math.floor(Date.now() / 1000);
     const name = document.getElementById('templateName').value;
+    const category = document.getElementById('templateCategory').value;
     const button_label = document.getElementById('buttonLabel').value;
     const subject = document.getElementById('emailSubject').value;
     const body = document.getElementById('emailBody').value;
@@ -2797,7 +3336,7 @@ async function saveEmailTemplate(event) {
         const response = await fetch(`${API_BASE_URL}/api/email-templates`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id, name, button_label, subject, body })
+            body: JSON.stringify({ id, name, category, button_label, subject, body })
         });
 
         if (response.ok) {
@@ -3208,21 +3747,71 @@ function showToast(message, type = 'info') {
     setTimeout(() => toast.remove(), 3000);
 }
 
+// Global reference to persistent toast
+let persistentToastElement = null;
+
+// Show a persistent success toast that auto-dismisses after data loads
+function showPersistentToast(message, type = 'success') {
+    // Remove any existing persistent toast
+    if (persistentToastElement) {
+        persistentToastElement.remove();
+    }
+    
+    const toast = document.createElement('div');
+    toast.id = 'persistentToast';
+    
+    let bgColor = '#34a853'; // green for success
+    if (type === 'error') bgColor = '#f44336';
+    
+    // Add checkmark animation
+    toast.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <i class="fas fa-check-circle" style="font-size: 18px;"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: ${bgColor};
+        color: white;
+        padding: 12px 16px;
+        border-radius: 4px;
+        font-size: 14px;
+        z-index: 10001;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        animation: slideInRight 0.3s ease-out;
+    `;
+    
+    document.body.appendChild(toast);
+    persistentToastElement = toast;
+    
+    // Will be dismissed after checklist data finishes loading (see loadChecklistCompletionForAllStudents)
+}
+
+// Dismiss the persistent toast
+function dismissPersistentToast() {
+    if (persistentToastElement) {
+        persistentToastElement.style.animation = 'slideOutRight 0.3s ease-out';
+        setTimeout(() => {
+            if (persistentToastElement) {
+                persistentToastElement.remove();
+                persistentToastElement = null;
+            }
+        }, 300);
+    }
+}
+
 // ============================================
 // BULK EMAIL SENDING
 // ============================================
 
 function getBulkGroupOptions() {
-    const staticOptions = [
-        'Waiting list',
-        "Can't reach",
-        'Next Cohort',
-        'Standby'
-    ];
-    
-    // Combine dynamic cohorts with static options
+    // Return only dynamic cohorts (no static status options)
     const cohortNames = cohorts.map(c => c.name);
-    return [...cohortNames, ...staticOptions];
+    return cohortNames;
 }
 
 function openBulkEmailModal(templateId) {
@@ -3428,6 +4017,21 @@ async function sendBulkEmail(event) {
 let cohorts = [];
 let editingCohortId = null;
 
+function createDynamicCohortPage(pageId) {
+    // Create a page container for a dynamic cohort
+    const contentWrapper = document.querySelector('.content-wrapper');
+    if (!contentWrapper) {
+        console.error('❌ Content wrapper not found');
+        return;
+    }
+    
+    const page = document.createElement('div');
+    page.id = pageId;
+    page.className = 'page cohort-page';
+    contentWrapper.appendChild(page);
+    console.log(`✅ Created dynamic cohort page: ${pageId}`);
+}
+
 async function loadCohorts() {
     try {
         const response = await fetch(`${API_BASE_URL}/api/cohorts`);
@@ -3436,54 +4040,11 @@ async function loadCohorts() {
             console.log('✅ Loaded cohorts:', cohorts);
             updateCohortsTable();
             updateCohortDropdowns();
-            populateSidebarCohorts();
+            updateSidebarDynamicCohorts();
         }
     } catch (error) {
         console.error('❌ Error loading cohorts:', error);
     }
-}
-
-function populateSidebarCohorts() {
-    const sidebarCohortsList = document.getElementById('sidebar-cohorts-list');
-    if (!sidebarCohortsList) return;
-    
-    // Keep the Manage Cohorts link, remove all other cohort links
-    const manageCohortItem = sidebarCohortsList.querySelector('li:first-child');
-    sidebarCohortsList.innerHTML = '';
-    if (manageCohortItem) {
-        sidebarCohortsList.appendChild(manageCohortItem);
-    }
-    
-    // Track which cohorts we've added to avoid duplicates
-    const addedCohorts = new Set();
-    
-    // Add hardcoded cohorts first (legacy support)
-    HARDCODED_COHORTS.forEach(cohortName => {
-        addedCohorts.add(cohortName);
-        const li = document.createElement('li');
-        const a = document.createElement('a');
-        a.className = 'nav-link';
-        a.setAttribute('data-page', `cohort-legacy-${cohortName.toLowerCase().replace(/\s+/g, '-')}`);
-        a.innerHTML = `<i class="fas fa-map-pin"></i> ${escapeHtml(cohortName)} <span style="font-size: 11px; opacity: 0.6;">(legacy)</span>`;
-        
-        li.appendChild(a);
-        sidebarCohortsList.appendChild(li);
-    });
-    
-    // Add database cohorts
-    cohorts.forEach(cohort => {
-        // Skip if already added as hardcoded
-        if (!addedCohorts.has(cohort.name)) {
-            const li = document.createElement('li');
-            const a = document.createElement('a');
-            a.className = 'nav-link';
-            a.setAttribute('data-page', `cohort-${cohort.id}`);
-            a.innerHTML = `<i class="fas fa-map-pin"></i> ${escapeHtml(cohort.name)}`;
-            
-            li.appendChild(a);
-            sidebarCohortsList.appendChild(li);
-        }
-    });
 }
 
 function renderCohortManager() {
@@ -3500,20 +4061,40 @@ function renderCohortManager() {
 function updateCohortsTable() {
     const tbody = document.getElementById('cohortsTableBody');
     
-    if (cohorts.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="2" class="empty-cell">No cohorts yet. Create one to get started!</td></tr>';
+    // Show all active cohorts (both hardcoded and dynamic)
+    const activeHardcoded = getActiveHardcodedCohorts();
+    const allCohorts = [
+        ...activeHardcoded.map(name => ({
+            name,
+            icon: 'fa-map-pin',
+            color: COHORT_COLORS[name] || '#4ECDC4',
+            isHardcoded: true
+        })),
+        ...cohorts.filter(cohort => !COHORTS.includes(cohort.name))
+    ];
+    
+    if (allCohorts.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty-cell">No cohorts available.</td></tr>';
         return;
     }
     
-    tbody.innerHTML = cohorts.map(cohort => `
+    tbody.innerHTML = allCohorts.map(cohort => `
         <tr>
-            <td>${escapeHtml(cohort.name)}</td>
+            <td>
+                <i class="fas ${cohort.icon || 'fa-map-pin'}"></i> ${escapeHtml(cohort.name)}
+            </td>
+            <td>
+                <div style="width: 30px; height: 30px; background-color: ${cohort.color || '#4ECDC4'}; border-radius: 4px;"></div>
+            </td>
+            <td style="color: #999; font-size: 12px;">
+                ${cohort.isHardcoded ? 'Hardcoded' : 'Dynamic'}
+            </td>
             <td>
                 <div class="cohort-actions-cell">
-                    <button class="btn-edit cohort-edit-btn" data-cohort-id="${cohort.id}" data-cohort-name="${escapeHtml(cohort.name)}">
+                    ${!cohort.isHardcoded ? `<button class="btn-edit cohort-edit-btn" data-cohort-id="${cohort.id}" data-cohort-name="${escapeHtml(cohort.name)}" data-cohort-icon="${cohort.icon || 'fa-map-pin'}" data-cohort-color="${cohort.color || '#4ECDC4'}">
                         <i class="fas fa-edit"></i> Edit
-                    </button>
-                    <button class="btn-delete cohort-delete-btn" data-cohort-id="${cohort.id}">
+                    </button>` : ''}
+                    <button class="btn-delete cohort-delete-btn" data-cohort-id="${cohort.isHardcoded ? 'hardcoded-' + cohort.name : cohort.id}" data-is-hardcoded="${cohort.isHardcoded || false}">
                         <i class="fas fa-trash"></i> Delete
                     </button>
                 </div>
@@ -3529,10 +4110,13 @@ function handleCohortTableClick(event) {
     if (editBtn) {
         const id = parseInt(editBtn.dataset.cohortId);
         const name = editBtn.dataset.cohortName;
-        openEditCohortModal(id, name);
+        const icon = editBtn.dataset.cohortIcon;
+        const color = editBtn.dataset.cohortColor;
+        openEditCohortModal(id, name, icon, color);
     } else if (deleteBtn) {
-        const id = parseInt(deleteBtn.dataset.cohortId);
-        deleteCohortConfirm(id);
+        const id = deleteBtn.dataset.cohortId;
+        const isHardcoded = deleteBtn.dataset.isHardcoded === 'true';
+        deleteCohortConfirm(id, isHardcoded);
     }
 }
 
@@ -3540,11 +4124,47 @@ function updateCohortDropdowns() {
     // Update status dropdown for students
     updateStatusDropdown();
     
-    // Update status filter for students table
-    updateStatusFilterStudents();
-    
     // Update email template group selector
     updateEmailTemplateGroupSelect();
+}
+
+function updateSidebarDynamicCohorts() {
+    const container = document.getElementById('dynamicCohortsContainer');
+    if (!container) return;
+    
+    // Hide hardcoded cohort links
+    const cohortMap = {
+        'cohort0': 'Cohort 0',
+        'cohort1cradis': 'Cohort 1 - Cradis',
+        'cohort1zomra': 'Cohort 1 - Zomra',
+        'cohort2': 'Cohort 2',
+        'cohort3': 'Cohort 3',
+        'english1': 'English 1'
+    };
+    
+    Object.entries(cohortMap).forEach(([pageId, cohortName]) => {
+        const link = document.querySelector(`[data-page="${pageId}"]`);
+        if (link) {
+            link.parentElement.style.display = 'none';
+        }
+    });
+    
+    // Filter to show only dynamic cohorts (exclude hardcoded ones)
+    const dynamicCohorts = cohorts.filter(cohort => !COHORTS.includes(cohort.name));
+    
+    // Clear existing dynamic cohorts
+    container.innerHTML = '';
+    
+    // Add each dynamic cohort as a list item
+    dynamicCohorts.forEach(cohort => {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.className = 'nav-link';
+        a.setAttribute('data-page', `cohort-${cohort.id}`);
+        a.innerHTML = `<i class="fas ${cohort.icon || 'fa-map-pin'}"></i> ${escapeHtml(cohort.name)}`;
+        li.appendChild(a);
+        container.appendChild(li);
+    });
 }
 
 function updateStatusDropdown() {
@@ -3556,84 +4176,16 @@ function updateStatusDropdown() {
     // Clear existing options, keep the default
     statusSelect.innerHTML = '<option value="">Select Status</option>';
     
-    // Add static status options first
-    const staticStatuses = ['Waiting list', "Can't reach", 'Next Cohort', 'Standby'];
-    staticStatuses.forEach(status => {
-        const option = document.createElement('option');
-        option.value = status;
-        option.textContent = status;
-        statusSelect.appendChild(option);
-    });
-    
-    // Add hardcoded cohorts first (legacy)
-    HARDCODED_COHORTS.forEach(cohortName => {
-        const option = document.createElement('option');
-        option.value = cohortName;
-        option.textContent = cohortName + ' (legacy)';
-        statusSelect.appendChild(option);
-    });
-    
-    // Add database cohorts
+    // Add only dynamic cohorts as options
     cohorts.forEach(cohort => {
-        // Skip if it matches a hardcoded cohort
-        if (!HARDCODED_COHORTS.includes(cohort.name)) {
-            const option = document.createElement('option');
-            option.value = cohort.name;
-            option.textContent = cohort.name;
-            statusSelect.appendChild(option);
-        }
+        const option = document.createElement('option');
+        option.value = cohort.name;
+        option.textContent = cohort.name;
+        statusSelect.appendChild(option);
     });
     
     // Restore selected value
     statusSelect.value = currentValue;
-}
-
-function updateStatusFilterStudents() {
-    const filterSelect = document.getElementById('statusFilterStudents');
-    if (!filterSelect) return;
-    
-    // Store currently selected values
-    const selectedValues = Array.from(filterSelect.selectedOptions).map(opt => opt.value);
-    
-    // Clear all options
-    filterSelect.innerHTML = '';
-    
-    // Add static status options first
-    const staticStatuses = ['Waiting list', "Can't reach", 'Next Cohort', 'Standby'];
-    staticStatuses.forEach(status => {
-        const option = document.createElement('option');
-        option.value = status;
-        option.textContent = status;
-        if (selectedValues.includes(status)) {
-            option.selected = true;
-        }
-        filterSelect.appendChild(option);
-    });
-    
-    // Add hardcoded cohorts first (legacy)
-    HARDCODED_COHORTS.forEach(cohortName => {
-        const option = document.createElement('option');
-        option.value = cohortName;
-        option.textContent = cohortName + ' (legacy)';
-        if (selectedValues.includes(cohortName)) {
-            option.selected = true;
-        }
-        filterSelect.appendChild(option);
-    });
-    
-    // Add database cohorts
-    cohorts.forEach(cohort => {
-        // Skip if it matches a hardcoded cohort
-        if (!HARDCODED_COHORTS.includes(cohort.name)) {
-            const option = document.createElement('option');
-            option.value = cohort.name;
-            option.textContent = cohort.name;
-            if (selectedValues.includes(cohort.name)) {
-                option.selected = true;
-            }
-            filterSelect.appendChild(option);
-        }
-    });
 }
 
 function updateEmailTemplateGroupSelect() {
@@ -3645,23 +4197,12 @@ function updateEmailTemplateGroupSelect() {
     // Clear and rebuild options
     groupSelect.innerHTML = '<option value="">Select Group...</option>';
     
-    // Add hardcoded cohorts first (legacy)
-    HARDCODED_COHORTS.forEach(cohortName => {
-        const option = document.createElement('option');
-        option.value = cohortName;
-        option.textContent = cohortName + ' (legacy)';
-        groupSelect.appendChild(option);
-    });
-    
-    // Add database cohorts
+    // Add cohorts
     cohorts.forEach(cohort => {
-        // Skip if it matches a hardcoded cohort
-        if (!HARDCODED_COHORTS.includes(cohort.name)) {
-            const option = document.createElement('option');
-            option.value = cohort.name;
-            option.textContent = cohort.name;
-            groupSelect.appendChild(option);
-        }
+        const option = document.createElement('option');
+        option.value = cohort.name;
+        option.textContent = cohort.name;
+        groupSelect.appendChild(option);
     });
     
     groupSelect.value = currentValue;
@@ -3671,13 +4212,35 @@ function openAddCohortModal() {
     editingCohortId = null;
     document.getElementById('cohortModalTitle').textContent = 'Add New Cohort';
     document.getElementById('cohortForm').reset();
+    document.getElementById('cohortIcon').value = 'fa-map-pin';
+    document.getElementById('cohortColor').value = '#4ECDC4';
+    
+    // Reset selected states
+    document.querySelectorAll('.icon-option').forEach(btn => btn.classList.remove('selected'));
+    document.querySelectorAll('.color-option').forEach(btn => btn.classList.remove('selected'));
+    
+    // Select defaults
+    document.querySelector('.icon-option[data-icon="fa-map-pin"]').classList.add('selected');
+    document.querySelector('.color-option[data-color="#4ECDC4"]').classList.add('selected');
+    
     document.getElementById('cohortModal').style.display = 'block';
 }
 
-function openEditCohortModal(id, name) {
+function openEditCohortModal(id, name, icon = 'fa-map-pin', color = '#4ECDC4') {
     editingCohortId = id;
     document.getElementById('cohortModalTitle').textContent = 'Edit Cohort';
     document.getElementById('cohortName').value = name;
+    document.getElementById('cohortIcon').value = icon;
+    document.getElementById('cohortColor').value = color;
+    
+    // Reset selected states
+    document.querySelectorAll('.icon-option').forEach(btn => btn.classList.remove('selected'));
+    document.querySelectorAll('.color-option').forEach(btn => btn.classList.remove('selected'));
+    
+    // Select current icon and color
+    document.querySelector(`.icon-option[data-icon="${icon}"]`).classList.add('selected');
+    document.querySelector(`.color-option[data-color="${color}"]`).classList.add('selected');
+    
     document.getElementById('cohortModal').style.display = 'block';
 }
 
@@ -3690,6 +4253,8 @@ async function saveCohort(event) {
     event.preventDefault();
     
     const name = document.getElementById('cohortName').value.trim();
+    const icon = document.getElementById('cohortIcon').value;
+    const color = document.getElementById('cohortColor').value;
     
     if (!name) {
         alert('Please enter a cohort name');
@@ -3706,7 +4271,7 @@ async function saveCohort(event) {
         const response = await fetch(url, {
             method,
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, description: '' })
+            body: JSON.stringify({ name, description: '', icon, color })
         });
         
         if (response.ok) {
@@ -3723,25 +4288,544 @@ async function saveCohort(event) {
     }
 }
 
-async function deleteCohortConfirm(id) {
-    const cohort = cohorts.find(c => c.id === id);
-    if (!cohort) return;
+async function deleteCohortConfirm(idOrName, isHardcoded = false) {
+    let cohortName = '';
+    let id = null;
     
-    if (confirm(`Are you sure you want to delete "${cohort.name}"?`)) {
+    if (isHardcoded) {
+        // For hardcoded cohorts, idOrName is like 'hardcoded-Cohort 0'
+        cohortName = idOrName.replace('hardcoded-', '');
+    } else {
+        // For dynamic cohorts, find by id
+        id = parseInt(idOrName);
+        const cohort = cohorts.find(c => c.id === id);
+        if (!cohort) return;
+        cohortName = cohort.name;
+    }
+    
+    if (confirm(`Are you sure you want to delete "${cohortName}"?`)) {
         try {
-            const response = await fetch(`${API_BASE_URL}/api/cohorts/${id}`, {
-                method: 'DELETE'
-            });
-            
-            if (response.ok) {
-                showToast('Cohort deleted successfully', 'success');
+            if (isHardcoded) {
+                // Add to deleted cohorts list and persist
+                if (!deletedHardcodedCohorts.includes(cohortName)) {
+                    deletedHardcodedCohorts.push(cohortName);
+                    saveDeletedCohorts();
+                }
+                showToast(`Hardcoded cohort "${cohortName}" deleted successfully`, 'success');
+                // Reload the UI
                 await loadCohorts();
+                updateSidebarVisibility();
+                updateCohortsTable();
             } else {
-                alert('Failed to delete cohort');
+                // Delete dynamic cohort via API
+                const response = await fetch(`${API_BASE_URL}/api/cohorts/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    showToast('Cohort deleted successfully', 'success');
+                    await loadCohorts();
+                } else {
+                    alert('Failed to delete cohort');
+                }
             }
         } catch (error) {
             console.error('❌ Error deleting cohort:', error);
             alert('Error deleting cohort: ' + error.message);
         }
+    }
+}
+
+// ============================================
+// CHECKLIST ITEMS MANAGEMENT (ADMIN PAGE)
+// ============================================
+
+// Render the checklist items table/list
+async function renderChecklistItemsTable() {
+    try {
+        await loadChecklistItems();
+        
+        const container = document.getElementById('checklistItemsContainer');
+        
+        // Filter out placeholder items (those starting with ~)
+        const visibleItems = checklistItems.filter(item => !item.label.startsWith('~'));
+        
+        if (!visibleItems || visibleItems.length === 0) {
+            container.innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">No checklist items yet. Click "Add Item" to create one.</p>';
+            return;
+        }
+
+        // Group items by category
+        const groupedItems = {};
+        visibleItems.forEach(item => {
+            if (!groupedItems[item.category]) {
+                groupedItems[item.category] = [];
+            }
+            groupedItems[item.category].push(item);
+        });
+
+        let html = '<div style="display: grid; gap: 20px;">';
+
+        // Add "Manage Categories" button at top
+        html += `
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+                <button onclick="openManageChecklistCategoriesModal()" class="btn-secondary" style="padding: 8px 16px;">
+                    <i class="fas fa-tags"></i> Manage Categories
+                </button>
+            </div>
+        `;
+
+        // Render each category
+        Object.keys(groupedItems).sort().forEach(category => {
+            const items = groupedItems[category];
+            const categoryIcon = getCategoryIcon(category);
+            
+            html += `
+                <div style="border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; background: white;">
+                    <div style="background: #f5f5f5; padding: 12px 16px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center;">
+                        <h3 style="margin: 0; font-size: 14px; font-weight: 600; color: #333;">
+                            ${categoryIcon} ${category} <span style="color: #999; font-weight: 400;">(${items.length})</span>
+                        </h3>
+                    </div>
+                    <div style="padding: 0;">
+                        ${items.map((item, idx) => `
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: ${idx < items.length - 1 ? '1px solid #f0f0f0' : 'none'}; background: ${idx % 2 === 0 ? 'white' : '#fafafa'};">
+                                <div>
+                                    <div style="font-weight: 500; color: #333; margin-bottom: 4px;">${item.label}</div>
+                                    <div style="font-size: 12px; color: #999;">ID: ${item.id}</div>
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    <button onclick="openEditChecklistItemModal(${item.id})" class="btn-secondary" style="padding: 6px 12px; font-size: 12px;">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                    <button onclick="deleteChecklistItemConfirm(${item.id})" class="btn-danger" style="padding: 6px 12px; font-size: 12px; background-color: #ff6b6b; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        });
+
+        html += '</div>';
+        container.innerHTML = html;
+    } catch (error) {
+        console.error('❌ Error rendering checklist items:', error);
+        document.getElementById('checklistItemsContainer').innerHTML = `<p style="color: red; text-align: center;">Error loading checklist items: ${error.message}</p>`;
+    }
+}
+
+// Get icon for category
+function getCategoryIcon(category) {
+    const icons = {
+        'Onboarding Checklist': '📋',
+        'Figma Submission Status': '🎨',
+        'Post-Course Actions': '✅'
+    };
+    return icons[category] || '📌';
+}
+
+// Populate category dropdown
+function populateCategoryDropdowns() {
+    const categories = [...new Set(checklistItems.map(item => item.category))].sort();
+    
+    const addDropdown = document.getElementById('newChecklistItemCategory');
+    const editDropdown = document.getElementById('editChecklistItemCategory');
+    
+    [addDropdown, editDropdown].forEach(dropdown => {
+        if (dropdown) {
+            const currentValue = dropdown.value;
+            dropdown.innerHTML = '<option value="">-- Select Category --</option>';
+            categories.forEach(cat => {
+                dropdown.innerHTML += `<option value="${cat}">${cat}</option>`;
+            });
+            dropdown.value = currentValue;
+        }
+    });
+}
+
+// Open add checklist item modal
+function openAddChecklistItemModal() {
+    populateCategoryDropdowns();
+    document.getElementById('addChecklistItemModal').style.display = 'block';
+    document.getElementById('addChecklistItemForm').reset();
+}
+
+// Close add checklist item modal
+function closeAddChecklistItemModal() {
+    document.getElementById('addChecklistItemModal').style.display = 'none';
+    document.getElementById('addChecklistItemForm').reset();
+}
+
+// Save new checklist item
+async function saveChecklistItem(event) {
+    event.preventDefault();
+    
+    const category = document.getElementById('newChecklistItemCategory').value.trim();
+    const label = document.getElementById('newChecklistItemLabel').value.trim();
+    
+    if (!category || !label) {
+        alert('Please fill in all required fields');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/checklist-items`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                category,
+                label
+            })
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            // Extract item from response (API returns { success: true, item })
+            const newItem = result.item || result;
+            console.log('✅ New checklist item created:', newItem);
+            
+            // Update in-memory array immediately
+            if (newItem && newItem.id) {
+                checklistItems.push(newItem);
+            }
+            
+            showToast('Checklist item added successfully', 'success');
+            closeAddChecklistItemModal();
+            
+            // Re-render the table
+            await renderChecklistItemsTable();
+            
+            // Refresh category dropdowns for future adds
+            populateCategoryDropdowns();
+        } else {
+            const error = await response.json();
+            alert('Error: ' + (error.error || 'Failed to add item'));
+        }
+    } catch (error) {
+        console.error('❌ Error saving checklist item:', error);
+        alert('Error saving checklist item: ' + error.message);
+    }
+}
+
+// Open edit checklist item modal
+async function openEditChecklistItemModal(itemId) {
+    const item = checklistItems.find(i => i.id === itemId);
+    if (!item) {
+        alert('Item not found');
+        return;
+    }
+    
+    populateCategoryDropdowns();
+    document.getElementById('editChecklistItemId').value = item.id;
+    document.getElementById('editChecklistItemCategory').value = item.category;
+    document.getElementById('editChecklistItemLabel').value = item.label;
+    
+    document.getElementById('editChecklistItemModal').style.display = 'block';
+}
+
+// Close edit checklist item modal
+function closeEditChecklistItemModal() {
+    document.getElementById('editChecklistItemModal').style.display = 'none';
+    document.getElementById('editChecklistItemForm').reset();
+}
+
+// Save edited checklist item
+async function saveEditedChecklistItem(event) {
+    event.preventDefault();
+    
+    const id = parseInt(document.getElementById('editChecklistItemId').value);
+    const category = document.getElementById('editChecklistItemCategory').value.trim();
+    const label = document.getElementById('editChecklistItemLabel').value.trim();
+    
+    if (!category || !label) {
+        alert('Please fill in all required fields');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/checklist-items/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                category,
+                label
+            })
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            const updatedItem = result.item || result;
+            
+            // Update in-memory array
+            const itemIndex = checklistItems.findIndex(i => i.id === id);
+            if (itemIndex !== -1 && updatedItem) {
+                checklistItems[itemIndex] = updatedItem;
+            }
+            
+            showToast('Checklist item updated successfully', 'success');
+            closeEditChecklistItemModal();
+            await renderChecklistItemsTable();
+        } else {
+            const error = await response.json();
+            alert('Error: ' + (error.error || 'Failed to update item'));
+        }
+    } catch (error) {
+        console.error('❌ Error updating checklist item:', error);
+        alert('Error updating checklist item: ' + error.message);
+    }
+}
+
+// Delete checklist item with confirmation
+function deleteChecklistItemConfirm(itemId) {
+    const item = checklistItems.find(i => i.id === itemId);
+    if (!item) return;
+    
+    if (confirm(`Are you sure you want to delete "${item.label}"? This will not affect existing student data.`)) {
+        deleteChecklistItem(itemId);
+    }
+}
+
+// Delete checklist item
+async function deleteChecklistItem(itemId) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/checklist-items/${itemId}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            // Remove from in-memory array
+            checklistItems = checklistItems.filter(i => i.id !== itemId);
+            
+            showToast('Checklist item deleted successfully', 'success');
+            await renderChecklistItemsTable();
+        } else {
+            const error = await response.json();
+            alert('Error: ' + (error.error || 'Failed to delete item'));
+        }
+    } catch (error) {
+        console.error('❌ Error deleting checklist item:', error);
+        alert('Error deleting checklist item: ' + error.message);
+    }
+}
+
+// ============================================
+// CHECKLIST CATEGORIES MANAGEMENT
+// ============================================
+
+// Open manage categories modal
+function openManageChecklistCategoriesModal() {
+    renderCategoriesList();
+    document.getElementById('manageChecklistCategoriesModal').style.display = 'block';
+}
+
+// Close manage categories modal
+function closeManageChecklistCategoriesModal() {
+    document.getElementById('manageChecklistCategoriesModal').style.display = 'none';
+    document.getElementById('newCategoryInput').value = '';
+}
+
+// Render list of categories with edit/delete buttons
+async function renderCategoriesList() {
+    try {
+        await loadChecklistItems();
+        
+        const categories = [...new Set(checklistItems.map(item => item.category))].sort();
+        const container = document.getElementById('categoriesListContainer');
+        
+        if (categories.length === 0) {
+            container.innerHTML = '<p style="text-align: center; color: #999;">No categories yet</p>';
+            return;
+        }
+        
+        let html = '<div style="display: grid; gap: 8px;">';
+        
+        categories.forEach((category, idx) => {
+            // Count only non-placeholder items in this category
+            const itemCount = checklistItems.filter(item => item.category === category && !item.label.startsWith('~')).length;
+            html += `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: ${idx % 2 === 0 ? 'white' : '#f9f9f9'}; border: 1px solid #eee; border-radius: 4px;">
+                    <div>
+                        <div style="font-weight: 500; color: #333;">${category}</div>
+                        <div style="font-size: 12px; color: #999;">${itemCount} item${itemCount !== 1 ? 's' : ''}</div>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button onclick="editChecklistCategory('${category}')" class="btn-secondary" style="padding: 6px 12px; font-size: 12px;">
+                            <i class="fas fa-edit"></i> Rename
+                        </button>
+                        <button onclick="deleteChecklistCategoryConfirm('${category}')" class="btn-danger" style="padding: 6px 12px; font-size: 12px; background-color: #ff6b6b; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+        container.innerHTML = html;
+    } catch (error) {
+        console.error('❌ Error rendering categories:', error);
+        document.getElementById('categoriesListContainer').innerHTML = `<p style="color: red;">Error loading categories</p>`;
+    }
+}
+
+// Add new checklist category
+async function addNewChecklistCategory() {
+    const input = document.getElementById('newCategoryInput');
+    const categoryName = input.value.trim();
+    
+    if (!categoryName) {
+        alert('Please enter a category name');
+        return;
+    }
+    
+    await loadChecklistItems();
+    
+    // Check if category already exists
+    if (checklistItems.some(item => item.category === categoryName)) {
+        alert('Category already exists');
+        return;
+    }
+    
+    // Create a placeholder item in the new category (marked with ~ prefix to hide from main table)
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/checklist-items`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                category: categoryName,
+                label: '~Placeholder (rename or delete this item)'
+            })
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            const newItem = result.item || result;
+            
+            // Add to in-memory array
+            if (newItem && newItem.id) {
+                checklistItems.push(newItem);
+            }
+            
+            showToast(`Category "${categoryName}" created successfully`, 'success');
+            input.value = '';
+            await renderCategoriesList();
+            populateCategoryDropdowns();
+        } else {
+            const error = await response.json();
+            alert('Error creating category: ' + (error.error || 'Failed to create'));
+        }
+    } catch (error) {
+        console.error('❌ Error adding category:', error);
+        alert('Error adding category: ' + error.message);
+    }
+}
+
+// Edit/rename checklist category
+async function editChecklistCategory(oldName) {
+    const newName = prompt(`Rename category "${oldName}" to:`, oldName);
+    
+    if (!newName || newName.trim() === '') {
+        return;
+    }
+    
+    if (newName.trim() === oldName) {
+        return; // No change
+    }
+    
+    await loadChecklistItems();
+    
+    // Check if new name already exists
+    if (checklistItems.some(item => item.category === newName.trim())) {
+        alert('A category with that name already exists');
+        return;
+    }
+    
+    // Update all items in this category
+    const itemsToUpdate = checklistItems.filter(item => item.category === oldName);
+    
+    try {
+        let successCount = 0;
+        
+        for (const item of itemsToUpdate) {
+            const response = await fetch(`${API_BASE_URL}/api/checklist-items/${item.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    category: newName.trim(),
+                    label: item.label
+                })
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                const updatedItem = result.item || result;
+                
+                // Update in-memory array
+                const itemIndex = checklistItems.findIndex(i => i.id === item.id);
+                if (itemIndex !== -1 && updatedItem) {
+                    checklistItems[itemIndex] = updatedItem;
+                }
+                
+                successCount++;
+            }
+        }
+        
+        if (successCount === itemsToUpdate.length) {
+            showToast(`Renamed category "${oldName}" to "${newName.trim()}"`, 'success');
+            await renderCategoriesList();
+            populateCategoryDropdowns();
+        } else {
+            alert(`Only ${successCount} of ${itemsToUpdate.length} items were updated`);
+        }
+    } catch (error) {
+        console.error('❌ Error renaming category:', error);
+        alert('Error renaming category: ' + error.message);
+    }
+}
+
+// Delete checklist category with confirmation
+async function deleteChecklistCategoryConfirm(categoryName) {
+    await loadChecklistItems();
+    const itemCount = checklistItems.filter(item => item.category === categoryName).length;
+    
+    if (confirm(`Delete category "${categoryName}"? This will also delete all ${itemCount} item(s) in this category.`)) {
+        deleteChecklistCategory(categoryName);
+    }
+}
+
+// Delete checklist category
+async function deleteChecklistCategory(categoryName) {
+    try {
+        await loadChecklistItems();
+        
+        const itemsToDelete = checklistItems.filter(item => item.category === categoryName);
+        let successCount = 0;
+        
+        for (const item of itemsToDelete) {
+            const response = await fetch(`${API_BASE_URL}/api/checklist-items/${item.id}`, {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                // Remove from in-memory array
+                checklistItems = checklistItems.filter(i => i.id !== item.id);
+                successCount++;
+            }
+        }
+        
+        if (successCount === itemsToDelete.length) {
+            showToast(`Deleted category "${categoryName}" and all its items`, 'success');
+            await renderCategoriesList();
+            await renderChecklistItemsTable();
+            populateCategoryDropdowns();
+        } else {
+            alert(`Only ${successCount} of ${itemsToDelete.length} items were deleted`);
+        }
+    } catch (error) {
+        console.error('❌ Error deleting category:', error);
+        alert('Error deleting category: ' + error.message);
     }
 }

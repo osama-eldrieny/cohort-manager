@@ -32,20 +32,17 @@
             <li><a data-page="overview" class="nav-link active"><i class="fas fa-chart-pie"></i> Overview</a></li>
             <li><a data-page="students" class="nav-link"><i class="fas fa-users"></i> Students</a></li>
             <li class="sidebar-cohorts-divider"><span class="sidebar-section-label">COHORTS</span>
-                <ul class="sidebar-section-list" id="sidebar-cohorts-list">
-                    <li><a data-page="cohortmanager" class="nav-link"><i class="fas fa-cogs"></i> Manage Cohorts</a></li>
-                </ul>
-            </li>
-            <li class="sidebar-cohorts-divider"><span class="sidebar-section-label">STATUS</span>
                 <ul class="sidebar-section-list">
-                    <li><a data-page="waitinglist" class="nav-link"><i class="fas fa-clock"></i> Waiting List</a></li>
-                    <li><a data-page="cantreach" class="nav-link"><i class="fas fa-phone-slash"></i> Can't Reach</a></li>
-                    <li><a data-page="nextcohort" class="nav-link"><i class="fas fa-arrow-right"></i> Next Cohort</a></li>
-                    <li><a data-page="standby" class="nav-link"><i class="fas fa-pause"></i> Standby</a></li>
+                    <li><a data-page="cohortmanager" class="nav-link"><i class="fas fa-cogs"></i> Manage Cohorts</a></li>
+                    <!-- Dynamic cohorts will be inserted here -->
+                    <div id="dynamicCohortsContainer"></div>
                 </ul>
             </li>
             <li class="sidebar-settings-divider">
                 <a data-page="emailtemplates" class="nav-link"><i class="fas fa-envelope"></i> Email Templates</a>
+            </li>
+            <li class="sidebar-settings-divider">
+                <a data-page="managechecklists" class="nav-link"><i class="fas fa-list-check"></i> Student Checklist</a>
             </li>
             <li class="sidebar-settings-divider">
                 <a data-page="settings" class="nav-link"><i class="fas fa-cog"></i> Settings</a>
@@ -281,10 +278,12 @@
                     <input type="text" id="searchStudent" placeholder="Search student..." class="search-input">
                     <div class="status-filter-wrapper status-filter-wrapper-inline">
                         <select id="statusFilterStudents" class="status-filter-custom" multiple size="1">
-                            <option value="Waiting list">Waiting list</option>
-                            <option value="Can't reach">Can't reach</option>
-                            <option value="Next Cohort">Next Cohort</option>
-                            <option value="Standby">Standby</option>
+                            <option value="Cohort 0">Cohort 0</option>
+                            <option value="Cohort 1 - Cradis">Cohort 1 - Cradis</option>
+                            <option value="Cohort 1 - Zomra">Cohort 1 - Zomra</option>
+                            <option value="Cohort 2">Cohort 2</option>
+                            <option value="Cohort 3">Cohort 3</option>
+                            <option value="English 1">English 1</option>
                         </select>
                     </div>
                     <button class="column-control-button" onclick="createColumnControlModal('students', 'Students')" title="Column visibility settings"><i class="fas fa-sliders-h"></i> Columns</button>
@@ -338,8 +337,31 @@
             <div id="emailtemplates" class="page">
                 <h2 class="page-title-with-button">
                     <span><i class="fas fa-envelope"></i> Email Templates</span>
-                    <button onclick="openEmailTemplateModal()" class="btn-primary"><i class="fas fa-plus"></i> Create New Template</button>
+                    <div style="display: flex; gap: 8px;">
+                        <button onclick="openManageCategoriesModal()" class="btn-secondary" title="Manage categories" style="padding: 8px 16px;"><i class="fas fa-list"></i> Manage Categories</button>
+                        <button onclick="openEmailTemplateModal()" class="btn-primary"><i class="fas fa-plus"></i> Create New Template</button>
+                    </div>
                 </h2>
+                
+                <!-- NEW STUDENTS TABLE -->
+                <div id="newStudentsSection" style="display: none; margin-bottom: 40px;">
+                    <h3 style="color: #333; margin-bottom: 16px; font-size: 16px; font-weight: 600; display: flex; align-items: center;"><i class="fas fa-user-plus" style="margin-right: 8px; color: #4ECDC4;"></i> New Students</h3>
+                    <div class="students-table">
+                        <table class="email-templates-table">
+                            <thead>
+                                <tr>
+                                    <th class="col-template-name">Template Name</th>
+                                    <th class="col-button-label">Button Label</th>
+                                    <th class="col-subject">Subject</th>
+                                    <th class="col-actions">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="newStudentsBody">
+                                <tr><td colspan="4" class="empty-templates-cell">No templates yet</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
                 
                 <!-- SETUP TEMPLATES TABLE -->
                 <div id="setupTemplatesSection" style="display: none; margin-bottom: 40px;">
@@ -421,6 +443,18 @@
                             <tr><td colspan="2" class="empty-cell">No cohorts yet. Create one to get started!</td></tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- MANAGE CHECKLISTS PAGE -->
+            <div id="managechecklists" class="page">
+                <h2 class="page-title-with-button">
+                    <span><i class="fas fa-list-check"></i> Student Checklist</span>
+                    <button onclick="openAddChecklistItemModal()" class="btn-primary"><i class="fas fa-plus"></i> Add Item</button>
+                </h2>
+
+                <div id="checklistItemsContainer" style="margin-top: 20px;">
+                    <p style="text-align: center; color: #999; padding: 40px;">Loading checklist items...</p>
                 </div>
             </div>
 
@@ -525,12 +559,18 @@
                     </div>
                     <div class="form-group">
                         <label for="status">Status</label>
-                        <select id="status" onchange="toggleChecklistSection()">
+                        <select id="status">
                             <option value="">Select Status</option>
                             <option value="Waiting list">Waiting list</option>
                             <option value="Can't reach">Can't reach</option>
                             <option value="Next Cohort">Next Cohort</option>
                             <option value="Standby">Standby</option>
+                            <option value="Cohort 0">Cohort 0</option>
+                            <option value="Cohort 1 - Cradis">Cohort 1 - Cradis</option>
+                            <option value="Cohort 1 - Zomra">Cohort 1 - Zomra</option>
+                            <option value="Cohort 2">Cohort 2</option>
+                            <option value="Cohort 3">Cohort 3</option>
+                            <option value="English 1">English 1</option>
                         </select>
                     </div>
                 </div>
@@ -565,80 +605,12 @@
                     </div>
                 </div>
 
-                <!-- Checklist Section - Only for Current Cohort -->
+                <!-- Checklist Section - Always displayed, dynamically populated -->
                 <div id="checklistSection" class="checklist-section">
-                    <div class="checklist-group">
-                        <div class="checklist-group-title">✅ Onboarding Checklist</div>
-                        <div class="checklist-item">
-                            <input type="checkbox" id="addedCommunity">
-                            <label for="addedCommunity">Added to community group</label>
-                        </div>
-                        <div class="checklist-item">
-                            <input type="checkbox" id="sharedAgreement">
-                            <label for="sharedAgreement">Shared course agreement</label>
-                        </div>
-                        <div class="checklist-item">
-                            <input type="checkbox" id="respondStudentGrouping">
-                            <label for="respondStudentGrouping">Shared Student Grouping form</label>
-                        </div>
-                        <div class="checklist-item">
-                            <input type="checkbox" id="sharedDrive">
-                            <label for="sharedDrive">Shared Google Drive folder</label>
-                        </div>
-                        <div class="checklist-item">
-                            <input type="checkbox" id="sharedMasterFigma">
-                            <label for="sharedMasterFigma">Shared Master Figma file</label>
-                        </div>
-                        <div class="checklist-item">
-                            <input type="checkbox" id="signedAgreement">
-                            <label for="signedAgreement">Signed course agreement</label>
-                        </div>
-                        <div class="checklist-item">
-                            <input type="checkbox" id="respondedStudentGrouping">
-                            <label for="respondedStudentGrouping">Respond Student Grouping Form</label>
-                        </div>
-                        <div class="checklist-item">
-                            <input type="checkbox" id="createdFigma">
-                            <label for="createdFigma">Create private figma file</label>
-                        </div>
-                    </div>
-                    
-                    <div class="checklist-group">
-                        <div class="checklist-group-title">🎨 Figma Submission Status</div>
-                        <div class="figma-status-section">
-                            <div class="figma-status-item">
-                                <input type="radio" id="figmaNotStarted" name="figmaStatus" value="Not started" checked>
-                                <label for="figmaNotStarted" class="figma-status-radio">Not started</label>
-                            </div>
-                            <div class="figma-status-item">
-                                <input type="radio" id="figmaSubmitted" name="figmaStatus" value="Submitted">
-                                <label for="figmaSubmitted" class="figma-status-radio">Submitted</label>
-                            </div>
-                            <div class="figma-status-item">
-                                <input type="radio" id="figmaUnderReview" name="figmaStatus" value="Under review">
-                                <label for="figmaUnderReview" class="figma-status-radio">Under review</label>
-                            </div>
-                            <div class="figma-status-item">
-                                <input type="radio" id="figmaApproved" name="figmaStatus" value="Approved">
-                                <label for="figmaApproved" class="figma-status-radio">Approved</label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="checklist-group">
-                        <div class="checklist-group-title">🏁 Post-Course Actions</div>
-                        <div class="checklist-item">
-                            <input type="checkbox" id="sharedFeedbackForm">
-                            <label for="sharedFeedbackForm">Shared feedback form</label>
-                        </div>
-                        <div class="checklist-item">
-                            <input type="checkbox" id="submittedCourseFeedback">
-                            <label for="submittedCourseFeedback">Submitted course feedback</label>
-                        </div>
-                        <div class="checklist-item">
-                            <input type="checkbox" id="issuedCertificate">
-                            <label for="issuedCertificate">Issued the certificate</label>
-                        </div>
+                    <h3 style="margin-bottom: 16px; font-size: 16px; font-weight: 600;">📋 Student Checklist</h3>
+                    <div class="checklist-content">
+                        <!-- Dynamic checklist items will be rendered here -->
+                        <p style="color: #999; padding: 20px; text-align: center;">Loading checklist...</p>
                     </div>
                 </div>
 
@@ -670,6 +642,16 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="templateCategory">Category *</label>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <select id="templateCategory" required style="flex: 1;">
+                            <option value="">Select Category</option>
+                        </select>
+                        <button type="button" onclick="openAddCategoryModal()" class="btn-small" title="Add new category" style="padding: 8px 12px;"><i class="fas fa-plus"></i></button>
+                    </div>
+                </div>
+
+                <div class="form-group">
                     <label for="buttonLabel">Button Label *</label>
                     <input type="text" id="buttonLabel" required placeholder="e.g., Send Invitation">
                 </div>
@@ -688,6 +670,74 @@
                 <div class="modal-buttons">
                     <button type="button" onclick="closeEmailTemplateModal()" class="btn-secondary">Cancel</button>
                     <button type="submit" class="btn-primary">Save Template</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Email Template Category Modal -->
+    <div id="addCategoryModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <span class="close" onclick="closeAddCategoryModal()"><i class="fas fa-times"></i></span>
+            <div class="modal-header"><i class="fas fa-folder-plus modal-header-icon"></i> Add New Category</div>
+            
+            <form id="addCategoryForm" onsubmit="saveNewCategory(event)">
+                <div class="form-group">
+                    <label for="categoryName">Category Name *</label>
+                    <input type="text" id="categoryName" required placeholder="e.g., Onboarding">
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="button" onclick="closeAddCategoryModal()" class="btn-secondary">Cancel</button>
+                    <button type="submit" class="btn-primary">Add Category</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Manage Email Template Categories Modal -->
+    <div id="manageCategoriesModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="close" onclick="closeManageCategoriesModal()"><i class="fas fa-times"></i></span>
+            <div class="modal-header"><i class="fas fa-list modal-header-icon"></i> Manage Categories</div>
+            
+            <div style="margin-bottom: 20px; max-height: 400px; overflow-y: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #e0e0e0;">
+                            <th style="padding: 12px; text-align: left; font-weight: 600;">Category Name</th>
+                            <th style="padding: 12px; text-align: right; font-weight: 600; width: 100px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="categoriesListBody">
+                        <tr><td colspan="2" style="padding: 12px; text-align: center; color: #999;">Loading categories...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="modal-buttons">
+                <button type="button" onclick="closeManageCategoriesModal()" class="btn-secondary">Close</button>
+                <button type="button" onclick="openAddCategoryModal()" class="btn-primary"><i class="fas fa-plus"></i> Add Category</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Category Modal -->
+    <div id="editCategoryModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <span class="close" onclick="closeEditCategoryModal()"><i class="fas fa-times"></i></span>
+            <div class="modal-header"><i class="fas fa-edit modal-header-icon"></i> Edit Category</div>
+            
+            <form id="editCategoryForm" onsubmit="saveEditedCategory(event)">
+                <div class="form-group">
+                    <label for="editCategoryName">Category Name *</label>
+                    <input type="text" id="editCategoryName" required placeholder="e.g., Onboarding">
+                    <input type="hidden" id="editCategoryOldName">
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="button" onclick="closeEditCategoryModal()" class="btn-secondary">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Changes</button>
                 </div>
             </form>
         </div>
@@ -770,7 +820,7 @@
 
     <!-- Add/Edit Cohort Modal -->
     <div id="cohortModal" class="modal">
-        <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-content" style="max-width: 500px;">
             <span class="close" onclick="closeCohortModal()"><i class="fas fa-times"></i></span>
             <div class="modal-header"><i class="fas fa-plus modal-header-icon"></i> <span id="cohortModalTitle">Add New Cohort</span></div>
             
@@ -780,11 +830,114 @@
                     <input type="text" id="cohortName" required placeholder="Enter cohort name">
                 </div>
                 
+                <div class="form-group">
+                    <label for="cohortIcon">Icon</label>
+                    <div id="iconPicker" class="icon-picker">
+                        <button type="button" class="icon-option" data-icon="fa-map-pin" title="Map Pin"><i class="fas fa-map-pin"></i></button>
+                        <button type="button" class="icon-option" data-icon="fa-pause" title="Pause"><i class="fas fa-pause"></i></button>
+                        <button type="button" class="icon-option" data-icon="fa-arrow-right" title="Arrow Right"><i class="fas fa-arrow-right"></i></button>
+                        <button type="button" class="icon-option" data-icon="fa-phone-slash" title="Phone Slash"><i class="fas fa-phone-slash"></i></button>
+                        <button type="button" class="icon-option" data-icon="fa-clock" title="Clock"><i class="fas fa-clock"></i></button>
+                    </div>
+                    <input type="hidden" id="cohortIcon" value="fa-map-pin">
+                </div>
+                
+                <div class="form-group">
+                    <label for="cohortColor">Color</label>
+                    <div id="colorPicker" class="color-picker">
+                        <button type="button" class="color-option" data-color="#FF6B6B" style="background-color: #FF6B6B;" title="Red"></button>
+                        <button type="button" class="color-option" data-color="#4ECDC4" style="background-color: #4ECDC4;" title="Teal"></button>
+                        <button type="button" class="color-option" data-color="#45B7D1" style="background-color: #45B7D1;" title="Blue"></button>
+                        <button type="button" class="color-option" data-color="#FFA07A" style="background-color: #FFA07A;" title="Orange"></button>
+                        <button type="button" class="color-option" data-color="#98D8C8" style="background-color: #98D8C8;" title="Mint"></button>
+                        <button type="button" class="color-option" data-color="#F7DC6F" style="background-color: #F7DC6F;" title="Yellow"></button>
+                        <button type="button" class="color-option" data-color="#BB8FCE" style="background-color: #BB8FCE;" title="Purple"></button>
+                        <button type="button" class="color-option" data-color="#85C1E2" style="background-color: #85C1E2;" title="Sky Blue"></button>
+                        <button type="button" class="color-option" data-color="#F8B88B" style="background-color: #F8B88B;" title="Peach"></button>
+                        <button type="button" class="color-option" data-color="#ABEBC6" style="background-color: #ABEBC6;" title="Light Green"></button>
+                        <button type="button" class="color-option" data-color="#F5B041" style="background-color: #F5B041;" title="Amber"></button>
+                        <button type="button" class="color-option" data-color="#D7BDE2" style="background-color: #D7BDE2;" title="Lavender"></button>
+                    </div>
+                    <input type="hidden" id="cohortColor" value="#4ECDC4">
+                </div>
+                
                 <div class="modal-buttons">
                     <button type="button" onclick="closeCohortModal()" class="btn-secondary">Cancel</button>
                     <button type="submit" class="btn-primary">Save Cohort</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Add Checklist Item Modal -->
+    <div id="addChecklistItemModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close" onclick="closeAddChecklistItemModal()"><i class="fas fa-times"></i></span>
+            <div class="modal-header"><i class="fas fa-plus modal-header-icon"></i> Add Checklist Item</div>
+            
+            <form id="addChecklistItemForm" onsubmit="saveChecklistItem(event)">
+                <div class="form-group">
+                    <label for="newChecklistItemCategory">Category *</label>
+                    <select id="newChecklistItemCategory" required>
+                        <option value="">-- Select Category --</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="newChecklistItemLabel">Label *</label>
+                    <input type="text" id="newChecklistItemLabel" required placeholder="e.g., Shared feedback form">
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="button" onclick="closeAddChecklistItemModal()" class="btn-secondary">Cancel</button>
+                    <button type="submit" class="btn-primary">Add Item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Checklist Item Modal -->
+    <div id="editChecklistItemModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close" onclick="closeEditChecklistItemModal()"><i class="fas fa-times"></i></span>
+            <div class="modal-header"><i class="fas fa-edit modal-header-icon"></i> Edit Checklist Item</div>
+            
+            <form id="editChecklistItemForm" onsubmit="saveEditedChecklistItem(event)">
+                <input type="hidden" id="editChecklistItemId">
+
+                <div class="form-group">
+                    <label for="editChecklistItemCategory">Category *</label>
+                    <select id="editChecklistItemCategory" required>
+                        <option value="">-- Select Category --</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="editChecklistItemLabel">Label *</label>
+                    <input type="text" id="editChecklistItemLabel" required placeholder="e.g., Shared feedback form">
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="button" onclick="closeEditChecklistItemModal()" class="btn-secondary">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Manage Checklist Categories Modal -->
+    <div id="manageChecklistCategoriesModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="close" onclick="closeManageChecklistCategoriesModal()"><i class="fas fa-times"></i></span>
+            <div class="modal-header"><i class="fas fa-list modal-header-icon"></i> Manage Categories</div>
+            
+            <div style="margin-bottom: 20px;">
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <input type="text" id="newCategoryInput" placeholder="Enter new category name" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <button onclick="addNewChecklistCategory()" class="btn-primary" style="padding: 8px 16px;"><i class="fas fa-plus"></i> Add</button>
+                </div>
+                <div id="categoriesListContainer" style="max-height: 400px; overflow-y: auto;"></div>
+            </div>
         </div>
     </div>
 
