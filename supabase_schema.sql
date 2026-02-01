@@ -18,11 +18,13 @@ CREATE TABLE IF NOT EXISTS student_checklist_completion (
     UNIQUE(student_id, checklist_item_id)
 );
 
--- Create cohorts table
+-- Create cohorts table (with color and icon fields)
 CREATE TABLE IF NOT EXISTS cohorts (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE,
     description TEXT,
+    icon VARCHAR(255),
+    color VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -34,12 +36,14 @@ CREATE TABLE IF NOT EXISTS email_template_categories (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create email_templates table (if not exists)
+-- Create email_templates table (with category field and button_label)
 CREATE TABLE IF NOT EXISTS email_templates (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     subject VARCHAR(255),
     body TEXT,
+    category VARCHAR(255),
+    button_label VARCHAR(255),
     category_id INTEGER REFERENCES email_template_categories(id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
