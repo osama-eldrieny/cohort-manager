@@ -355,10 +355,15 @@ async function resetColumnPreferences(pageId) {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
+    console.log('🔄 DOMContentLoaded event fired');
     await loadStudents();
+    console.log(`✅ Loaded ${students.length} students`);
     await loadEmailTemplates();
+    console.log('✅ Loaded email templates');
     await loadCohorts();
+    console.log(`✅ Loaded ${cohorts.length} cohorts`);
     setupEventListeners();
+    console.log('✅ Event listeners setup');
     
     // Handle URL routing
     window.addEventListener('hashchange', handleRouteChange);
