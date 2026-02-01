@@ -3171,7 +3171,7 @@ function closeAddCategoryModal() {
 
 function openManageCategoriesModal() {
     document.getElementById('manageCategoriesModal').style.display = 'block';
-    renderCategoriesList();
+    renderEmailTemplateCategoriesList();
 }
 
 function closeManageCategoriesModal() {
@@ -3189,7 +3189,7 @@ function closeEditCategoryModal() {
     document.getElementById('editCategoryForm').reset();
 }
 
-function renderCategoriesList() {
+function renderEmailTemplateCategoriesList() {
     const tbody = document.getElementById('categoriesListBody');
     
     tbody.innerHTML = emailTemplateCategories.map(category => `
@@ -3218,7 +3218,7 @@ async function deleteCategory(categoryName) {
 
         if (response.ok) {
             await loadEmailTemplateCategories();
-            renderCategoriesList();
+            renderEmailTemplateCategoriesList();
             renderEmailTemplatesList();
             showToast(`Category "${categoryName}" deleted successfully!`, 'success');
         } else {
@@ -3261,7 +3261,7 @@ async function saveEditedCategory(event) {
 
         if (response.ok) {
             await loadEmailTemplateCategories();
-            renderCategoriesList();
+            renderEmailTemplateCategoriesList();
             renderEmailTemplatesList();
             closeEditCategoryModal();
             showToast(`Category renamed to "${newName}" successfully!`, 'success');
@@ -3312,7 +3312,7 @@ function saveNewCategory(event) {
             // Refresh categories list if modal is open
             const tbody = document.getElementById('categoriesListBody');
             if (tbody) {
-                renderCategoriesList();
+                renderEmailTemplateCategoriesList();
             }
         })
         .catch(error => {

@@ -153,9 +153,6 @@ export async function deleteStudent(id) {
         if (!supabase) {
             throw new Error('Supabase not initialized. Cannot delete student.');
         }
-            console.log(`✅ Student deleted from JSON file (local fallback) - ID: ${id}`);
-            return;
-        }
 
         // Parse ID to handle both string and number types
         const numericId = parseInt(id, 10);
@@ -189,21 +186,7 @@ export async function deleteStudent(id) {
 export async function deleteStudentByEmail(email) {
     try {
         if (!supabase) {
-            // Fallback to JSON file
-            const studentsPath = path.join(__dirname, 'students.json');
-            let students = [];
-
-            try {
-                const data = fs.readFileSync(studentsPath, 'utf-8');
-                students = JSON.parse(data);
-            } catch {
-                students = [];
-            }
-
-            students = students.filter(s => s.email !== email);
-            fs.writeFileSync(studentsPath, JSON.stringify(students, null, 2));
-            console.log(`✅ Student with email ${email} deleted from JSON file (local fallback)`);
-            return;
+            throw new Error('Supabase not initialized. Cannot delete student by email.');
         }
 
         const { error } = await supabase
