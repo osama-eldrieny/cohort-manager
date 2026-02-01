@@ -564,6 +564,7 @@ function renderPage(pageId) {
     const titles = {
         'overview': { title: 'Overview', subtitle: 'Dashboard overview and key metrics' },
         'students': { title: 'Students', subtitle: 'Manage all students' },
+        'cohortmanager': { title: 'Manage Cohorts', subtitle: 'Create and manage course cohorts' },
         'cohort0': { title: 'Cohort 0', subtitle: 'Students in Cohort 0' },
         'cohort1': { title: 'Cohort 1', subtitle: 'Students in Cohort 1' },
         'cohort1cradis': { title: 'Cohort 1 - Cradis', subtitle: 'Students in Cohort 1 - Cradis' },
@@ -589,6 +590,8 @@ function renderPage(pageId) {
         renderOverview();
     } else if (pageId === 'students') {
         renderStudentsTable();
+    } else if (pageId === 'cohortmanager') {
+        renderCohortManager();
     } else if (pageId.startsWith('cohort') || pageId === 'english1') {
         renderCohortPage(pageId);
     } else if (pageId === 'waitinglist') {
@@ -3363,6 +3366,10 @@ async function loadCohorts() {
     } catch (error) {
         console.error('❌ Error loading cohorts:', error);
     }
+}
+
+function renderCohortManager() {
+    updateCohortsTable();
 }
 
 function updateCohortsTable() {
