@@ -551,13 +551,7 @@ export async function getAllColumnPreferences() {
 export async function getAllCohorts() {
     try {
         if (!supabase) {
-            console.log('⚠️  Using local JSON fallback for cohorts');
-            const cohortsFile = path.join(__dirname, 'cohorts.json');
-            if (fs.existsSync(cohortsFile)) {
-                const data = fs.readFileSync(cohortsFile, 'utf-8');
-                return JSON.parse(data);
-            }
-            return [];
+            throw new Error('Supabase not initialized');
         }
 
         const { data, error } = await supabase
@@ -565,16 +559,7 @@ export async function getAllCohorts() {
             .select('*')
             .order('created_at', { ascending: true });
 
-        if (error) {
-            console.log('⚠️  Cohorts table error, using JSON fallback:', error.message);
-            const cohortsFile = path.join(__dirname, 'cohorts.json');
-            if (fs.existsSync(cohortsFile)) {
-                const fileData = fs.readFileSync(cohortsFile, 'utf-8');
-                return JSON.parse(fileData);
-            }
-            return [];
-        }
-
+        if (error) throw error;
         return data || [];
     } catch (error) {
         console.error('❌ Error fetching cohorts:', error.message);
@@ -585,25 +570,7 @@ export async function getAllCohorts() {
 export async function createCohort(name, description = '', icon = 'fa-map-pin', color = '#4ECDC4') {
     try {
         if (!supabase) {
-            console.log('⚠️  Creating cohort in JSON fallback');
-            const cohortsFile = path.join(__dirname, 'cohorts.json');
-            let cohorts = [];
-            if (fs.existsSync(cohortsFile)) {
-                const data = fs.readFileSync(cohortsFile, 'utf-8');
-                cohorts = JSON.parse(data);
-            }
-            const newCohort = {
-                id: cohorts.length > 0 ? Math.max(...cohorts.map(c => c.id)) + 1 : 1,
-                name,
-                description,
-                icon,
-                color,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-            };
-            cohorts.push(newCohort);
-            fs.writeFileSync(cohortsFile, JSON.stringify(cohorts, null, 2));
-            return newCohort;
+            throw new Error('Supabase not initialized');
         }
 
         const { data, error } = await supabase
@@ -611,28 +578,7 @@ export async function createCohort(name, description = '', icon = 'fa-map-pin', 
             .insert([{ name, description, icon, color }])
             .select();
 
-        if (error) {
-            console.log('⚠️  Insert error, using JSON fallback:', error.message);
-            const cohortsFile = path.join(__dirname, 'cohorts.json');
-            let cohorts = [];
-            if (fs.existsSync(cohortsFile)) {
-                const fileData = fs.readFileSync(cohortsFile, 'utf-8');
-                cohorts = JSON.parse(fileData);
-            }
-            const newCohort = {
-                id: cohorts.length > 0 ? Math.max(...cohorts.map(c => c.id)) + 1 : 1,
-                name,
-                description,
-                icon,
-                color,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-            };
-            cohorts.push(newCohort);
-            fs.writeFileSync(cohortsFile, JSON.stringify(cohorts, null, 2));
-            return newCohort;
-        }
-
+        if (error) throw error;
         return data[0];
     } catch (error) {
         console.error('❌ Error creating cohort:', error.message);
@@ -643,27 +589,7 @@ export async function createCohort(name, description = '', icon = 'fa-map-pin', 
 export async function updateCohort(id, name, description = '', icon = 'fa-map-pin', color = '#4ECDC4') {
     try {
         if (!supabase) {
-            console.log('⚠️  Updating cohort in JSON fallback');
-            const cohortsFile = path.join(__dirname, 'cohorts.json');
-            let cohorts = [];
-            if (fs.existsSync(cohortsFile)) {
-                const data = fs.readFileSync(cohortsFile, 'utf-8');
-                cohorts = JSON.parse(data);
-            }
-            const index = cohorts.findIndex(c => c.id === id);
-            if (index !== -1) {
-                cohorts[index] = {
-                    ...cohorts[index],
-                    name,
-                    description,
-                    icon,
-                    color,
-                    updated_at: new Date().toISOString()
-                };
-                fs.writeFileSync(cohortsFile, JSON.stringify(cohorts, null, 2));
-                return cohorts[index];
-            }
-            return null;
+            throw new Error('Supabase not initialized');
         }
 
         const { data, error } = await supabase
@@ -672,30 +598,7 @@ export async function updateCohort(id, name, description = '', icon = 'fa-map-pi
             .eq('id', id)
             .select();
 
-        if (error) {
-            console.log('⚠️  Update error, using JSON fallback:', error.message);
-            const cohortsFile = path.join(__dirname, 'cohorts.json');
-            let cohorts = [];
-            if (fs.existsSync(cohortsFile)) {
-                const fileData = fs.readFileSync(cohortsFile, 'utf-8');
-                cohorts = JSON.parse(fileData);
-            }
-            const index = cohorts.findIndex(c => c.id === id);
-            if (index !== -1) {
-                cohorts[index] = {
-                    ...cohorts[index],
-                    name,
-                    description,
-                    icon,
-                    color,
-                    updated_at: new Date().toISOString()
-                };
-                fs.writeFileSync(cohortsFile, JSON.stringify(cohorts, null, 2));
-                return cohorts[index];
-            }
-            return null;
-        }
-
+        if (error) throw error;
         return data[0] || null;
     } catch (error) {
         console.error('❌ Error updating cohort:', error.message);
@@ -706,16 +609,7 @@ export async function updateCohort(id, name, description = '', icon = 'fa-map-pi
 export async function deleteCohort(id) {
     try {
         if (!supabase) {
-            console.log('⚠️  Deleting cohort in JSON fallback');
-            const cohortsFile = path.join(__dirname, 'cohorts.json');
-            let cohorts = [];
-            if (fs.existsSync(cohortsFile)) {
-                const data = fs.readFileSync(cohortsFile, 'utf-8');
-                cohorts = JSON.parse(data);
-            }
-            cohorts = cohorts.filter(c => c.id !== id);
-            fs.writeFileSync(cohortsFile, JSON.stringify(cohorts, null, 2));
-            return true;
+            throw new Error('Supabase not initialized');
         }
 
         const { error } = await supabase
@@ -723,19 +617,7 @@ export async function deleteCohort(id) {
             .delete()
             .eq('id', id);
 
-        if (error) {
-            console.log('⚠️  Delete error, using JSON fallback:', error.message);
-            const cohortsFile = path.join(__dirname, 'cohorts.json');
-            let cohorts = [];
-            if (fs.existsSync(cohortsFile)) {
-                const fileData = fs.readFileSync(cohortsFile, 'utf-8');
-                cohorts = JSON.parse(fileData);
-            }
-            cohorts = cohorts.filter(c => c.id !== id);
-            fs.writeFileSync(cohortsFile, JSON.stringify(cohorts, null, 2));
-            return true;
-        }
-
+        if (error) throw error;
         return true;
     } catch (error) {
         console.error('❌ Error deleting cohort:', error.message);
