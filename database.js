@@ -592,6 +592,28 @@ export async function updateCohort(id, name, description = '', icon = 'fa-map-pi
             throw new Error('Supabase not initialized');
         }
 
+        // Get the old cohort name before updating
+        const { data: oldCohortData, error: fetchError } = await supabase
+            .from('cohorts')
+            .select('name')
+            .eq('id', id)
+            .single();
+
+        if (fetchError) throw fetchError;
+        const oldName = oldCohortData?.name;
+
+        // If the name is being changed, update all students with the old cohort name
+        if (oldName && oldName !== name) {
+            const { error: updateStudentsError } = await supabase
+                .from('students')
+                .update({ cohort: name, updated_at: new Date().toISOString() })
+                .eq('cohort', oldName);
+
+            if (updateStudentsError) throw updateStudentsError;
+            console.log(`✅ Updated ${oldName} → ${name} for all students in this cohort`);
+        }
+
+        // Update the cohort record itself
         const { data, error } = await supabase
             .from('cohorts')
             .update({ name, description, icon, color, updated_at: new Date().toISOString() })
