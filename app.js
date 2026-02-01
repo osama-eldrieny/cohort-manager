@@ -4093,7 +4093,6 @@ function updateCohortsTable() {
         </tr>
     `).join('');
 }
-}
 
 function handleCohortTableClick(event) {
     const editBtn = event.target.closest('.cohort-edit-btn');
