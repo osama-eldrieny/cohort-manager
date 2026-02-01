@@ -671,86 +671,98 @@ function updateCohortSummary() {
 }
 
 function renderCharts() {
-    // Status Distribution Chart
-    const statusCounts = {
-        'Waiting list': students.filter(s => s.status === 'Waiting list').length,
-        'Can\'t reach': students.filter(s => s.status === 'Can\'t reach').length,
-        'Next Cohort': students.filter(s => s.status === 'Next Cohort').length,
-        'Standby': students.filter(s => s.status === 'Standby').length,
-        'Cohort 0': students.filter(s => s.status === 'Cohort 0').length,
-        'Cohort 1 - Cradis': students.filter(s => s.status === 'Cohort 1 - Cradis').length,
-        'Cohort 1 - Zomra': students.filter(s => s.status === 'Cohort 1 - Zomra').length,
-        'Cohort 2': students.filter(s => s.status === 'Cohort 2').length,
-        'Cohort 3': students.filter(s => s.status === 'Cohort 3').length,
-        'English 1': students.filter(s => s.status === 'English 1').length
-    };
+    // Check if Chart.js is loaded
+    if (typeof Chart === 'undefined') {
+        console.warn('Chart.js not loaded, skipping charts');
+        return;
+    }
 
-    const ctx1 = document.getElementById('statusChart');
-    if (charts.status) charts.status.destroy();
-    charts.status = new Chart(ctx1, {
-        type: 'doughnut',
-        data: {
-            labels: Object.keys(statusCounts),
-            datasets: [{
-                data: Object.values(statusCounts),
-                backgroundColor: ['#FFC107', '#F44336', '#2196F3', '#9C27B0', '#4CAF50', '#00BCD4', '#FF9800', '#009688', '#E91E63'],
-                borderColor: '#fff',
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: { legend: { position: 'bottom', labels: { boxWidth: 16, boxHeight: 16, borderRadius: 8 } } }
+    try {
+        // Status Distribution Chart
+        const statusCounts = {
+            'Waiting list': students.filter(s => s.status === 'Waiting list').length,
+            'Can\'t reach': students.filter(s => s.status === 'Can\'t reach').length,
+            'Next Cohort': students.filter(s => s.status === 'Next Cohort').length,
+            'Standby': students.filter(s => s.status === 'Standby').length,
+            'Cohort 0': students.filter(s => s.status === 'Cohort 0').length,
+            'Cohort 1 - Cradis': students.filter(s => s.status === 'Cohort 1 - Cradis').length,
+            'Cohort 1 - Zomra': students.filter(s => s.status === 'Cohort 1 - Zomra').length,
+            'Cohort 2': students.filter(s => s.status === 'Cohort 2').length,
+            'Cohort 3': students.filter(s => s.status === 'Cohort 3').length,
+            'English 1': students.filter(s => s.status === 'English 1').length
+        };
+
+        const ctx1 = document.getElementById('statusChart');
+        if (ctx1 && charts.status) charts.status.destroy();
+        if (ctx1) {
+            charts.status = new Chart(ctx1, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(statusCounts),
+                    datasets: [{
+                        data: Object.values(statusCounts),
+                        backgroundColor: ['#FFC107', '#F44336', '#2196F3', '#9C27B0', '#4CAF50', '#00BCD4', '#FF9800', '#009688', '#E91E63'],
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 16, boxHeight: 16, borderRadius: 8 } } }
+                }
+            });
         }
-    });
 
-    // Revenue Status Chart
-    const paidTotal = students.reduce((sum, s) => sum + s.paidAmount, 0);
-    const pendingTotal = students.reduce((sum, s) => sum + s.remaining, 0);
+        // Revenue Status Chart
+        const paidTotal = students.reduce((sum, s) => sum + s.paidAmount, 0);
+        const pendingTotal = students.reduce((sum, s) => sum + s.remaining, 0);
 
-    const ctx2 = document.getElementById('revenueChart');
-    if (charts.revenue) charts.revenue.destroy();
-    charts.revenue = new Chart(ctx2, {
-        type: 'doughnut',
-        data: {
-            labels: ['Paid', 'Pending'],
-            datasets: [{
-                data: [paidTotal, pendingTotal],
-                backgroundColor: ['#4CAF50', '#FF9800'],
-                borderColor: '#fff',
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: { legend: { position: 'bottom', labels: { boxWidth: 16, boxHeight: 16, borderRadius: 8 } } }
+        const ctx2 = document.getElementById('revenueChart');
+        if (ctx2 && charts.revenue) charts.revenue.destroy();
+        if (ctx2) {
+            charts.revenue = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Paid', 'Pending'],
+                    datasets: [{
+                        data: [paidTotal, pendingTotal],
+                        backgroundColor: ['#4CAF50', '#FF9800'],
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 16, boxHeight: 16, borderRadius: 8 } } }
+                }
+            });
         }
-    });
 
-    // Student Locations Chart
-    const locationCounts = {};
-    students.forEach(s => {
-        // Skip empty locations and normalize location names
-        const location = s.location && s.location.trim() ? s.location : 'Unknown';
-        locationCounts[location] = (locationCounts[location] || 0) + 1;
-    });
+        // Student Locations Chart
+        const locationCounts = {};
+        students.forEach(s => {
+            // Skip empty locations and normalize location names
+            const location = s.location && s.location.trim() ? s.location : 'Unknown';
+            locationCounts[location] = (locationCounts[location] || 0) + 1;
+        });
 
-    // Sort by count and get top 15 locations
-    const sortedLocations = Object.entries(locationCounts)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 15);
+        // Sort by count and get top 15 locations
+        const sortedLocations = Object.entries(locationCounts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 15);
 
-    const ctx3 = document.getElementById('locationsChart');
-    if (charts.locations) charts.locations.destroy();
-    charts.locations = new Chart(ctx3, {
-        type: 'doughnut',
-        data: {
-            labels: sortedLocations.map(l => l[0]),
-            datasets: [{
-                data: sortedLocations.map(l => l[1]),
-                backgroundColor: sortedLocations.map(l => getColor(l[0])),
+        const ctx3 = document.getElementById('locationsChart');
+        if (ctx3 && charts.locations) charts.locations.destroy();
+        if (ctx3) {
+            charts.locations = new Chart(ctx3, {
+                type: 'doughnut',
+                data: {
+                    labels: sortedLocations.map(l => l[0]),
+                    datasets: [{
+                        data: sortedLocations.map(l => l[1]),
+                        backgroundColor: sortedLocations.map(l => getColor(l[0])),
                 borderColor: '#fff',
                 borderWidth: 2
             }]
@@ -891,6 +903,10 @@ function renderCharts() {
             }
         }
     });
+        }
+    } catch (error) {
+        console.error('Error rendering charts:', error);
+    }
 }
 
 // ============================================
