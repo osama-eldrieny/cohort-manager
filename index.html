@@ -33,6 +33,7 @@
             <li><a data-page="students" class="nav-link"><i class="fas fa-users"></i> Students</a></li>
             <li class="sidebar-cohorts-divider"><span class="sidebar-section-label">COHORTS</span>
                 <ul class="sidebar-section-list">
+                    <li><a data-page="cohortmanager" class="nav-link"><i class="fas fa-cogs"></i> Manage Cohorts</a></li>
                     <li><a data-page="cohort0" class="nav-link"><i class="fas fa-map-pin"></i> Cohort 0</a></li>
                     <li><a data-page="cohort1cradis" class="nav-link"><i class="fas fa-map-pin"></i> Cohort 1 - Cradis</a></li>
                     <li><a data-page="cohort1zomra" class="nav-link"><i class="fas fa-map-pin"></i> Cohort 1 - Zomra</a></li>
@@ -413,6 +414,28 @@
                 </div>
             </div>
 
+            <!-- COHORT MANAGER PAGE -->
+            <div id="cohortmanager" class="page">
+                <h2 class="page-title-with-button">
+                    <span><i class="fas fa-cogs"></i> Manage Cohorts</span>
+                    <button onclick="openAddCohortModal()" class="btn-primary"><i class="fas fa-plus"></i> Add Cohort</button>
+                </h2>
+                
+                <div class="students-table">
+                    <table class="cohorts-table">
+                        <thead>
+                            <tr>
+                                <th>Cohort Name</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cohortsTableBody">
+                            <tr><td colspan="2" class="empty-cell">No cohorts yet. Create one to get started!</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- SETTINGS PAGE -->
             <div id="settings" class="page">
                 <h2 class="settings-title"><i class="fas fa-cog"></i> Settings</h2>
@@ -763,6 +786,23 @@
         </div>
     </div>
 
-    <script src="app.js"></script>
-</body>
-</html>
+    <!-- Add/Edit Cohort Modal -->
+    <div id="cohortModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <span class="close" onclick="closeCohortModal()"><i class="fas fa-times"></i></span>
+            <div class="modal-header"><i class="fas fa-plus modal-header-icon"></i> <span id="cohortModalTitle">Add New Cohort</span></div>
+            
+            <form id="cohortForm" onsubmit="saveCohort(event)">
+                <div class="form-group">
+                    <label for="cohortName">Cohort Name *</label>
+                    <input type="text" id="cohortName" required placeholder="Enter cohort name">
+                </div>
+                
+                <div class="modal-buttons">
+                    <button type="button" onclick="closeCohortModal()" class="btn-secondary">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Cohort</button>
+                </div>
+            </form>
+        </div>
+    </div>
+

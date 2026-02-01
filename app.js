@@ -357,6 +357,7 @@ async function resetColumnPreferences(pageId) {
 document.addEventListener('DOMContentLoaded', async () => {
     await loadStudents();
     await loadEmailTemplates();
+    await loadCohorts();
     setupEventListeners();
     
     // Handle URL routing
@@ -934,7 +935,7 @@ function renderStudentsTable() {
         return `
         <tr>
             <td class="col-id" style="padding-right: 0px;"><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
-            <td class="col-name"><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" onclick="openStudentContactModal('${student.id}')" title="Click to view details">${student.name}</strong></td>
+            <td class="col-name"><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" class="student-name-link" data-student-id="${student.id}" title="Click to view details">${student.name}</strong></td>
             <td class="col-email"><span class="copy-email" title="Click to copy">${student.email}</span></td>
             <td class="col-figmaEmail">${student.figmaEmail ? `<span class="copy-email" title="Click to copy">${student.figmaEmail}</span>` : '-'}</td>
             <td class="col-status"><span class="status-badge status-${(student.status || 'unknown').toLowerCase().replace(/\s+/g, '-')}">${student.status || 'Unknown'}</span></td>
@@ -971,6 +972,14 @@ function renderStudentsTable() {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
             deleteStudent(btn.dataset.studentId);
+        });
+    });
+    
+    // Attach listener to student name links
+    document.querySelectorAll('#studentsTableBody .student-name-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            openStudentContactModal(link.dataset.studentId);
         });
     });
 
@@ -1080,7 +1089,7 @@ function renderCohortPage(cohortId) {
                         return `
                         <tr>
                             <td class="col-id" style="padding-right: 0px;"><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
-                            <td class="col-name"><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" onclick="openStudentContactModal('${student.id}')" title="Click to view details">${student.name}</strong></td>
+                            <td class="col-name"><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" class="student-name-link" data-student-id="${student.id}" title="Click to view details">${student.name}</strong></td>
                             <td class="col-email"><span class="copy-email" title="Click to copy">${student.email}</span></td>
                             <td class="col-figmaEmail">${student.figmaEmail ? `<span class="copy-email" title="Click to copy">${student.figmaEmail}</span>` : '-'}</td>
                             <td class="col-status"><span class="status-badge status-${(student.status || 'unknown').toLowerCase().replace(/\s+/g, '-')}">${student.status || 'Unknown'}</span></td>
@@ -1135,7 +1144,7 @@ function renderCohortPage(cohortId) {
                     return `
                     <tr>
                         <td class="col-id" style="padding-right: 0px;"><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
-                        <td class="col-name"><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" onclick="openStudentContactModal('${student.id}')" title="Click to view details">${student.name}</strong></td>
+                        <td class="col-name"><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" class="student-name-link" data-student-id="${student.id}" title="Click to view details">${student.name}</strong></td>
                         <td class="col-email"><span class="copy-email" title="Click to copy">${student.email}</span></td>
                         <td class="col-figmaEmail">${student.figmaEmail ? `<span class="copy-email" title="Click to copy">${student.figmaEmail}</span>` : '-'}</td>
                         <td class="col-status"><span class="status-badge status-${(student.status || 'unknown').toLowerCase().replace(/\s+/g, '-')}">${student.status || 'Unknown'}</span></td>
@@ -1163,6 +1172,14 @@ function renderCohortPage(cohortId) {
     }
 
     attachCohortButtonListeners(page);
+    
+    // Attach listeners to student name links
+    page.querySelectorAll('.student-name-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            openStudentContactModal(link.dataset.studentId);
+        });
+    });
     
     // Apply column visibility
     applyColumnVisibility(`cohortTableBody-${cohortId}`, cohortId, 'cohort').catch(err => 
@@ -1273,7 +1290,7 @@ function renderStatusPage(status) {
                         return `
                         <tr>
                             <td class="col-id" style="padding-right: 0px;"><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
-                            <td class="col-name"><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" onclick="openStudentContactModal('${student.id}')" title="Click to view details">${student.name}</strong></td>
+                            <td class="col-name"><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" class="student-name-link" data-student-id="${student.id}" title="Click to view details">${student.name}</strong></td>
                             <td class="col-email"><span class="copy-email" title="Click to copy">${student.email}</span></td>
                             <td class="col-figmaEmail">${student.figmaEmail ? `<span class="copy-email" title="Click to copy">${student.figmaEmail}</span>` : '-'}</td>
                             <td class="col-status"><span class="status-badge status-${(student.status || 'unknown').toLowerCase().replace(/\s+/g, '-')}">${student.status || 'Unknown'}</span></td>
@@ -1328,7 +1345,7 @@ function renderStatusPage(status) {
                     return `
                     <tr>
                         <td class="col-id" style="padding-right: 0px;"><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
-                        <td class="col-name"><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" onclick="openStudentContactModal('${student.id}')" title="Click to view details">${student.name}</strong></td>
+                        <td class="col-name"><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" class="student-name-link" data-student-id="${student.id}" title="Click to view details">${student.name}</strong></td>
                         <td class="col-email"><span class="copy-email" title="Click to copy">${student.email}</span></td>
                         <td class="col-figmaEmail">${student.figmaEmail ? `<span class="copy-email" title="Click to copy">${student.figmaEmail}</span>` : '-'}</td>
                         <td class="col-status"><span class="status-badge status-${(student.status || 'unknown').toLowerCase().replace(/\s+/g, '-')}">${student.status || 'Unknown'}</span></td>
@@ -1356,6 +1373,14 @@ function renderStatusPage(status) {
     }
 
     attachStatusButtonListeners(page);
+    
+    // Attach listeners to student name links
+    page.querySelectorAll('.student-name-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            openStudentContactModal(link.dataset.studentId);
+        });
+    });
     
     // Apply column visibility
     applyColumnVisibility(`statusTableBody-${pageId}`, pageId, 'status').catch(err => 
@@ -1551,6 +1576,7 @@ function openAddModal() {
     document.getElementById('modalTitle').textContent = 'Add New Student';
     document.getElementById('studentForm').reset();
     document.getElementById('checklistSection').style.display = 'none';
+    updateStatusDropdown(); // Refresh status dropdown with current cohorts
     document.getElementById('studentModal').style.display = 'block';
 }
 
@@ -1575,6 +1601,8 @@ function editStudent(id) {
     currentEditingId = id;
     originalEditingEmail = student.email; // Store original email for comparison
     document.getElementById('modalTitle').textContent = 'Edit Student';
+    
+    updateStatusDropdown(); // Refresh status dropdown with current cohorts
     
     document.getElementById('name').value = student.name || '';
     document.getElementById('email').value = student.email || '';
@@ -2490,6 +2518,7 @@ window.onclick = function(event) {
     const studentModal = document.getElementById('studentModal');
     const emailTemplateModal = document.getElementById('emailTemplateModal');
     const studentContactModal = document.getElementById('studentContactModal');
+    const cohortModal = document.getElementById('cohortModal');
     
     if (event.target === studentModal) {
         closeStudentModal();
@@ -2499,6 +2528,9 @@ window.onclick = function(event) {
     }
     if (event.target === studentContactModal) {
         closeStudentContactModal();
+    }
+    if (event.target === cohortModal) {
+        closeCohortModal();
     }
 }
 
@@ -2570,12 +2602,32 @@ function renderTemplateSection(sectionId, bodyId, templates) {
             <td class="col-button-label">${template.button_label}</td>
             <td class="col-subject">${template.subject}</td>
             <td class="col-actions">
-                <button class="btn-action" onclick="openBulkEmailModal('${template.id}')" title="Send to Group"><i class="fas fa-paper-plane"></i></button>
-                <button class="btn-small btn-edit" onclick="editEmailTemplate('${template.id}')" title="Edit"><i class="fas fa-pencil-alt"></i></button>
-                <button class="btn-small btn-danger" onclick="deleteEmailTemplate('${template.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+                <button class="btn-action email-send-btn" data-template-id="${template.id}" title="Send to Group"><i class="fas fa-paper-plane"></i></button>
+                <button class="btn-small btn-edit email-edit-btn" data-template-id="${template.id}" title="Edit"><i class="fas fa-pencil-alt"></i></button>
+                <button class="btn-small btn-danger email-delete-btn" data-template-id="${template.id}" title="Delete"><i class="fas fa-trash"></i></button>
             </td>
         </tr>
     `).join('');
+    
+    // Attach event listeners using event delegation
+    if (!tbody.dataset.listenerAttached) {
+        tbody.addEventListener('click', handleEmailTemplateClick);
+        tbody.dataset.listenerAttached = 'true';
+    }
+}
+
+function handleEmailTemplateClick(event) {
+    const sendBtn = event.target.closest('.email-send-btn');
+    const editBtn = event.target.closest('.email-edit-btn');
+    const deleteBtn = event.target.closest('.email-delete-btn');
+    
+    if (sendBtn) {
+        openBulkEmailModal(sendBtn.dataset.templateId);
+    } else if (editBtn) {
+        openEmailTemplateModal(editBtn.dataset.templateId);
+    } else if (deleteBtn) {
+        deleteEmailTemplate(deleteBtn.dataset.templateId);
+    }
 }
 
 function openEmailTemplateModal(templateId = null) {
@@ -2864,8 +2916,9 @@ function openStudentContactModal(studentId) {
                         ${templates.map(template => `
                             <button 
                                 type="button" 
-                                class="btn-primary" 
-                                onclick="sendEmailToStudent('${template.id}', '${student.id}')" 
+                                class="btn-primary student-email-send-btn" 
+                                data-template-id="${template.id}"
+                                data-student-id="${student.id}"
                                 style="text-align: left; margin: 0;">
                                 <i class="fas fa-paper-plane"></i> ${template.button_label}
                             </button>
@@ -2893,8 +2946,9 @@ function openStudentContactModal(studentId) {
                         ${other.map(template => `
                             <button 
                                 type="button" 
-                                class="btn-primary" 
-                                onclick="sendEmailToStudent('${template.id}', '${student.id}')" 
+                                class="btn-primary student-email-send-btn" 
+                                data-template-id="${template.id}"
+                                data-student-id="${student.id}"
                                 style="text-align: left; margin: 0;">
                                 <i class="fas fa-paper-plane"></i> ${template.button_label}
                             </button>
@@ -2905,6 +2959,14 @@ function openStudentContactModal(studentId) {
         }
         
         templatesDiv.innerHTML = groupHTML;
+        
+        // Attach event listeners to email send buttons
+        templatesDiv.querySelectorAll('.student-email-send-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                sendEmailToStudent(btn.dataset.templateId, btn.dataset.studentId);
+            });
+        });
     }
 
     modal.style.display = 'block';
@@ -3034,23 +3096,25 @@ function showToast(message, type = 'info') {
 // BULK EMAIL SENDING
 // ============================================
 
-const BULK_GROUP_OPTIONS = [
-    'Cohort 0',
-    'Cohort 1 - Cradis',
-    'Cohort 1 - Zomra',
-    'Cohort 2',
-    'Cohort 3',
-    'English 1',
-    'Waiting list',
-    "Can't reach",
-    'Next Cohort',
-    'Standby'
-];
+function getBulkGroupOptions() {
+    const staticOptions = [
+        'Waiting list',
+        "Can't reach",
+        'Next Cohort',
+        'Standby'
+    ];
+    
+    // Combine dynamic cohorts with static options
+    const cohortNames = cohorts.map(c => c.name);
+    return [...cohortNames, ...staticOptions];
+}
 
 function openBulkEmailModal(templateId) {
     const modal = document.getElementById('bulkEmailModal');
     const templateSelect = document.getElementById('bulkTemplate');
     const groupOptions = document.getElementById('bulkGroupOptions');
+    
+    const bulkGroupOptionsList = getBulkGroupOptions();
 
     // Populate template dropdown
     templateSelect.innerHTML = '<option value="">-- Choose a template --</option>';
@@ -3067,7 +3131,7 @@ function openBulkEmailModal(templateId) {
 
     // Populate group radio buttons
     groupOptions.innerHTML = '';
-    BULK_GROUP_OPTIONS.forEach(group => {
+    bulkGroupOptionsList.forEach(group => {
         const radioId = `group-${group.replace(/\s+/g, '-').toLowerCase()}`;
         const label = document.createElement('label');
         label.className = 'bulk-group-option';
@@ -3240,4 +3304,194 @@ async function sendBulkEmail(event) {
     }
 
     document.querySelector('#bulkEmailForm button[type="submit"]').disabled = false;
+}
+// ============================================
+// COHORT MANAGEMENT FUNCTIONS
+// ============================================
+
+let cohorts = [];
+let editingCohortId = null;
+
+async function loadCohorts() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/cohorts`);
+        if (response.ok) {
+            cohorts = await response.json();
+            console.log('✅ Loaded cohorts:', cohorts);
+            updateCohortsTable();
+            updateCohortDropdowns();
+        }
+    } catch (error) {
+        console.error('❌ Error loading cohorts:', error);
+    }
+}
+
+function updateCohortsTable() {
+    const tbody = document.getElementById('cohortsTableBody');
+    
+    if (cohorts.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="2" class="empty-cell">No cohorts yet. Create one to get started!</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = cohorts.map(cohort => `
+        <tr>
+            <td>${escapeHtml(cohort.name)}</td>
+            <td>
+                <div class="cohort-actions-cell">
+                    <button class="btn-edit cohort-edit-btn" data-cohort-id="${cohort.id}" data-cohort-name="${escapeHtml(cohort.name)}">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                    <button class="btn-delete cohort-delete-btn" data-cohort-id="${cohort.id}">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+    
+    // Attach event listeners using event delegation
+    tbody.addEventListener('click', handleCohortTableClick);
+}
+
+function handleCohortTableClick(event) {
+    const editBtn = event.target.closest('.cohort-edit-btn');
+    const deleteBtn = event.target.closest('.cohort-delete-btn');
+    
+    if (editBtn) {
+        const id = parseInt(editBtn.dataset.cohortId);
+        const name = editBtn.dataset.cohortName;
+        openEditCohortModal(id, name);
+    } else if (deleteBtn) {
+        const id = parseInt(deleteBtn.dataset.cohortId);
+        deleteCohortConfirm(id);
+    }
+}
+
+function updateCohortDropdowns() {
+    // Update status dropdown for students
+    updateStatusDropdown();
+    
+    // Update email template group selector
+    updateEmailTemplateGroupSelect();
+}
+
+function updateStatusDropdown() {
+    const statusSelect = document.getElementById('status');
+    if (!statusSelect) return;
+    
+    const currentValue = statusSelect.value;
+    
+    // Clear existing options, keep the default
+    statusSelect.innerHTML = '<option value="">Select Status</option>';
+    
+    // Add cohorts as options
+    cohorts.forEach(cohort => {
+        const option = document.createElement('option');
+        option.value = cohort.name;
+        option.textContent = cohort.name;
+        statusSelect.appendChild(option);
+    });
+    
+    // Restore selected value
+    statusSelect.value = currentValue;
+}
+
+function updateEmailTemplateGroupSelect() {
+    const groupSelect = document.getElementById('bulkEmailGroup');
+    if (!groupSelect) return;
+    
+    const currentValue = groupSelect.value;
+    
+    // Clear and rebuild options
+    groupSelect.innerHTML = '<option value="">Select Group...</option>';
+    
+    // Add cohorts
+    cohorts.forEach(cohort => {
+        const option = document.createElement('option');
+        option.value = cohort.name;
+        option.textContent = cohort.name;
+        groupSelect.appendChild(option);
+    });
+    
+    groupSelect.value = currentValue;
+}
+
+function openAddCohortModal() {
+    editingCohortId = null;
+    document.getElementById('cohortModalTitle').textContent = 'Add New Cohort';
+    document.getElementById('cohortForm').reset();
+    document.getElementById('cohortModal').style.display = 'block';
+}
+
+function openEditCohortModal(id, name) {
+    editingCohortId = id;
+    document.getElementById('cohortModalTitle').textContent = 'Edit Cohort';
+    document.getElementById('cohortName').value = name;
+    document.getElementById('cohortModal').style.display = 'block';
+}
+
+function closeCohortModal() {
+    document.getElementById('cohortModal').style.display = 'none';
+    editingCohortId = null;
+}
+
+async function saveCohort(event) {
+    event.preventDefault();
+    
+    const name = document.getElementById('cohortName').value.trim();
+    
+    if (!name) {
+        alert('Please enter a cohort name');
+        return;
+    }
+    
+    try {
+        const url = editingCohortId 
+            ? `${API_BASE_URL}/api/cohorts/${editingCohortId}`
+            : `${API_BASE_URL}/api/cohorts`;
+        
+        const method = editingCohortId ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, description: '' })
+        });
+        
+        if (response.ok) {
+            showToast(editingCohortId ? 'Cohort updated successfully' : 'Cohort created successfully', 'success');
+            closeCohortModal();
+            await loadCohorts();
+        } else {
+            const error = await response.json();
+            alert('Error: ' + (error.error || 'Failed to save cohort'));
+        }
+    } catch (error) {
+        console.error('❌ Error saving cohort:', error);
+        alert('Error saving cohort: ' + error.message);
+    }
+}
+
+async function deleteCohortConfirm(id) {
+    const cohort = cohorts.find(c => c.id === id);
+    if (!cohort) return;
+    
+    if (confirm(`Are you sure you want to delete "${cohort.name}"?`)) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/cohorts/${id}`, {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                showToast('Cohort deleted successfully', 'success');
+                await loadCohorts();
+            } else {
+                alert('Failed to delete cohort');
+            }
+        } catch (error) {
+            console.error('❌ Error deleting cohort:', error);
+            alert('Error deleting cohort: ' + error.message);
+        }
+    }
 }

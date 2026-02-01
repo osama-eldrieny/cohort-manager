@@ -24,7 +24,11 @@ import {
     getColumnPreferences,
     saveColumnPreferences,
     deleteColumnPreferences,
-    getAllColumnPreferences
+    getAllColumnPreferences,
+    getAllCohorts,
+    createCohort,
+    updateCohort,
+    deleteCohort
 } from './database.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -470,6 +474,71 @@ app.get('/api/column-preferences', async (req, res) => {
     } catch (error) {
         console.error('❌ Error fetching all column preferences:', error.message);
         res.status(500).json({ error: 'Failed to fetch column preferences' });
+    }
+});
+
+// ============================================
+// COHORTS API ROUTES
+// ============================================
+
+// Get all cohorts
+app.get('/api/cohorts', async (req, res) => {
+    try {
+        const cohorts = await getAllCohorts();
+        res.json(cohorts);
+    } catch (error) {
+        console.error('❌ Error fetching cohorts:', error);
+        res.status(500).json({ error: 'Failed to fetch cohorts' });
+    }
+});
+
+// Create a new cohort
+app.post('/api/cohorts', async (req, res) => {
+    try {
+        const { name, description } = req.body;
+        
+        if (!name || name.trim() === '') {
+            return res.status(400).json({ error: 'Cohort name is required' });
+        }
+        
+        const newCohort = await createCohort(name, description || '');
+        res.status(201).json(newCohort);
+    } catch (error) {
+        console.error('❌ Error creating cohort:', error);
+        res.status(500).json({ error: 'Failed to create cohort' });
+    }
+});
+
+// Update a cohort
+app.put('/api/cohorts/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, description } = req.body;
+        
+        if (!name || name.trim() === '') {
+            return res.status(400).json({ error: 'Cohort name is required' });
+        }
+        
+        const updated = await updateCohort(parseInt(id), name, description || '');
+        if (!updated) {
+            return res.status(404).json({ error: 'Cohort not found' });
+        }
+        res.json(updated);
+    } catch (error) {
+        console.error('❌ Error updating cohort:', error);
+        res.status(500).json({ error: 'Failed to update cohort' });
+    }
+});
+
+// Delete a cohort
+app.delete('/api/cohorts/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await deleteCohort(parseInt(id));
+        res.json({ success: true });
+    } catch (error) {
+        console.error('❌ Error deleting cohort:', error);
+        res.status(500).json({ error: 'Failed to delete cohort' });
     }
 });
 

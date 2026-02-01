@@ -1,0 +1,16 @@
+📧 Gmail SMTP configured for osama.eldrieny@gmail.com
+🔍 Checking environment variables:
+   SUPABASE_URL: ✓ set
+   SUPABASE_KEY: ✓ set
+✅ Connected to Supabase PostgreSQL database
+🚀 Course Dashboard Server running on http://localhost:3002
+🌍 Environment: Local
+💾 Data storage: SQLite Database
+📊 API Endpoints:
+   GET  /api/students - Load students
+   POST /api/students - Save students
+   DELETE /api/students/:id - Delete student
+   GET  /api/export - Export students
+   GET  /api/health - Health check
+✅ Column preferences table ready
+🔧 Database initialization complete
