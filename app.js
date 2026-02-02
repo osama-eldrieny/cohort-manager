@@ -2536,22 +2536,23 @@ function saveStudent(event) {
     const actionType = currentEditingId ? 'update' : 'create';
     console.log(`💾 Saving student to server (${actionType}): ${newEmail}`);
     
-    saveToStorage(student).then(() => {
-        // Save checklist completion separately
+    saveToStorage(student).then(async () => {
+        // Save checklist completion and wait for it to complete BEFORE reloading students
         if (selectedChecklistItems.length > 0 || currentEditingId) {
-            fetch(`${API_BASE_URL}/api/students/${student.id}/checklist-completion`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ completedItemIds: selectedChecklistItems })
-            }).then(response => {
-                if (response.ok) {
+            try {
+                const checklistResponse = await fetch(`${API_BASE_URL}/api/students/${student.id}/checklist-completion`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ completedItemIds: selectedChecklistItems })
+                });
+                if (checklistResponse.ok) {
                     console.log('✅ Saved checklist completion for student', student.id);
                 } else {
                     console.warn('⚠️ Failed to save checklist completion');
                 }
-            }).catch(error => {
+            } catch (error) {
                 console.error('❌ Error saving checklist completion:', error);
-            });
+            }
         }
         
         loadStudents().then(() => {
