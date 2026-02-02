@@ -2315,8 +2315,23 @@ function renderDynamicChecklist(student) {
         groupedByCategory[item.category].push(item);
     });
 
-    // Get completed item IDs for this student
-    const completedItemIds = new Set(currentStudentChecklistCompletion.map(c => c.checklist_item_id));
+    // Get completed item IDs for this student - NORMALIZE to numbers
+    const completedItemIds = new Set();
+    if (currentStudentChecklistCompletion && Array.isArray(currentStudentChecklistCompletion)) {
+        currentStudentChecklistCompletion.forEach(c => {
+            // Ensure we store as numbers for consistent comparison
+            const itemId = parseInt(c.checklist_item_id, 10);
+            if (!isNaN(itemId)) {
+                completedItemIds.add(itemId);
+            }
+        });
+    }
+    
+    console.log('📋 Rendering checklist for student:', {
+        totalItems: visibleItems.length,
+        completedItems: completedItemIds.size,
+        completedItemIds: Array.from(completedItemIds)
+    });
 
     let html = '';
     Object.entries(groupedByCategory).forEach(([category, items]) => {
@@ -2324,7 +2339,8 @@ function renderDynamicChecklist(student) {
             <div class="checklist-group-title">${category}</div>`;
         
         items.forEach(item => {
-            const isChecked = completedItemIds.has(item.id);
+            const itemId = parseInt(item.id, 10);
+            const isChecked = completedItemIds.has(itemId);
             html += `
                 <div class="checklist-item">
                     <input type="checkbox" id="checklistItem_${item.id}" class="checklist-checkbox" data-item-id="${item.id}" ${isChecked ? 'checked' : ''}>
@@ -2344,8 +2360,12 @@ function renderDynamicChecklist(student) {
 function getSelectedChecklistItems() {
     const selected = [];
     document.querySelectorAll('.checklist-checkbox:checked').forEach(checkbox => {
-        selected.push(parseInt(checkbox.dataset.itemId));
+        const itemId = parseInt(checkbox.dataset.itemId, 10);
+        if (!isNaN(itemId)) {
+            selected.push(itemId);
+        }
     });
+    console.log('✅ Selected checklist items:', selected);
     return selected;
 }
 
@@ -2359,13 +2379,31 @@ function calculateChecklistProgress(student) {
     if (onboardingItems.length === 0) return 0;
     
     // Count how many onboarding items are completed for this student
+    // Normalize all IDs to numbers for consistent comparison
     const completionMap = {};
-    student.checklistCompletion?.forEach(completion => {
-        completionMap[completion.checklist_item_id] = true;
+    if (student.checklistCompletion && Array.isArray(student.checklistCompletion)) {
+        student.checklistCompletion.forEach(completion => {
+            const itemId = parseInt(completion.checklist_item_id, 10);
+            if (!isNaN(itemId)) {
+                completionMap[itemId] = true;
+            }
+        });
+    }
+    
+    const completedOnboardingItems = onboardingItems.filter(item => {
+        const itemId = parseInt(item.id, 10);
+        return completionMap[itemId] === true;
+    }).length;
+    
+    const percentage = onboardingItems.length > 0 ? Math.round((completedOnboardingItems / onboardingItems.length) * 100) : 0;
+    
+    // Debug logging
+    console.log(`📊 Checklist progress for ${student.name} (ID: ${student.id}):`, {
+        onboardingItems: onboardingItems.length,
+        completedOnboardingItems: completedOnboardingItems,
+        percentage: percentage
     });
     
-    const completedOnboardingItems = onboardingItems.filter(item => completionMap[item.id]).length;
-    const percentage = Math.round((completedOnboardingItems / onboardingItems.length) * 100);
     return percentage;
 }
 
