@@ -947,14 +947,28 @@ export async function deleteChecklistItem(id) {
             return true;
         }
 
+        // First, delete all student_checklist_completion records for this item
+        console.log(`🗑️  Deleting completion records for item ${id}...`);
+        const { error: completionError } = await supabase
+            .from('student_checklist_completion')
+            .delete()
+            .eq('checklist_item_id', id);
+
+        if (completionError && completionError.code !== 'PGRST116') {
+            console.warn('⚠️  Warning deleting completion records:', completionError);
+        }
+
+        // Then delete the checklist item itself
+        console.log(`🗑️  Deleting checklist item ${id}...`);
         const { error } = await supabase
             .from('checklist_items')
             .delete()
             .eq('id', id);
 
         if (error) {
+            console.error('❌ Supabase error deleting item:', error.message);
             // Fallback to JSON for Supabase errors
-            console.log('📄 Supabase delete failed, using JSON fallback');
+            console.log('📄 Using JSON fallback');
             const items = await getChecklistItems();
             const filtered = items.filter(i => i.id !== id);
             await saveChecklistItems(filtered);

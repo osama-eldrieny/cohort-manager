@@ -1,0 +1,130 @@
+[
+  {
+    "id": 1,
+    "category": "Onboarding Checklist",
+    "label": "Added to community group",
+    "sort_position": 1,
+    "created_at": "2026-02-02T00:00:00",
+    "updated_at": "2026-02-01T19:21:30.022542"
+  },
+  {
+    "id": 9,
+    "category": "Figma Submission Status",
+    "label": "Not started",
+    "sort_position": 1,
+    "created_at": "2026-02-02T00:00:00",
+    "updated_at": "2026-02-01T19:21:30.022542"
+  },
+  {
+    "id": 13,
+    "category": "Post-Course Actions",
+    "label": "Shared feedback form",
+    "sort_position": 1,
+    "created_at": "2026-02-02T00:00:00",
+    "updated_at": "2026-02-01T19:21:30.022542"
+  },
+  {
+    "id": 10,
+    "category": "Figma Submission Status",
+    "label": "Submitted",
+    "sort_position": 2,
+    "created_at": "2026-02-02T00:00:00",
+    "updated_at": "2026-02-01T19:21:30.022542"
+  },
+  {
+    "id": 2,
+    "category": "Onboarding Checklist",
+    "label": "Shared course agreement",
+    "sort_position": 2,
+    "created_at": "2026-02-02T00:00:00",
+    "updated_at": "2026-02-01T19:21:30.022542"
+  },
+  {
+    "id": 14,
+    "category": "Post-Course Actions",
+    "label": "Submitted course feedback",
+    "sort_position": 2,
+    "created_at": "2026-02-02T00:00:00",
+    "updated_at": "2026-02-01T19:21:30.022542"
+  },
+  {
+    "id": 3,
+    "category": "Onboarding Checklist",
+    "label": "Shared Student Grouping form",
+    "sort_position": 3,
+    "created_at": "2026-02-02T00:00:00",
+    "updated_at": "2026-02-01T19:21:30.022542"
+  },
+  {
+    "id": 11,
+    "category": "Figma Submission Status",
+    "label": "Under review",
+    "sort_position": 3,
+    "created_at": "2026-02-02T00:00:00",
+    "updated_at": "2026-02-01T19:21:30.022542"
+  },
+  {
+    "id": 15,
+    "category": "Post-Course Actions",
+    "label": "Issued the certificate",
+    "sort_position": 3,
+    "created_at": "2026-02-02T00:00:00",
+    "updated_at": "2026-02-01T19:21:30.022542"
+  },
+  {
+    "id": 12,
+    "category": "Figma Submission Status",
+    "label": "Approved",
+    "sort_position": 4,
+    "created_at": "2026-02-02T00:00:00",
+    "updated_at": "2026-02-01T19:21:30.022542"
+  },
+  {
+    "id": 4,
+    "category": "Onboarding Checklist",
+    "label": "Shared Google Drive folder",
+    "sort_position": 4,
+    "created_at": "2026-02-02T00:00:00",
+    "updated_at": "2026-02-01T19:21:30.022542"
+  },
+  {
+    "id": 5,
+    "category": "Onboarding Checklist",
+    "label": "Shared Master Figma file",
+    "sort_position": 5,
+    "created_at": "2026-02-02T00:00:00",
+    "updated_at": "2026-02-01T19:21:30.022542"
+  },
+  {
+    "id": 6,
+    "category": "Onboarding Checklist",
+    "label": "Signed course agreement",
+    "sort_position": 6,
+    "created_at": "2026-02-02T00:00:00",
+    "updated_at": "2026-02-01T19:21:30.022542"
+  },
+  {
+    "id": 7,
+    "category": "Onboarding Checklist",
+    "label": "Respond Student Grouping Form",
+    "sort_position": 7,
+    "created_at": "2026-02-02T00:00:00",
+    "updated_at": "2026-02-01T19:21:30.022542"
+  },
+  {
+    "id": 8,
+    "category": "Onboarding Checklist",
+    "label": "Create private figma file",
+    "sort_position": 8,
+    "created_at": "2026-02-02T00:00:00",
+    "updated_at": "2026-02-01T19:21:30.022542"
+  },
+  {
+    "id": 17,
+    "category": "Post-Course Actions",
+    "label": "new onboarding",
+    "sort_position": 999,
+    "created_at": "2026-02-01T18:39:35.956",
+    "updated_at": "2026-02-01T19:21:30.022542"
+  }
+]
