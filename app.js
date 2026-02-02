@@ -1966,10 +1966,10 @@ function renderAnalyticsCharts() {
         return;
     }
     
-    // Use dynamic cohorts from Supabase
-    const dynamicCohorts = cohorts && cohorts.length > 0 ? cohorts.map(c => c.name) : COHORTS;
-    const visibleCohorts = getVisibleCohorts();
-    const cohortsToDisplay = visibleCohorts.length > 0 ? visibleCohorts : dynamicCohorts;
+    // Use dynamic cohorts from Supabase ONLY (not statuses or other fields)
+    const dynamicCohorts = cohorts && cohorts.length > 0 ? cohorts.map(c => c.name) : ['Cohort 0', 'Cohort 1 - Cradis', 'Cohort 1 - Zomra', 'Cohort 2', 'Cohort 3', 'English 1'];
+    // For charts, always use all available cohorts from Supabase for consistency
+    const cohortsToDisplay = dynamicCohorts;
     
     // Revenue by Cohort
     const cohortRevenue = {};
