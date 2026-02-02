@@ -2418,13 +2418,31 @@ function calculatePostCourseProgress(student) {
     if (postCourseItems.length === 0) return 0;
     
     // Count how many post-course items are completed for this student
+    // Normalize all IDs to numbers for consistent comparison
     const completionMap = {};
-    student.checklistCompletion?.forEach(completion => {
-        completionMap[completion.checklist_item_id] = true;
+    if (student.checklistCompletion && Array.isArray(student.checklistCompletion)) {
+        student.checklistCompletion.forEach(completion => {
+            const itemId = parseInt(completion.checklist_item_id, 10);
+            if (!isNaN(itemId)) {
+                completionMap[itemId] = true;
+            }
+        });
+    }
+    
+    const completedPostCourseItems = postCourseItems.filter(item => {
+        const itemId = parseInt(item.id, 10);
+        return completionMap[itemId] === true;
+    }).length;
+    
+    const percentage = postCourseItems.length > 0 ? Math.round((completedPostCourseItems / postCourseItems.length) * 100) : 0;
+    
+    // Debug logging
+    console.log(`📊 Post-course progress for ${student.name} (ID: ${student.id}):`, {
+        postCourseItems: postCourseItems.length,
+        completedPostCourseItems: completedPostCourseItems,
+        percentage: percentage
     });
     
-    const completedPostCourseItems = postCourseItems.filter(item => completionMap[item.id]).length;
-    const percentage = Math.round((completedPostCourseItems / postCourseItems.length) * 100);
     return percentage;
 }
 
