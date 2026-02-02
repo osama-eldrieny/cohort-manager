@@ -1640,59 +1640,120 @@ function attachStatusButtonListeners(page) {
 }
 
 // ============================================
+// COHORT CHARTS VISIBILITY CONTROLS
+// ============================================
+
+// Get visible cohorts from localStorage
+function getVisibleCohorts() {
+    const stored = localStorage.getItem('visibleCohortCharts');
+    return stored ? JSON.parse(stored) : [];
+}
+
+// Save visible cohorts to localStorage
+function saveVisibleCohorts(cohortList) {
+    localStorage.setItem('visibleCohortCharts', JSON.stringify(cohortList));
+}
+
+// Update cohort charts checkbox controls
+function updateCohortChartsControls() {
+    const container = document.getElementById('cohortChartsCheckboxes');
+    if (!container) return;
+    
+    const dynamicCohorts = cohorts && cohorts.length > 0 ? cohorts.map(c => c.name) : COHORTS;
+    const visibleCohorts = getVisibleCohorts();
+    
+    container.innerHTML = '';
+    
+    dynamicCohorts.forEach((cohortName, index) => {
+        const label = document.createElement('label');
+        label.className = 'cohort-checkbox-label';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = cohortName;
+        checkbox.checked = visibleCohorts.length === 0 || visibleCohorts.includes(cohortName);
+        checkbox.className = 'cohort-checkbox';
+        checkbox.dataset.cohort = cohortName;
+        
+        checkbox.addEventListener('change', () => {
+            const allCheckboxes = container.querySelectorAll('input[type="checkbox"]');
+            const selected = Array.from(allCheckboxes)
+                .filter(cb => cb.checked)
+                .map(cb => cb.value);
+            
+            saveVisibleCohorts(selected);
+            renderAnalyticsCharts();
+        });
+        
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(cohortName));
+        container.appendChild(label);
+    });
+}
+
+// ============================================
 // ANALYTICS CHARTS
 // ============================================
 
 function renderAnalyticsCharts() {
+    // Use dynamic cohorts from Supabase
+    const dynamicCohorts = cohorts && cohorts.length > 0 ? cohorts.map(c => c.name) : COHORTS;
+    const visibleCohorts = getVisibleCohorts();
+    const cohortsToDisplay = visibleCohorts.length > 0 ? visibleCohorts : dynamicCohorts;
+    
     // Revenue by Cohort
     const cohortRevenue = {};
-    COHORTS.forEach(cohort => {
+    cohortsToDisplay.forEach(cohort => {
         cohortRevenue[cohort] = students
             .filter(s => s.cohort === cohort)
             .reduce((sum, s) => sum + s.paidAmount, 0);
     });
 
     const ctx1 = document.getElementById('cohortRevenueChart');
-    if (charts.cohortRevenue) charts.cohortRevenue.destroy();
-    charts.cohortRevenue = new Chart(ctx1, {
-        type: 'bar',
-        data: {
-            labels: COHORTS,
-            datasets: [{
-                label: 'Revenue',
-                data: Object.values(cohortRevenue),
-                backgroundColor: '#667eea'
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: { y: { beginAtZero: true } }
-        }
-    });
+    if (ctx1 && charts.cohortRevenue) charts.cohortRevenue.destroy();
+    if (ctx1) {
+        charts.cohortRevenue = new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: cohortsToDisplay,
+                datasets: [{
+                    label: 'Revenue',
+                    data: cohortsToDisplay.map(c => cohortRevenue[c] || 0),
+                    backgroundColor: cohortsToDisplay.map(c => getColor(c))
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
 
     // Students by Cohort
     const cohortStudents = {};
-    COHORTS.forEach(cohort => {
+    cohortsToDisplay.forEach(cohort => {
         cohortStudents[cohort] = students.filter(s => s.cohort === cohort).length;
     });
 
     const ctx2 = document.getElementById('cohortStudentsChart');
-    if (charts.cohortStudents) charts.cohortStudents.destroy();
-    charts.cohortStudents = new Chart(ctx2, {
-        type: 'bar',
-        data: {
-            labels: COHORTS,
-            datasets: [{
-                label: 'Students',
-                data: Object.values(cohortStudents),
-                backgroundColor: '#764ba2'
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: { y: { beginAtZero: true } }
-        }
-    });
+    if (ctx2 && charts.cohortStudents) charts.cohortStudents.destroy();
+    if (ctx2) {
+        charts.cohortStudents = new Chart(ctx2, {
+            type: 'bar',
+            data: {
+                labels: cohortsToDisplay,
+                datasets: [{
+                    label: 'Students',
+                    data: cohortsToDisplay.map(c => cohortStudents[c] || 0),
+                    backgroundColor: cohortsToDisplay.map(c => getColor(c))
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
 
     // Language Distribution
     const languages = {};
@@ -4041,6 +4102,8 @@ async function loadCohorts() {
             updateCohortsTable();
             updateCohortDropdowns();
             updateSidebarDynamicCohorts();
+            updateCohortChartsControls();
+            renderAnalyticsCharts();
         }
     } catch (error) {
         console.error('❌ Error loading cohorts:', error);
