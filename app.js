@@ -103,6 +103,51 @@ function createStatusBadge(statusName) {
     return `<span class="status-badge ${className}" style="background-color: ${color}; color: white; font-weight: 600;">${statusName || 'Unknown'}</span>`;
 }
 
+// Update filter dropdowns with current cohort names
+function updateStatusFilterOptions() {
+    const filterElement = document.getElementById('statusFilterStudents');
+    if (!filterElement) return;
+    
+    // Get all unique cohort names from cohorts array and hardcoded COHORTS
+    const cohortNames = [];
+    
+    // Add dynamic cohorts from API
+    if (cohorts && Array.isArray(cohorts)) {
+        cohorts.forEach(c => {
+            if (c.name && !cohortNames.includes(c.name)) {
+                cohortNames.push(c.name);
+            }
+        });
+    }
+    
+    // Add hardcoded cohorts that haven't been deleted
+    getActiveHardcodedCohorts().forEach(c => {
+        if (!cohortNames.includes(c)) {
+            cohortNames.push(c);
+        }
+    });
+    
+    // Store currently selected values
+    const selectedValues = Array.from(filterElement.selectedOptions).map(option => option.value);
+    
+    // Clear existing options
+    filterElement.innerHTML = '';
+    
+    // Add new options based on current cohorts
+    cohortNames.sort().forEach(cohortName => {
+        const option = document.createElement('option');
+        option.value = cohortName;
+        option.textContent = cohortName;
+        // Restore selection if this option was previously selected
+        if (selectedValues.includes(cohortName)) {
+            option.selected = true;
+        }
+        filterElement.appendChild(option);
+    });
+    
+    console.log('✅ Updated status filter options:', cohortNames);
+}
+
 // Utility Functions
 function escapeHtml(text) {
     const map = {
@@ -4429,6 +4474,7 @@ async function loadCohorts() {
             updateCohortDropdowns();
             updateSidebarDynamicCohorts();
             updateCohortChartsControls();
+            updateStatusFilterOptions();  // Update filter dropdowns with current cohorts
             renderAnalyticsCharts();
         }
     } catch (error) {
