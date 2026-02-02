@@ -1867,19 +1867,19 @@ function createGlobalChartsSection() {
             <div class="chart-card">
                 <div class="chart-title">Status Distribution</div>
                 <div class="chart-container">
-                    <canvas id="statusChart"></canvas>
+                    <canvas id="overviewStatusChart"></canvas>
                 </div>
             </div>
             <div class="chart-card">
                 <div class="chart-title">Language Distribution</div>
                 <div class="chart-container">
-                    <canvas id="languageChart"></canvas>
+                    <canvas id="overviewLanguageChart"></canvas>
                 </div>
             </div>
             <div class="chart-card">
                 <div class="chart-title">Payment Status</div>
                 <div class="chart-container">
-                    <canvas id="paymentStatusChart"></canvas>
+                    <canvas id="overviewPaymentStatusChart"></canvas>
                 </div>
             </div>
         </div>
@@ -1888,13 +1888,13 @@ function createGlobalChartsSection() {
                 <div class="chart-card">
                     <div class="chart-title">Revenue by Cohort</div>
                     <div class="chart-container">
-                        <canvas id="cohortRevenueChart"></canvas>
+                        <canvas id="overviewCohortRevenueChart"></canvas>
                     </div>
                 </div>
                 <div class="chart-card">
                     <div class="chart-title">Students by Cohort</div>
                     <div class="chart-container">
-                        <canvas id="cohortStudentsChart"></canvas>
+                        <canvas id="overviewCohortStudentsChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -1902,12 +1902,15 @@ function createGlobalChartsSection() {
         <div style="margin-top: 20px;">
             <div class="cohort-charts-controls">
                 <h3 class="controls-title"><i class="fas fa-eye"></i> Cohort Charts Visibility</h3>
-                <div id="cohortChartsCheckboxes" class="cohort-checkboxes">
+                <div id="overviewCohortChartsCheckboxes" class="cohort-checkboxes">
                     <!-- Dynamically populated -->
                 </div>
             </div>
         </div>
     `;
+    
+    // Render charts after a brief delay to ensure DOM is ready
+    setTimeout(() => renderOverviewCharts(), 100);
     
     return section;
 }
@@ -1946,6 +1949,222 @@ function createCohortSection(cohort) {
     `;
     
     return section;
+}
+
+// ============================================
+// OVERVIEW CHARTS RENDERING
+// ============================================
+
+let overviewCharts = {}; // Store overview chart instances
+
+function renderOverviewCharts() {
+    // Get helper function for colors
+    const getStatusColor = (status) => {
+        const colors = {
+            'Active': '#4ECDC4',
+            'Completed': '#2ECC71',
+            'On Hold': '#F39C12',
+            'Waiting list': '#E74C3C',
+            'Next Cohort': '#3498DB',
+            'Standby': '#95A5A6'
+        };
+        return colors[status] || '#7C3AED';
+    };
+    
+    const getLanguageColor = (lang) => {
+        const colors = {
+            'Arabic': '#FF6B6B',
+            'English': '#4ECDC4',
+            'Mixed': '#FFE66D'
+        };
+        return colors[lang] || '#7C3AED';
+    };
+    
+    // Status Distribution Chart
+    const statusCtx = document.getElementById('overviewStatusChart');
+    if (statusCtx) {
+        if (overviewCharts.status) overviewCharts.status.destroy();
+        
+        const statusData = {};
+        students.forEach(s => {
+            const status = s.status || 'Active';
+            statusData[status] = (statusData[status] || 0) + 1;
+        });
+        
+        overviewCharts.status = new Chart(statusCtx, {
+            type: 'pie',
+            data: {
+                labels: Object.keys(statusData),
+                datasets: [{
+                    data: Object.values(statusData),
+                    backgroundColor: Object.keys(statusData).map(s => getStatusColor(s)),
+                    borderColor: '#fff',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+    }
+    
+    // Language Distribution Chart
+    const languageCtx = document.getElementById('overviewLanguageChart');
+    if (languageCtx) {
+        if (overviewCharts.language) overviewCharts.language.destroy();
+        
+        const languageData = {};
+        students.forEach(s => {
+            const lang = s.language || 'Unknown';
+            languageData[lang] = (languageData[lang] || 0) + 1;
+        });
+        
+        overviewCharts.language = new Chart(languageCtx, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(languageData),
+                datasets: [{
+                    data: Object.values(languageData),
+                    backgroundColor: Object.keys(languageData).map(l => getLanguageColor(l)),
+                    borderColor: '#fff',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+    }
+    
+    // Payment Status Chart
+    const paymentCtx = document.getElementById('overviewPaymentStatusChart');
+    if (paymentCtx) {
+        if (overviewCharts.payment) overviewCharts.payment.destroy();
+        
+        const paid = students.filter(s => s.remaining === 0 || !s.remaining).length;
+        const pending = students.filter(s => s.remaining > 0).length;
+        
+        overviewCharts.payment = new Chart(paymentCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Paid', 'Pending'],
+                datasets: [{
+                    data: [paid, pending],
+                    backgroundColor: ['#2ECC71', '#E74C3C'],
+                    borderColor: '#fff',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+    }
+    
+    // Revenue by Cohort Chart
+    const revenueCtx = document.getElementById('overviewCohortRevenueChart');
+    if (revenueCtx) {
+        if (overviewCharts.cohortRevenue) overviewCharts.cohortRevenue.destroy();
+        
+        const cohortRevenue = {};
+        const cohortNames = cohorts && cohorts.length > 0 ? cohorts.map(c => c.name) : COHORTS;
+        
+        cohortNames.forEach(cohort => {
+            cohortRevenue[cohort] = students
+                .filter(s => s.cohort === cohort)
+                .reduce((sum, s) => sum + (s.paidAmount || 0), 0);
+        });
+        
+        overviewCharts.cohortRevenue = new Chart(revenueCtx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(cohortRevenue),
+                datasets: [{
+                    label: 'Revenue ($)',
+                    data: Object.values(cohortRevenue),
+                    backgroundColor: '#4ECDC4',
+                    borderColor: '#2B9D8F',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    }
+    
+    // Students by Cohort Chart
+    const studentsCtx = document.getElementById('overviewCohortStudentsChart');
+    if (studentsCtx) {
+        if (overviewCharts.cohortStudents) overviewCharts.cohortStudents.destroy();
+        
+        const cohortCounts = {};
+        const cohortNames = cohorts && cohorts.length > 0 ? cohorts.map(c => c.name) : COHORTS;
+        
+        cohortNames.forEach(cohort => {
+            cohortCounts[cohort] = students.filter(s => s.cohort === cohort).length;
+        });
+        
+        overviewCharts.cohortStudents = new Chart(studentsCtx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(cohortCounts),
+                datasets: [{
+                    label: 'Students',
+                    data: Object.values(cohortCounts),
+                    backgroundColor: '#667EEA',
+                    borderColor: '#5A67D8',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    }
+    
+    // Render cohort visibility checkboxes
+    updateOverviewCohortChartsControls();
+}
+
+function updateOverviewCohortChartsControls() {
+    const container = document.getElementById('overviewCohortChartsCheckboxes');
+    if (!container) return;
+    
+    const cohortNames = cohorts && cohorts.length > 0 ? cohorts.map(c => c.name) : COHORTS;
+    
+    container.innerHTML = '';
+    cohortNames.forEach(cohort => {
+        const label = document.createElement('label');
+        label.className = 'cohort-checkbox-label';
+        label.style.display = 'inline-block';
+        label.style.marginRight = '15px';
+        label.style.marginBottom = '10px';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = true;
+        checkbox.style.marginRight = '5px';
+        
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(cohort));
+        container.appendChild(label);
+    });
 }
 
 // ============================================
