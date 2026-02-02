@@ -2770,8 +2770,9 @@ async function loadStudents() {
                 students = serverStudents;
                 console.log(`✅ Loaded ${students.length} students from Supabase`);
                 
-                // Load checklist completion data in the background (non-blocking)
-                loadChecklistCompletionForAllStudents();
+                // Load checklist completion data and WAIT for it to complete
+                // This ensures percentages are calculated correctly before rendering
+                await loadChecklistCompletionForAllStudents();
                 
                 logStudentStats();
                 return;
@@ -2787,8 +2788,8 @@ async function loadStudents() {
     students = getSampleData();
     console.log(`⚠️ Server unavailable - Loaded ${students.length} students from sample data (local fallback)`);
     
-    // Still try to load checklist completion data even with fallback (non-blocking)
-    loadChecklistCompletionForAllStudents();
+    // Still load checklist completion data and WAIT for it
+    await loadChecklistCompletionForAllStudents();
     
     logStudentStats();
 }
@@ -3298,14 +3299,6 @@ async function loadChecklistCompletionForAllStudents() {
         
         // Dismiss persistent success toast
         dismissPersistentToast();
-        
-        // Re-render the current page after checklist data loads to update progress percentages
-        const activePage = document.querySelector('.page.active');
-        if (activePage) {
-            const pageId = activePage.id;
-            console.log(`🔄 Re-rendering page: ${pageId} with updated checklist data`);
-            renderPage(pageId);
-        }
     } catch (error) {
         console.error('❌ Error loading checklist completion for all students:', error);
     }
