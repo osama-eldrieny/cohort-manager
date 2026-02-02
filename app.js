@@ -1657,7 +1657,15 @@ const DEFAULT_OVERVIEW_SECTIONS = [
 
 function getOverviewSectionPreferences() {
     const stored = localStorage.getItem('overviewSections');
-    return stored ? JSON.parse(stored) : DEFAULT_OVERVIEW_SECTIONS;
+    if (!stored) {
+        return DEFAULT_OVERVIEW_SECTIONS;
+    }
+    
+    try {
+        return JSON.parse(stored);
+    } catch (e) {
+        return DEFAULT_OVERVIEW_SECTIONS;
+    }
 }
 
 function saveOverviewSectionPreferences(sections) {
@@ -1670,8 +1678,25 @@ function resetOverviewSections() {
 }
 
 function toggleOverviewSection(sectionId) {
-    const sections = getOverviewSectionPreferences();
-    const section = sections.find(s => s.id === sectionId);
+    let sections = getOverviewSectionPreferences();
+    let section = sections.find(s => s.id === sectionId);
+    
+    // If section doesn't exist (e.g., new per-cohort), create it
+    if (!section) {
+        const cohortId = sectionId.replace('cohort-', '');
+        const cohort = cohorts.find(c => c.id === parseInt(cohortId));
+        if (cohort) {
+            section = {
+                id: sectionId,
+                name: `${cohort.name} Overview`,
+                icon: cohort.icon || 'fa-map-pin',
+                visible: true,
+                cards: ['students-count', 'cohort-revenue', 'payment-status']
+            };
+            sections.push(section);
+        }
+    }
+    
     if (section) {
         section.visible = !section.visible;
         saveOverviewSectionPreferences(sections);
@@ -1680,15 +1705,21 @@ function toggleOverviewSection(sectionId) {
 }
 
 function renderOverviewPage() {
+    console.log('🎨 Rendering overview page...');
     // Update controls
     updateOverviewSectionControls();
     
     // Render sections
     const container = document.getElementById('overviewDynamicContent');
-    if (!container) return;
+    if (!container) {
+        console.error('❌ overviewDynamicContent container not found');
+        return;
+    }
     
     const sections = getOverviewSectionPreferences();
     const visibleSections = sections.filter(s => s.visible);
+    
+    console.log('👁️ Visible sections:', visibleSections.length, visibleSections);
     
     container.innerHTML = '';
     
@@ -1705,11 +1736,16 @@ function renderOverviewPage() {
             }
         }
     });
+    
+    console.log('✅ Overview page rendered');
 }
 
 function updateOverviewSectionControls() {
     const container = document.getElementById('overviewSectionsList');
-    if (!container) return;
+    if (!container) {
+        console.error('❌ overviewSectionsList container not found');
+        return;
+    }
     
     const sections = getOverviewSectionPreferences();
     const allSections = [
@@ -1722,6 +1758,8 @@ function updateOverviewSectionControls() {
             cards: ['students-count', 'cohort-revenue', 'payment-status']
         }))
     ];
+    
+    console.log('📋 Overview sections to render:', allSections.length, allSections);
     
     container.innerHTML = '';
     
@@ -1743,6 +1781,8 @@ function updateOverviewSectionControls() {
         label.appendChild(checkbox);
         container.appendChild(label);
     });
+    
+    console.log('✅ Overview section controls rendered, count:', container.children.length);
 }
 
 function createGlobalStatsSection() {
