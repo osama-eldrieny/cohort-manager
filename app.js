@@ -636,6 +636,12 @@ function setupEventListeners() {
             document.getElementById('cohortColor').value = btn.dataset.color;
         });
     });
+
+    // Overview Management Button
+    const resetOverviewBtn = document.getElementById('resetOverviewBtn');
+    if (resetOverviewBtn) {
+        resetOverviewBtn.addEventListener('click', resetOverviewSections);
+    }
 }
 
 // Function to attach eye toggle listeners - must be called after elements are created
@@ -778,6 +784,7 @@ function renderOverview() {
     renderCharts();
     updateCohortSummary();
     renderAnalyticsCharts();
+    renderOverviewPage();
 }
 
 function updateStats() {
@@ -1637,6 +1644,236 @@ function attachStatusButtonListeners(page) {
     
     // Attach eye toggle listeners for mini-stat money displays
     attachEyeToggleListeners();
+}
+
+// ============================================
+// DYNAMIC OVERVIEW MANAGEMENT
+// ============================================
+
+const DEFAULT_OVERVIEW_SECTIONS = [
+    { id: 'global-stats', name: 'Project Statistics', icon: 'fa-chart-bar', visible: true, cards: ['total-students', 'pending-payment', 'total-revenue'] },
+    { id: 'global-charts', name: 'Global Charts', icon: 'fa-chart-line', visible: true, cards: ['status-dist', 'language-dist', 'payment-status'] }
+];
+
+function getOverviewSectionPreferences() {
+    const stored = localStorage.getItem('overviewSections');
+    return stored ? JSON.parse(stored) : DEFAULT_OVERVIEW_SECTIONS;
+}
+
+function saveOverviewSectionPreferences(sections) {
+    localStorage.setItem('overviewSections', JSON.stringify(sections));
+}
+
+function resetOverviewSections() {
+    saveOverviewSectionPreferences(DEFAULT_OVERVIEW_SECTIONS);
+    renderOverviewPage();
+}
+
+function toggleOverviewSection(sectionId) {
+    const sections = getOverviewSectionPreferences();
+    const section = sections.find(s => s.id === sectionId);
+    if (section) {
+        section.visible = !section.visible;
+        saveOverviewSectionPreferences(sections);
+        renderOverviewPage();
+    }
+}
+
+function renderOverviewPage() {
+    // Update controls
+    updateOverviewSectionControls();
+    
+    // Render sections
+    const container = document.getElementById('overviewDynamicContent');
+    if (!container) return;
+    
+    const sections = getOverviewSectionPreferences();
+    const visibleSections = sections.filter(s => s.visible);
+    
+    container.innerHTML = '';
+    
+    visibleSections.forEach(section => {
+        if (section.id === 'global-stats') {
+            container.appendChild(createGlobalStatsSection());
+        } else if (section.id === 'global-charts') {
+            container.appendChild(createGlobalChartsSection());
+        } else if (section.id.startsWith('cohort-')) {
+            const cohortId = section.id.replace('cohort-', '');
+            const cohort = cohorts.find(c => c.id === parseInt(cohortId));
+            if (cohort) {
+                container.appendChild(createCohortSection(cohort));
+            }
+        }
+    });
+}
+
+function updateOverviewSectionControls() {
+    const container = document.getElementById('overviewSectionsList');
+    if (!container) return;
+    
+    const sections = getOverviewSectionPreferences();
+    const allSections = [
+        ...DEFAULT_OVERVIEW_SECTIONS,
+        ...(cohorts || []).map(c => ({
+            id: `cohort-${c.id}`,
+            name: `${c.name} Overview`,
+            icon: c.icon || 'fa-map-pin',
+            visible: sections.find(s => s.id === `cohort-${c.id}`)?.visible ?? true,
+            cards: ['students-count', 'cohort-revenue', 'payment-status']
+        }))
+    ];
+    
+    container.innerHTML = '';
+    
+    allSections.forEach(section => {
+        const label = document.createElement('label');
+        label.className = 'section-toggle';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'section-toggle-checkbox';
+        checkbox.checked = section.visible;
+        checkbox.addEventListener('change', () => toggleOverviewSection(section.id));
+        
+        const text = document.createElement('div');
+        text.className = 'section-toggle-text';
+        text.innerHTML = `<i class="fas ${section.icon}"></i> ${section.name}`;
+        
+        label.appendChild(text);
+        label.appendChild(checkbox);
+        container.appendChild(label);
+    });
+}
+
+function createGlobalStatsSection() {
+    const section = document.createElement('div');
+    section.className = 'overview-section';
+    
+    const totalStudents = students.length;
+    const pendingPayment = students.reduce((sum, s) => sum + (s.remaining || 0), 0);
+    const totalRevenue = students.reduce((sum, s) => sum + (s.paidAmount || 0), 0);
+    
+    section.innerHTML = `
+        <div class="overview-section-header">
+            <h3 class="overview-section-title">
+                <i class="fas fa-chart-bar overview-section-icon"></i> Project Statistics
+            </h3>
+        </div>
+        <div class="section-cards-grid">
+            <div class="overview-card total">
+                <div class="overview-card-label">Total Students</div>
+                <div class="overview-card-value">${totalStudents}</div>
+                <div class="overview-card-subtext">Registered students</div>
+            </div>
+            <div class="overview-card payment">
+                <div class="overview-card-label">Pending Payment</div>
+                <div class="overview-card-value">$${pendingPayment.toFixed(0)}</div>
+                <div class="overview-card-subtext">Awaiting payment</div>
+            </div>
+            <div class="overview-card revenue">
+                <div class="overview-card-label">Total Revenue</div>
+                <div class="overview-card-value">$${totalRevenue.toFixed(0)}</div>
+                <div class="overview-card-subtext">From paid students</div>
+            </div>
+        </div>
+    `;
+    
+    return section;
+}
+
+function createGlobalChartsSection() {
+    const section = document.createElement('div');
+    section.className = 'overview-section';
+    
+    section.innerHTML = `
+        <div class="overview-section-header">
+            <h3 class="overview-section-title">
+                <i class="fas fa-chart-line overview-section-icon"></i> Global Charts
+            </h3>
+        </div>
+        <div class="charts-grid" style="gap: 20px;">
+            <div class="chart-card">
+                <div class="chart-title">Status Distribution</div>
+                <div class="chart-container">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">Language Distribution</div>
+                <div class="chart-container">
+                    <canvas id="languageChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">Payment Status</div>
+                <div class="chart-container">
+                    <canvas id="paymentStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div style="margin-top: 20px;">
+            <div class="charts-grid" style="gap: 20px;">
+                <div class="chart-card">
+                    <div class="chart-title">Revenue by Cohort</div>
+                    <div class="chart-container">
+                        <canvas id="cohortRevenueChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">Students by Cohort</div>
+                    <div class="chart-container">
+                        <canvas id="cohortStudentsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div style="margin-top: 20px;">
+            <div class="cohort-charts-controls">
+                <h3 class="controls-title"><i class="fas fa-eye"></i> Cohort Charts Visibility</h3>
+                <div id="cohortChartsCheckboxes" class="cohort-checkboxes">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+        </div>
+    `;
+    
+    return section;
+}
+
+function createCohortSection(cohort) {
+    const section = document.createElement('div');
+    section.className = 'overview-section';
+    
+    const cohortStudents = students.filter(s => s.cohort === cohort.name);
+    const paidAmount = cohortStudents.reduce((sum, s) => sum + (s.paidAmount || 0), 0);
+    const remainingAmount = cohortStudents.reduce((sum, s) => sum + (s.remaining || 0), 0);
+    
+    section.innerHTML = `
+        <div class="overview-section-header">
+            <h3 class="overview-section-title">
+                <i class="fas ${cohort.icon || 'fa-map-pin'} overview-section-icon"></i> ${cohort.name} Overview
+            </h3>
+        </div>
+        <div class="section-cards-grid">
+            <div class="overview-card student-count">
+                <div class="overview-card-label">Students</div>
+                <div class="overview-card-value">${cohortStudents.length}</div>
+                <div class="overview-card-subtext">In this cohort</div>
+            </div>
+            <div class="overview-card revenue">
+                <div class="overview-card-label">Paid</div>
+                <div class="overview-card-value">$${paidAmount.toFixed(0)}</div>
+                <div class="overview-card-subtext">Received</div>
+            </div>
+            <div class="overview-card payment">
+                <div class="overview-card-label">Pending</div>
+                <div class="overview-card-value">$${remainingAmount.toFixed(0)}</div>
+                <div class="overview-card-subtext">Awaiting</div>
+            </div>
+        </div>
+    `;
+    
+    return section;
 }
 
 // ============================================

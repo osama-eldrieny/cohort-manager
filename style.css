@@ -2939,3 +2939,185 @@ button {
     color: #4ECDC4;
 }
 
+/* ============================================
+   OVERVIEW MANAGEMENT CONTROLS
+   ============================================ */
+
+.overview-controls {
+    background-color: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.controls-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #e0e0e0;
+    padding-bottom: 15px;
+}
+
+.controls-header h2 {
+    margin: 0;
+    font-size: 18px;
+    color: #2c3e50;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.overview-sections-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.section-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 15px;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.section-toggle:hover {
+    border-color: #4ECDC4;
+    box-shadow: 0 2px 4px rgba(78, 205, 196, 0.1);
+}
+
+.section-toggle-text {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: #333;
+    flex: 1;
+    cursor: pointer;
+}
+
+.section-toggle-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #4ECDC4;
+}
+
+.section-toggle.disabled {
+    opacity: 0.5;
+}
+
+.section-toggle.disabled .section-toggle-text {
+    color: #999;
+}
+
+/* Dynamic Overview Sections */
+
+#overviewDynamicContent {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.overview-section {
+    background-color: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    animation: fadeIn 0.3s ease-in;
+}
+
+.overview-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.overview-section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.overview-section-icon {
+    font-size: 20px;
+    color: #4ECDC4;
+}
+
+.section-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.overview-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s;
+    position: relative;
+}
+
+.overview-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.overview-card.total {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.overview-card.status {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.overview-card.revenue {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.overview-card.student-count {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.overview-card.payment {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+}
+
+.overview-card-label {
+    font-size: 12px;
+    opacity: 0.9;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.overview-card-value {
+    font-size: 28px;
+    font-weight: bold;
+    margin: 10px 0;
+}
+
+.overview-card-value.hidden {
+    letter-spacing: 2px;
+}
+
+.overview-card-subtext {
+    font-size: 11px;
+    opacity: 0.8;
+}
+
