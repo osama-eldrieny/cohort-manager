@@ -2316,9 +2316,12 @@ function renderDynamicChecklist(student) {
     });
 
     // Get completed item IDs for this student - NORMALIZE to numbers
+    // Use student.checklistCompletion if available, fall back to global if needed
+    const checklistCompletionData = student && student.checklistCompletion ? student.checklistCompletion : currentStudentChecklistCompletion;
+    
     const completedItemIds = new Set();
-    if (currentStudentChecklistCompletion && Array.isArray(currentStudentChecklistCompletion)) {
-        currentStudentChecklistCompletion.forEach(c => {
+    if (checklistCompletionData && Array.isArray(checklistCompletionData)) {
+        checklistCompletionData.forEach(c => {
             // Ensure we store as numbers for consistent comparison
             const itemId = parseInt(c.checklist_item_id, 10);
             if (!isNaN(itemId)) {
@@ -2327,12 +2330,6 @@ function renderDynamicChecklist(student) {
         });
     }
     
-    console.log('📋 Rendering checklist for student:', {
-        totalItems: visibleItems.length,
-        completedItems: completedItemIds.size,
-        completedItemIds: Array.from(completedItemIds)
-    });
-
     let html = '';
     Object.entries(groupedByCategory).forEach(([category, items]) => {
         html += `<div class="checklist-group">
@@ -2353,30 +2350,18 @@ function renderDynamicChecklist(student) {
     });
 
     checklistContent.innerHTML = html;
-    console.log('✅ Rendered dynamic checklist with', visibleItems.length, 'items');
 }
 
 // Get selected checklist items
 function getSelectedChecklistItems() {
     const selected = [];
-    const allCheckboxes = document.querySelectorAll('.checklist-checkbox');
     const checkedCheckboxes = document.querySelectorAll('.checklist-checkbox:checked');
-    
-    console.log(`🔍 Checklist checkboxes: ${allCheckboxes.length} total, ${checkedCheckboxes.length} checked`);
     
     checkedCheckboxes.forEach(checkbox => {
         const itemId = parseInt(checkbox.dataset.itemId, 10);
         if (!isNaN(itemId)) {
             selected.push(itemId);
         }
-    });
-    
-    console.log('✅ Selected checklist items:', selected);
-    console.log('📋 All checkbox states:');
-    allCheckboxes.forEach(cb => {
-        const itemId = cb.dataset.itemId;
-        const isChecked = cb.checked;
-        console.log(`   Item ${itemId}: ${isChecked ? '✓' : '☐'}`);
     });
     
     return selected;
@@ -2409,14 +2394,6 @@ function calculateChecklistProgress(student) {
     }).length;
     
     const percentage = onboardingItems.length > 0 ? Math.round((completedOnboardingItems / onboardingItems.length) * 100) : 0;
-    
-    // Debug logging
-    console.log(`📊 Checklist progress for ${student.name} (ID: ${student.id}):`, {
-        onboardingItems: onboardingItems.length,
-        completedOnboardingItems: completedOnboardingItems,
-        percentage: percentage
-    });
-    
     return percentage;
 }
 
@@ -2448,14 +2425,6 @@ function calculatePostCourseProgress(student) {
     }).length;
     
     const percentage = postCourseItems.length > 0 ? Math.round((completedPostCourseItems / postCourseItems.length) * 100) : 0;
-    
-    // Debug logging
-    console.log(`📊 Post-course progress for ${student.name} (ID: ${student.id}):`, {
-        postCourseItems: postCourseItems.length,
-        completedPostCourseItems: completedPostCourseItems,
-        percentage: percentage
-    });
-    
     return percentage;
 }
 
@@ -2574,14 +2543,14 @@ function saveStudent(event) {
         students.push(student);
     }
 
-    // Get selected checklist items and save them
-    const selectedChecklistItems = getSelectedChecklistItems();
-    console.log(`✓ Selected ${selectedChecklistItems.length} checklist items`);
-
-    // ⭐ IMPORTANT: Collect email templates BEFORE closing modal (which resets the form)
+    // ⭐ IMPORTANT: Collect data BEFORE closing modal (which clears the DOM)
     const selectedTemplateCheckboxes = document.querySelectorAll('.email-template-checkbox:checked');
     const selectedTemplateIds = Array.from(selectedTemplateCheckboxes).map(cb => parseInt(cb.value));
     const selectedTemplates = emailTemplates.filter(t => selectedTemplateIds.includes(t.id));
+    
+    // ⭐ CRITICAL: Get selected checklist items BEFORE closing modal
+    const selectedChecklistItems = getSelectedChecklistItems();
+    const isEditing = !!currentEditingId; // Capture this NOW before reset
 
     closeStudentModal();
     
@@ -2599,37 +2568,40 @@ function saveStudent(event) {
     }
     
     // Save to storage and refresh UI - pass only the single student
-    // Server UPSERT will:
-    // - Match by ID if record exists (UPDATE) ← This prevents duplicates when email changes!
-    // - Create new if ID doesn't exist (INSERT for new records)
-    const actionType = currentEditingId ? 'update' : 'create';
+    const actionType = isEditing ? 'update' : 'create';
     console.log(`💾 Saving student to server (${actionType}): ${newEmail}`);
     
     saveToStorage(student).then(async () => {
-        // Save checklist completion and wait for it to complete BEFORE reloading students
-        if (selectedChecklistItems.length > 0 || currentEditingId) {
+        console.log(`📤 Saving checklist: isEditing=${isEditing}, items=${selectedChecklistItems.length}`);
+        
+        // ALWAYS save checklist when editing an existing student (to capture unchecks)
+        // For new students, only save if they selected items
+        if (isEditing || selectedChecklistItems.length > 0) {
             try {
                 const checklistResponse = await fetch(`${API_BASE_URL}/api/students/${student.id}/checklist-completion`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ completedItemIds: selectedChecklistItems })
                 });
+                
                 if (checklistResponse.ok) {
-                    console.log('✅ Saved checklist completion for student', student.id);
+                    console.log(`✅ Checklist saved for student ${student.id}`);
                 } else {
-                    console.warn('⚠️ Failed to save checklist completion');
+                    console.warn('⚠️ Failed to save checklist completion - HTTP', checklistResponse.status);
                 }
             } catch (error) {
                 console.error('❌ Error saving checklist completion:', error);
             }
+        } else {
+            console.log('ℹ️ No checklist items to save (new student with no selections)');
         }
         
         loadStudents().then(() => {
             // Determine success message
             let successMessage = 'Student created successfully!';
-            if (currentEditingId && originalEditingEmail && originalEditingEmail !== newEmail) {
+            if (isEditing && originalEditingEmail && originalEditingEmail !== newEmail) {
                 successMessage = 'Student email updated successfully!';
-            } else if (currentEditingId) {
+            } else if (isEditing) {
                 successMessage = 'Student updated successfully!';
             }
             
@@ -2648,11 +2620,12 @@ function saveStudent(event) {
             } else {
                 console.log(`ℹ️ No templates selected, skipping email send`);
             }
+            
+            // Reset after all operations complete
+            currentEditingId = null;
+            originalEditingEmail = null;
         });
     });
-    // Reset tracking variables
-    currentEditingId = null;
-    originalEditingEmail = null;
 }
 
 async function sendEmailTemplatesWithDelay(student, templates) {
