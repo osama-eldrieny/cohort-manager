@@ -695,6 +695,18 @@ export async function addEmailTemplateCategory(categoryName) {
             throw new Error('Invalid category name');
         }
 
+        // Check if category already exists
+        const { data: existing, error: checkError } = await supabase
+            .from('email_template_categories')
+            .select('name')
+            .eq('name', categoryName.trim());
+
+        if (checkError) throw checkError;
+
+        if (existing && existing.length > 0) {
+            throw new Error(`Category "${categoryName}" already exists`);
+        }
+
         const { error } = await supabase
             .from('email_template_categories')
             .insert({ name: categoryName });

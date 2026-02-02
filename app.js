@@ -2255,8 +2255,8 @@ function editStudent(id) {
 
     calculateRemaining();
     
-    // Populate email templates checkboxes
-    populateEmailTemplatesCheckboxes(student);
+    // Populate email templates checkboxes grouped by category
+    renderStudentEmailTemplates(student);
     
     document.getElementById('studentModal').style.display = 'block';
 }
@@ -2499,7 +2499,8 @@ function toggleChecklistSection() {
     checklistSection.style.display = isCohortStatus ? 'block' : 'none';
 }
 
-function populateEmailTemplatesCheckboxes(student) {
+// Render email templates grouped by category for student details modal
+function renderStudentEmailTemplates(student) {
     const container = document.getElementById('emailTemplatesCheckboxList');
     const section = document.getElementById('emailTemplatesSection');
     
@@ -2507,7 +2508,7 @@ function populateEmailTemplatesCheckboxes(student) {
         console.warn('⚠️ Email templates container or section not found in DOM');
         return;
     }
-    
+
     container.innerHTML = '';
     
     console.log(`📋 Email templates available: ${emailTemplates.length} total`);
@@ -2522,20 +2523,22 @@ function populateEmailTemplatesCheckboxes(student) {
     
     section.style.display = 'block';
     
-    // Organize templates into 3 groups (same as email templates page)
-    const setupTemplateNames = ['Waiting list', 'Community Invitation', 'Roles & Agreement', 'Cohort Grouping Form', 'Camp Feedback', 'Upcoming Rounds'];
-    const resourceTemplateNames = ['Google Drive link', 'Shared Figma file'];
-    
-    const setupTemplates = emailTemplates.filter(t => setupTemplateNames.includes(t.name));
-    const resourceTemplates = emailTemplates.filter(t => resourceTemplateNames.includes(t.name));
-    const paymentTemplates = emailTemplates.filter(t => !setupTemplateNames.includes(t.name) && !resourceTemplateNames.includes(t.name));
+    // Group templates by category
+    const templatesByCategory = {};
+    emailTemplates.forEach(template => {
+        const category = template.category || 'Uncategorized';
+        if (!templatesByCategory[category]) {
+            templatesByCategory[category] = [];
+        }
+        templatesByCategory[category].push(template);
+    });
     
     // Helper function to create checkbox items
-    const createCheckboxGroup = (templates, groupTitle) => {
+    const createCheckboxGroup = (templates, categoryName) => {
         if (templates.length === 0) return '';
         
         let html = `<div class="email-checkbox-group">`;
-        html += `<div class="email-checkbox-group-title">${groupTitle}</div>`;
+        html += `<div class="email-checkbox-group-title">${categoryName}</div>`;
         
         templates.forEach(template => {
             const wasSelected = student.email_logs?.some(log => log.template_id === template.id && log.status !== 'failed');
@@ -2551,11 +2554,13 @@ function populateEmailTemplatesCheckboxes(student) {
         return html;
     };
     
-    // Build HTML for all groups
+    // Build HTML for all categories in order
     let html = '';
-    html += createCheckboxGroup(setupTemplates, '📋 Setup Templates');
-    html += createCheckboxGroup(resourceTemplates, '🔗 Resources & Tools');
-    html += createCheckboxGroup(paymentTemplates, '💳 Payments & Completion');
+    const sortedCategories = Object.keys(templatesByCategory).sort();
+    
+    sortedCategories.forEach(category => {
+        html += createCheckboxGroup(templatesByCategory[category], category);
+    });
     
     container.innerHTML = html;
 }
@@ -3605,10 +3610,15 @@ function closeAddCategoryModal() {
 function openManageCategoriesModal() {
     document.getElementById('manageCategoriesModal').style.display = 'block';
     renderEmailTemplateCategoriesList();
+    // Clear the form and success message when opening
+    document.getElementById('addCategoryFormInline').reset();
+    document.getElementById('categorySuccessMessage').style.display = 'none';
 }
 
 function closeManageCategoriesModal() {
     document.getElementById('manageCategoriesModal').style.display = 'none';
+    document.getElementById('addCategoryFormInline').reset();
+    document.getElementById('categorySuccessMessage').style.display = 'none';
 }
 
 function openEditCategoryModal(categoryName) {
@@ -3651,6 +3661,7 @@ async function deleteCategory(categoryName) {
 
         if (response.ok) {
             await loadEmailTemplateCategories();
+            await loadEmailTemplates();
             renderEmailTemplateCategoriesList();
             renderEmailTemplatesList();
             showToast(`Category "${categoryName}" deleted successfully!`, 'success');
@@ -3753,6 +3764,59 @@ function saveNewCategory(event) {
         });
 }
 
+// New function for adding category from within the Manage Categories modal
+function saveNewCategoryFromModal(event) {
+    event.preventDefault();
+    const categoryName = document.getElementById('categoryNameInline').value.trim();
+    
+    if (!categoryName) {
+        showToast('Please enter a category name', 'error');
+        return;
+    }
+    
+    if (emailTemplateCategories.includes(categoryName)) {
+        showToast('This category already exists', 'error');
+        return;
+    }
+    
+    // Save to API
+    saveNewCategoryToAPI(categoryName)
+        .then(() => {
+            showToast(`Category "${categoryName}" added successfully!`, 'success');
+            
+            // Clear form and refresh the categories list
+            document.getElementById('addCategoryFormInline').reset();
+            document.getElementById('categoryNameInline').focus();
+            
+            // Show success message
+            const successMsg = document.getElementById('categorySuccessMessage');
+            successMsg.style.display = 'block';
+            setTimeout(() => {
+                successMsg.style.display = 'none';
+            }, 2000);
+            
+            // Refresh categories list in the modal
+            renderEmailTemplateCategoriesList();
+            
+            // Refresh the category dropdown in the template form
+            const categorySelect = document.getElementById('templateCategory');
+            if (categorySelect) {
+                const currentValue = categorySelect.value;
+                categorySelect.innerHTML = '<option value="">Select Category</option>';
+                emailTemplateCategories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category;
+                    option.textContent = category;
+                    categorySelect.appendChild(option);
+                });
+                categorySelect.value = currentValue;
+            }
+        })
+        .catch(error => {
+            showToast('Failed to add category: ' + error.message, 'error');
+        });
+}
+
 async function saveEmailTemplate(event) {
     event.preventDefault();
     
@@ -3803,6 +3867,7 @@ async function deleteEmailTemplate(templateId) {
 
         if (response.ok) {
             await loadEmailTemplates();
+            renderEmailTemplatesList();
             showToast('Email template deleted successfully', 'success');
         } else {
             const errorData = await response.json();
@@ -3982,15 +4047,15 @@ function openStudentContactModal(studentId) {
     if (emailTemplates.length === 0) {
         templatesDiv.innerHTML = '<p style="color: #999; text-align: center;">No email templates available. Create one in Settings.</p>';
     } else {
-        // Group templates by keywords
-        const group1Keywords = ['waiting', 'roles', 'cohort grouping', 'community', 'drive', 'figma file'];
-        const group2Keywords = ['payment', 'payment link'];
-        const group3Keywords = ['feedback'];
-        
-        const group1 = emailTemplates.filter(t => group1Keywords.some(kw => t.button_label?.toLowerCase().includes(kw)));
-        const group2 = emailTemplates.filter(t => group2Keywords.some(kw => t.button_label?.toLowerCase().includes(kw)));
-        const group3 = emailTemplates.filter(t => group3Keywords.some(kw => t.button_label?.toLowerCase().includes(kw)));
-        const other = emailTemplates.filter(t => !group1.includes(t) && !group2.includes(t) && !group3.includes(t));
+        // Group templates by category
+        const templatesByCategory = {};
+        emailTemplates.forEach(template => {
+            const category = template.category || 'Uncategorized';
+            if (!templatesByCategory[category]) {
+                templatesByCategory[category] = [];
+            }
+            templatesByCategory[category].push(template);
+        });
 
         let groupHTML = '';
         
@@ -4016,35 +4081,11 @@ function openStudentContactModal(studentId) {
             `;
         };
         
-        // Group 1: Pre-course/Onboarding
-        groupHTML += renderGroup(group1, 'Onboarding & Pre-Course');
-        
-        // Group 2: Payment
-        groupHTML += renderGroup(group2, 'Payment Options');
-        
-        // Group 3: Post-course
-        groupHTML += renderGroup(group3, 'Post-Course');
-        
-        // Other (ungrouped)
-        if (other.length > 0) {
-            groupHTML += `
-                <div style="margin-bottom: 20px;">
-                    <div style="font-size: 12px; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">Other</div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        ${other.map(template => `
-                            <button 
-                                type="button" 
-                                class="btn-primary student-email-send-btn" 
-                                data-template-id="${template.id}"
-                                data-student-id="${student.id}"
-                                style="text-align: left; margin: 0;">
-                                <i class="fas fa-paper-plane"></i> ${template.button_label}
-                            </button>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-        }
+        // Render each category in sorted order
+        const sortedCategories = Object.keys(templatesByCategory).sort();
+        sortedCategories.forEach(category => {
+            groupHTML += renderGroup(templatesByCategory[category], category);
+        });
         
         templatesDiv.innerHTML = groupHTML;
         

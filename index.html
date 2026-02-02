@@ -679,27 +679,47 @@
 
     <!-- Manage Email Template Categories Modal -->
     <div id="manageCategoriesModal" class="modal">
-        <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-content manage-categories-content">
             <span class="close" onclick="closeManageCategoriesModal()"><i class="fas fa-times"></i></span>
             <div class="modal-header"><i class="fas fa-list modal-header-icon"></i> Manage Categories</div>
             
-            <div style="margin-bottom: 20px; max-height: 400px; overflow-y: auto;">
-                <table style="width: 100%; border-collapse: collapse;">
-                    <thead>
-                        <tr style="border-bottom: 2px solid #e0e0e0;">
-                            <th style="padding: 12px; text-align: left; font-weight: 600;">Category Name</th>
-                            <th style="padding: 12px; text-align: right; font-weight: 600; width: 100px;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="categoriesListBody">
-                        <tr><td colspan="2" style="padding: 12px; text-align: center; color: #999;">Loading categories...</td></tr>
-                    </tbody>
-                </table>
+            <div class="manage-categories-grid">
+                <!-- Existing Categories List -->
+                <div class="categories-list-section">
+                    <h3 class="categories-section-title">Existing Categories</h3>
+                    <div class="categories-list-container">
+                        <table class="categories-table">
+                            <thead>
+                                <tr class="categories-table-header">
+                                    <th class="categories-table-header-name">Name</th>
+                                    <th class="categories-table-header-actions">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="categoriesListBody">
+                                <tr><td colspan="2" class="categories-loading-cell">Loading categories...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Add New Category Form -->
+                <div class="add-category-section">
+                    <h3 class="categories-section-title">Add New Category</h3>
+                    <form id="addCategoryFormInline" onsubmit="saveNewCategoryFromModal(event)" class="add-category-form">
+                        <div class="form-group add-category-form-group">
+                            <label for="categoryNameInline" class="add-category-label">Category Name *</label>
+                            <input type="text" id="categoryNameInline" required placeholder="e.g., Onboarding" class="add-category-input">
+                        </div>
+                        <button type="submit" class="btn-primary add-category-button"><i class="fas fa-plus"></i> Create Category</button>
+                    </form>
+                    <div id="categorySuccessMessage" class="category-success-message">
+                        <i class="fas fa-check-circle"></i> Category added successfully!
+                    </div>
+                </div>
             </div>
 
-            <div class="modal-buttons">
+            <div class="modal-buttons manage-categories-buttons">
                 <button type="button" onclick="closeManageCategoriesModal()" class="btn-secondary">Close</button>
-                <button type="button" onclick="openAddCategoryModal()" class="btn-primary"><i class="fas fa-plus"></i> Add Category</button>
             </div>
         </div>
     </div>

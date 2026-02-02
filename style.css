@@ -3123,3 +3123,117 @@ button {
     opacity: 0.8;
 }
 
+/* ============================================
+   MANAGE CATEGORIES MODAL STYLES
+   ============================================ */
+
+.manage-categories-content {
+    max-width: 700px;
+}
+
+.manage-categories-grid {
+    display: flex;
+    gap: 20px;
+    flex-direction: column;
+}
+
+.categories-list-section,
+.add-category-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.categories-section-title {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+}
+
+.categories-list-container {
+    /* max-height: 350px;
+    overflow-y: auto; */
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+}
+
+.categories-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.categories-table-header {
+    border-bottom: 2px solid #e0e0e0;
+    background-color: #f5f5f5;
+}
+
+.categories-table-header-name,
+.categories-table-header-actions {
+    padding: 12px;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.categories-table-header-name {
+    text-align: left;
+}
+
+.categories-table-header-actions {
+    text-align: right;
+    width: 80px;
+}
+
+.categories-loading-cell {
+    padding: 12px;
+    text-align: center;
+    color: #999;
+    font-size: 12px;
+}
+
+.add-category-form {
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 16px;
+    background-color: #fafafa;
+}
+
+.add-category-form-group {
+    margin-bottom: 12px;
+}
+
+.add-category-label {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.add-category-input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 13px;
+    box-sizing: border-box;
+}
+
+.add-category-button {
+    width: 100%;
+    padding: 8px 12px;
+    margin-top: 8px;
+}
+
+.category-success-message {
+    margin-top: 12px;
+    padding: 10px;
+    background-color: #d4edda;
+    color: #155724;
+    border-radius: 4px;
+    display: none;
+    font-size: 12px;
+}
+
+.manage-categories-buttons {
+    margin-top: 24px;
+}
+
