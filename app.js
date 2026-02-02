@@ -2523,10 +2523,23 @@ function renderStudentEmailTemplates(student) {
     
     section.style.display = 'block';
     
-    // Group templates by category
+    // Filter templates to only include those with valid existing categories
+    const validTemplates = emailTemplates.filter(template => {
+        const category = template.category;
+        return category && emailTemplateCategories.includes(category);
+    });
+    
+    // If no valid templates, hide section
+    if (validTemplates.length === 0) {
+        console.log('ℹ️ No templates with valid categories available');
+        section.style.display = 'none';
+        return;
+    }
+    
+    // Group filtered templates by category
     const templatesByCategory = {};
-    emailTemplates.forEach(template => {
-        const category = template.category || 'Uncategorized';
+    validTemplates.forEach(template => {
+        const category = template.category;
         if (!templatesByCategory[category]) {
             templatesByCategory[category] = [];
         }
@@ -4044,13 +4057,20 @@ function openStudentContactModal(studentId) {
 
     // Render template buttons grouped by category
     const templatesDiv = document.getElementById('studentEmailTemplates');
-    if (emailTemplates.length === 0) {
+    
+    // Filter templates to only include those with valid existing categories
+    const validTemplates = emailTemplates.filter(template => {
+        const category = template.category;
+        return category && emailTemplateCategories.includes(category);
+    });
+    
+    if (validTemplates.length === 0) {
         templatesDiv.innerHTML = '<p style="color: #999; text-align: center;">No email templates available. Create one in Settings.</p>';
     } else {
-        // Group templates by category
+        // Group filtered templates by category
         const templatesByCategory = {};
-        emailTemplates.forEach(template => {
-            const category = template.category || 'Uncategorized';
+        validTemplates.forEach(template => {
+            const category = template.category;
             if (!templatesByCategory[category]) {
                 templatesByCategory[category] = [];
             }
