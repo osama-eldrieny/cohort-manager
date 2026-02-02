@@ -1000,37 +1000,39 @@ function renderCharts() {
     const cohort2Pending = cohort2Students.reduce((sum, s) => sum + s.remaining, 0);
 
     const ctx4 = document.getElementById('cohort2PaymentChart');
-    if (charts.cohort2Payment) charts.cohort2Payment.destroy();
-    charts.cohort2Payment = new Chart(ctx4, {
-        type: 'doughnut',
-        data: {
-            labels: ['Paid', 'Pending'],
-            datasets: [{
-                data: [cohort2Paid, cohort2Pending],
-                backgroundColor: ['#4CAF50', '#FF9800'],
-                borderColor: '#fff',
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: { 
-                legend: { position: 'bottom', labels: { boxWidth: 16, boxHeight: 16, borderRadius: 8 } },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            let label = context.label || '';
-                            if (context.parsed !== null) {
-                                label += ': $' + context.parsed.toFixed(2);
+    if (ctx4) {
+        if (charts.cohort2Payment) charts.cohort2Payment.destroy();
+        charts.cohort2Payment = new Chart(ctx4, {
+            type: 'doughnut',
+            data: {
+                labels: ['Paid', 'Pending'],
+                datasets: [{
+                    data: [cohort2Paid, cohort2Pending],
+                    backgroundColor: ['#4CAF50', '#FF9800'],
+                    borderColor: '#fff',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: { 
+                    legend: { position: 'bottom', labels: { boxWidth: 16, boxHeight: 16, borderRadius: 8 } },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (context.parsed !== null) {
+                                    label += ': $' + context.parsed.toFixed(2);
+                                }
+                                return label;
                             }
-                            return label;
                         }
                     }
                 }
             }
-        }
-    });
+        });
+    }
 
     // Payment Status Chart - Standby
     const standbyStudents = students.filter(s => s.status === 'Standby');
@@ -1038,37 +1040,39 @@ function renderCharts() {
     const standbyPending = standbyStudents.reduce((sum, s) => sum + s.remaining, 0);
 
     const ctx5 = document.getElementById('standbyPaymentChart');
-    if (charts.standbyPayment) charts.standbyPayment.destroy();
-    charts.standbyPayment = new Chart(ctx5, {
-        type: 'doughnut',
-        data: {
-            labels: ['Paid', 'Pending'],
-            datasets: [{
-                data: [standbyPaid, standbyPending],
-                backgroundColor: ['#4CAF50', '#FF9800'],
-                borderColor: '#fff',
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: { 
-                legend: { position: 'bottom', labels: { boxWidth: 16, boxHeight: 16, borderRadius: 8 } },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            let label = context.label || '';
-                            if (context.parsed !== null) {
-                                label += ': $' + context.parsed.toFixed(2);
+    if (ctx5) {
+        if (charts.standbyPayment) charts.standbyPayment.destroy();
+        charts.standbyPayment = new Chart(ctx5, {
+            type: 'doughnut',
+            data: {
+                labels: ['Paid', 'Pending'],
+                datasets: [{
+                    data: [standbyPaid, standbyPending],
+                    backgroundColor: ['#4CAF50', '#FF9800'],
+                    borderColor: '#fff',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: { 
+                    legend: { position: 'bottom', labels: { boxWidth: 16, boxHeight: 16, borderRadius: 8 } },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (context.parsed !== null) {
+                                    label += ': $' + context.parsed.toFixed(2);
+                                }
+                                return label;
                             }
-                            return label;
                         }
                     }
                 }
             }
-        }
-    });
+        });
+    }
 
     // Payment Status Chart - Cohort 3
     const cohort3Students = students.filter(s => s.cohort === 'Cohort 3');
@@ -1079,37 +1083,39 @@ function renderCharts() {
     const cohort3Pending = cohort3Students.reduce((sum, s) => sum + s.remaining, 0);
 
     const ctx6 = document.getElementById('cohort3PaymentChart');
-    if (charts.cohort3Payment) charts.cohort3Payment.destroy();
-    charts.cohort3Payment = new Chart(ctx6, {
-        type: 'doughnut',
-        data: {
-            labels: ['Paid', 'Pending'],
-            datasets: [{
-                data: [cohort3Paid, cohort3Pending],
-                backgroundColor: ['#4CAF50', '#FF9800'],
-                borderColor: '#fff',
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: { 
-                legend: { position: 'bottom', labels: { boxWidth: 16, boxHeight: 16, borderRadius: 8 } },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            let label = context.label || '';
-                            if (context.parsed !== null) {
-                                label += ': $' + context.parsed.toFixed(2);
+    if (ctx6) {
+        if (charts.cohort3Payment) charts.cohort3Payment.destroy();
+        charts.cohort3Payment = new Chart(ctx6, {
+            type: 'doughnut',
+            data: {
+                labels: ['Paid', 'Pending'],
+                datasets: [{
+                    data: [cohort3Paid, cohort3Pending],
+                    backgroundColor: ['#4CAF50', '#FF9800'],
+                    borderColor: '#fff',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: { 
+                    legend: { position: 'bottom', labels: { boxWidth: 16, boxHeight: 16, borderRadius: 8 } },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (context.parsed !== null) {
+                                    label += ': $' + context.parsed.toFixed(2);
+                                }
+                                return label;
                             }
-                            return label;
                         }
                     }
                 }
             }
-        }
-    });
+        });
+    }
         }
     } catch (error) {
         console.error('Error rendering charts:', error);
@@ -2027,23 +2033,25 @@ function renderAnalyticsCharts() {
     });
 
     const ctx3 = document.getElementById('languageChart');
-    if (charts.language) charts.language.destroy();
-    charts.language = new Chart(ctx3, {
-        type: 'doughnut',
-        data: {
-            labels: Object.keys(languages),
-            datasets: [{
-                data: Object.values(languages),
-                backgroundColor: Object.keys(languages).map(lang => getColor(lang)),
-                borderColor: '#fff',
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { position: 'bottom' } }
-        }
-    });
+    if (ctx3) {
+        if (charts.language) charts.language.destroy();
+        charts.language = new Chart(ctx3, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(languages),
+                datasets: [{
+                    data: Object.values(languages),
+                    backgroundColor: Object.keys(languages).map(lang => getColor(lang)),
+                    borderColor: '#fff',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+    }
 
     // Location Distribution by Cohort Status
     const targetCohorts = ['Cohort 0', 'Cohort 1 - Cradis', 'Cohort 1 - Zomra', 'Cohort 2', 'Cohort 3', 'English 1'];
@@ -2059,68 +2067,72 @@ function renderAnalyticsCharts() {
         .sort((a, b) => b[1] - a[1]);
 
     const ctx3b = document.getElementById('locationCohortChart');
-    if (charts.locationCohort) charts.locationCohort.destroy();
-    charts.locationCohort = new Chart(ctx3b, {
-        type: 'doughnut',
-        data: {
-            labels: sortedLocationsByStatus.map(l => l[0]),
-            datasets: [{
-                data: sortedLocationsByStatus.map(l => l[1]),
-                backgroundColor: sortedLocationsByStatus.map(l => getColor(l[0])),
-                borderColor: '#fff',
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { 
-                legend: { 
-                    position: 'bottom',
-                    labels: { 
-                        boxWidth: 12, 
-                        boxHeight: 12,
-                        font: { size: 11 },
-                        padding: 10
+    if (ctx3b) {
+        if (charts.locationCohort) charts.locationCohort.destroy();
+        charts.locationCohort = new Chart(ctx3b, {
+            type: 'doughnut',
+            data: {
+                labels: sortedLocationsByStatus.map(l => l[0]),
+                datasets: [{
+                    data: sortedLocationsByStatus.map(l => l[1]),
+                    backgroundColor: sortedLocationsByStatus.map(l => getColor(l[0])),
+                    borderColor: '#fff',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { 
+                    legend: { 
+                        position: 'bottom',
+                        labels: { 
+                            boxWidth: 12, 
+                            boxHeight: 12,
+                            font: { size: 11 },
+                            padding: 10
+                        },
+                        maxHeight: 150
                     },
-                    maxHeight: 150
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const label = context.label || '';
-                            const value = context.parsed || 0;
-                            const total = locationCohortStudents.length;
-                            const percentage = ((value / total) * 100).toFixed(1);
-                            return label + ': ' + value + ' (' + percentage + '%)';
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = locationCohortStudents.length;
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return label + ': ' + value + ' (' + percentage + '%)';
+                            }
                         }
                     }
                 }
             }
-        }
-    });
+        });
+    }
 
     // Payment Status
     const paid = students.filter(s => s.remaining === 0).length;
     const pending = students.filter(s => s.remaining > 0).length;
 
     const ctx4 = document.getElementById('paymentStatusChart');
-    if (charts.paymentStatus) charts.paymentStatus.destroy();
-    charts.paymentStatus = new Chart(ctx4, {
-        type: 'doughnut',
-        data: {
-            labels: ['Fully Paid', 'Pending Payment'],
-            datasets: [{
-                data: [paid, pending],
-                backgroundColor: ['#4CAF50', '#FF9800'],
-                borderColor: '#fff',
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { position: 'bottom' } }
-        }
-    });
+    if (ctx4) {
+        if (charts.paymentStatus) charts.paymentStatus.destroy();
+        charts.paymentStatus = new Chart(ctx4, {
+            type: 'doughnut',
+            data: {
+                labels: ['Fully Paid', 'Pending Payment'],
+                datasets: [{
+                    data: [paid, pending],
+                    backgroundColor: ['#4CAF50', '#FF9800'],
+                    borderColor: '#fff',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+    }
 }
 
 // ============================================
