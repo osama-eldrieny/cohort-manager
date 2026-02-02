@@ -70,22 +70,187 @@
 
             <!-- OVERVIEW PAGE -->
             <div id="overview" class="page active">
-                <!-- Overview Management Controls -->
-                <div class="overview-controls">
-                    <div class="controls-header">
-                        <h2><i class="fas fa-cog"></i> Manage Dashboard</h2>
-                        <button id="resetOverviewBtn" class="btn btn-secondary" title="Reset to default sections">
-                            <i class="fas fa-redo"></i> Reset
-                        </button>
+                <!-- Quick Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card total">
+                        <div class="stat-label">Total Students</div>
+                        <div class="stat-value" id="statTotal">0</div>
+                        <div class="stat-subtext">All registered students</div>
                     </div>
-                    <div id="overviewSectionsList" class="overview-sections-list">
-                        <!-- Dynamically populated -->
+                    <div class="stat-card current">
+                        <div class="stat-label">Cohort 3</div>
+                        <div class="stat-value" id="statCohorts">0</div>
+                        <div class="stat-subtext">Students in Cohort 3</div>
+                    </div>
+                    <div class="stat-card pending">
+                        <div class="stat-label-wrapper">
+                            <div class="stat-label">Pending Payment</div>
+                            <button class="eye-toggle" id="pendingToggle" title="Toggle pending payment visibility">
+                                <i class="fas fa-eye-slash"></i>
+                            </button>
+                        </div>
+                        <div class="stat-value hidden" id="statPending" data-value="$0">●●●●●</div>
+                        <div class="stat-subtext">Awaiting payment</div>
+                    </div>
+                    <div class="stat-card total">
+                        <div class="stat-label">Waiting List</div>
+                        <div class="stat-value" id="statWaitingList">0</div>
+                        <div class="stat-subtext">Students in waiting list</div>
+                    </div>
+                    <div class="stat-card total">
+                        <div class="stat-label">Next Cohort</div>
+                        <div class="stat-value" id="statNextCohort">0</div>
+                        <div class="stat-subtext">Students for next cohort</div>
+                    </div>
+                    <div class="stat-card revenue">
+                        <div class="stat-label-wrapper">
+                            <div class="stat-label">Total Revenue</div>
+                            <button class="eye-toggle" id="revenueToggle" title="Toggle revenue visibility">
+                                <i class="fas fa-eye-slash"></i>
+                            </button>
+                        </div>
+                        <div class="stat-value hidden" id="statRevenue" data-value="$0">●●●●●</div>
+                        <div class="stat-subtext">From paid students</div>
                     </div>
                 </div>
 
-                <!-- Dynamic Overview Sections -->
-                <div id="overviewDynamicContent">
-                    <!-- Dynamically populated by JavaScript -->
+                <!-- Charts Row -->
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-title">Status Distribution</div>
+                        <div class="chart-container">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-title">Revenue Status</div>
+                        <div class="chart-container">
+                            <canvas id="revenueChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-title">Student Locations</div>
+                        <div class="chart-container">
+                            <canvas id="locationsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cohort Summary -->
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-title">Cohort 0 Summary</div>
+                        <div class="cohort-stats">
+                            <div class="cohort-stat-item">
+                                <div class="cohort-stat-label">Students</div>
+                                <div class="cohort-stat-value" id="cohort0-count">0</div>
+                            </div>
+                            <div class="cohort-stat-item cohort-revenue-item">
+                                <button class="eye-toggle-small" data-revenue-id="cohort0-revenue" title="Toggle revenue visibility">
+                                    <i class="fas fa-eye-slash"></i>
+                                </button>
+                                <div class="cohort-stat-label">Revenue</div>
+                                <div class="cohort-stat-value hidden" id="cohort0-revenue" data-value="$0">●●●</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-title">Cohort 1 - Cradis Summary</div>
+                        <div class="cohort-stats">
+                            <div class="cohort-stat-item">
+                                <div class="cohort-stat-label">Students</div>
+                                <div class="cohort-stat-value" id="cohort1cradis-count">0</div>
+                            </div>
+                            <div class="cohort-stat-item cohort-revenue-item">
+                                <button class="eye-toggle-small" data-revenue-id="cohort1cradis-revenue" title="Toggle revenue visibility">
+                                    <i class="fas fa-eye-slash"></i>
+                                </button>
+                                <div class="cohort-stat-label">Revenue</div>
+                                <div class="cohort-stat-value hidden" id="cohort1cradis-revenue" data-value="$0">●●●</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-title">Cohort 1 - Zomra Summary</div>
+                        <div class="cohort-stats">
+                            <div class="cohort-stat-item">
+                                <div class="cohort-stat-label">Students</div>
+                                <div class="cohort-stat-value" id="cohort1zomra-count">0</div>
+                            </div>
+                            <div class="cohort-stat-item cohort-revenue-item">
+                                <button class="eye-toggle-small" data-revenue-id="cohort1zomra-revenue" title="Toggle revenue visibility">
+                                    <i class="fas fa-eye-slash"></i>
+                                </button>
+                                <div class="cohort-stat-label">Revenue</div>
+                                <div class="cohort-stat-value hidden" id="cohort1zomra-revenue" data-value="$0">●●●</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-title">Cohort 2 Summary</div>
+                        <div class="cohort-stats">
+                            <div class="cohort-stat-item">
+                                <div class="cohort-stat-label">Students</div>
+                                <div class="cohort-stat-value" id="cohort2-count">0</div>
+                            </div>
+                            <div class="cohort-stat-item cohort-revenue-item">
+                                <button class="eye-toggle-small" data-revenue-id="cohort2-revenue" title="Toggle revenue visibility">
+                                    <i class="fas fa-eye-slash"></i>
+                                </button>
+                                <div class="cohort-stat-label">Revenue</div>
+                                <div class="cohort-stat-value hidden" id="cohort2-revenue" data-value="$0">●●●</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-title">Cohort 3 Summary</div>
+                        <div class="cohort-stats">
+                            <div class="cohort-stat-item">
+                                <div class="cohort-stat-label">Students</div>
+                                <div class="cohort-stat-value" id="cohort3-count">0</div>
+                            </div>
+                            <div class="cohort-stat-item cohort-revenue-item">
+                                <button class="eye-toggle-small" data-revenue-id="cohort3-revenue" title="Toggle revenue visibility">
+                                    <i class="fas fa-eye-slash"></i>
+                                </button>
+                                <div class="cohort-stat-label">Revenue</div>
+                                <div class="cohort-stat-value hidden" id="cohort3-revenue" data-value="$0">●●●</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analytics Charts Section -->
+                <div class="analytics-section">
+                    <h2 style="margin-bottom: 20px; margin-top: 40px; padding-top: 20px; border-top: 2px solid #e0e0e0; color: #1a1a1a;"><i class="fas fa-chart-line"></i> Analytics</h2>
+                    <div class="charts-grid">
+                        <div class="chart-card">
+                            <div class="chart-title">Revenue by Cohort</div>
+                            <div class="chart-container">
+                                <canvas id="cohortRevenueChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-card">
+                            <div class="chart-title">Students by Cohort</div>
+                            <div class="chart-container">
+                                <canvas id="cohortStudentsChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="charts-grid">
+                        <div class="chart-card">
+                            <div class="chart-title">Language Distribution</div>
+                            <div class="chart-container">
+                                <canvas id="languageChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-card">
+                            <div class="chart-title">Payment Status</div>
+                            <div class="chart-container">
+                                <canvas id="paymentStatusChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
