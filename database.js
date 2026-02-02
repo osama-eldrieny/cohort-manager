@@ -9,52 +9,6 @@ const __dirname = path.dirname(__filename);
 let supabase = null;
 const STUDENTS_JSON = path.join(__dirname, 'students.json');
 
-// ============================================
-// CACHING LAYER - Keep data in memory for fast access
-// ============================================
-const cache = {
-    students: null,
-    cohorts: null,
-    emailTemplates: null,
-    emailTemplateCategories: null,
-    checklistItems: null,
-    studentChecklistCompletion: null,
-    lastFetch: {
-        students: 0,
-        cohorts: 0,
-        emailTemplates: 0,
-        emailTemplateCategories: 0,
-        checklistItems: 0,
-        studentChecklistCompletion: 0
-    }
-};
-
-// Cache TTL in milliseconds (30 seconds)
-const CACHE_TTL = 30 * 1000;
-
-function isCacheValid(key) {
-    return cache.lastFetch[key] && (Date.now() - cache.lastFetch[key]) < CACHE_TTL;
-}
-
-function setCacheValue(key, data) {
-    cache[key] = data;
-    cache.lastFetch[key] = Date.now();
-}
-
-function getCacheValue(key) {
-    if (isCacheValid(key)) {
-        console.log(`📦 Cache hit: ${key}`);
-        return cache[key];
-    }
-    return null;
-}
-
-function invalidateCache(key) {
-    cache[key] = null;
-    cache.lastFetch[key] = 0;
-    console.log(`🔄 Cache invalidated: ${key}`);
-}
-
 // Initialize Supabase client
 export function initializeDatabase() {
     return new Promise((resolve, reject) => {
@@ -113,27 +67,14 @@ export async function getAllStudents() {
             throw new Error('Supabase not initialized. Cannot fetch students.');
         }
 
-        // Check cache first
-        const cachedData = getCacheValue('students');
-        if (cachedData) {
-            return cachedData;
-        }
-
-        console.log('🌐 Fetching students from Supabase...');
         const { data, error } = await supabase
             .from('students')
             .select('*')
             .order('name', { ascending: true });
 
         if (error) throw error;
-        
         // Convert all students from snake_case to camelCase
-        const students = (data || []).map(convertStudentFromDatabase);
-        
-        // Cache the result
-        setCacheValue('students', students);
-        
-        return students;
+        return (data || []).map(convertStudentFromDatabase);
     } catch (error) {
         console.error('❌ Error fetching students:', error.message);
         throw error;
@@ -199,10 +140,6 @@ export async function saveAllStudents(students) {
         if (upsertError) throw upsertError;
 
         console.log(`✅ Saved ${deduplicatedStudents.length} students to Supabase (deduplicated from ${students.length})`);
-        
-        // Invalidate cache so next fetch gets fresh data
-        invalidateCache('students');
-        
         return { count: deduplicatedStudents.length };
     } catch (error) {
         console.error('❌ Error saving students:', error.message);
@@ -236,8 +173,6 @@ export async function deleteStudent(id) {
 
         if (data && data.length > 0) {
             console.log(`✅ Student ${id} deleted from Supabase (${data.length} row(s) deleted)`);
-            // Invalidate cache
-            invalidateCache('students');
         } else {
             console.log(`⚠️ No student found with ID ${id} in Supabase - may have been deleted already`);
         }
@@ -285,13 +220,6 @@ export async function getAllEmailTemplates() {
             throw new Error('Supabase not initialized. Cannot fetch email templates.');
         }
 
-        // Check cache first
-        const cachedData = getCacheValue('emailTemplates');
-        if (cachedData) {
-            return cachedData;
-        }
-
-        console.log('🌐 Fetching email templates from Supabase...');
         const { data, error } = await supabase
             .from('email_templates')
             .select('*')
@@ -299,10 +227,6 @@ export async function getAllEmailTemplates() {
 
         if (error) throw error;
         console.log(`✅ Loaded ${data?.length || 0} email templates from Supabase`);
-        
-        // Cache the result
-        setCacheValue('emailTemplates', data || []);
-        
         return data || [];
     } catch (error) {
         console.error('❌ Error fetching email templates:', error.message);
@@ -332,9 +256,6 @@ export async function saveEmailTemplate(id, name, category, button_label, subjec
 
         if (error) throw error;
         console.log(`✅ Email template "${name}" saved to Supabase`);
-        
-        // Invalidate cache
-        invalidateCache('emailTemplates');
     } catch (error) {
         console.error('❌ Error saving email template:', error.message);
         throw error;
@@ -355,9 +276,6 @@ export async function deleteEmailTemplate(id) {
 
         if (error) throw error;
         console.log(`✅ Email template deleted from Supabase`);
-        
-        // Invalidate cache
-        invalidateCache('emailTemplates');
     } catch (error) {
         console.error('❌ Error deleting email template:', error.message);
         throw error;
@@ -636,23 +554,12 @@ export async function getAllCohorts() {
             throw new Error('Supabase not initialized');
         }
 
-        // Check cache first
-        const cachedData = getCacheValue('cohorts');
-        if (cachedData) {
-            return cachedData;
-        }
-
-        console.log('🌐 Fetching cohorts from Supabase...');
         const { data, error } = await supabase
             .from('cohorts')
             .select('*')
             .order('created_at', { ascending: true });
 
         if (error) throw error;
-        
-        // Cache the result
-        setCacheValue('cohorts', data || []);
-        
         return data || [];
     } catch (error) {
         console.error('❌ Error fetching cohorts:', error.message);
@@ -714,11 +621,6 @@ export async function updateCohort(id, name, description = '', icon = 'fa-map-pi
             .select();
 
         if (error) throw error;
-        
-        // Invalidate caches
-        invalidateCache('cohorts');
-        invalidateCache('students');
-        
         return data[0] || null;
     } catch (error) {
         console.error('❌ Error updating cohort:', error.message);
@@ -752,13 +654,6 @@ export async function getEmailTemplateCategories() {
             throw new Error('Supabase not initialized');
         }
 
-        // Check cache first
-        const cachedData = getCacheValue('emailTemplateCategories');
-        if (cachedData) {
-            return cachedData;
-        }
-
-        console.log('🌐 Fetching email template categories from Supabase...');
         const { data, error } = await supabase
             .from('email_template_categories')
             .select('name')
@@ -768,14 +663,9 @@ export async function getEmailTemplateCategories() {
         
         const categories = data.map(row => row.name);
         console.log(`✅ Loaded ${categories.length} email template categories from Supabase`);
-        
-        // Cache the result
-        setCacheValue('emailTemplateCategories', categories);
-        
         return categories;
     } catch (error) {
         console.error('❌ Error getting email template categories:', error.message);
-
         return ['Setup Templates', 'Resources & Tools', 'Payments & Completion'];
     }
 }
@@ -837,10 +727,6 @@ export async function deleteEmailTemplateCategory(categoryName) {
 
         if (error) throw error;
         
-        // Invalidate cache
-        invalidateCache('emailTemplateCategories');
-        invalidateCache('emailTemplates');
-        
         const categories = await getEmailTemplateCategories();
         console.log(`✅ Deleted category: "${categoryName}"`);
         return categories;
@@ -900,13 +786,6 @@ export async function getChecklistItems() {
             throw new Error('Supabase not initialized');
         }
 
-        // Check cache first
-        const cachedData = getCacheValue('checklistItems');
-        if (cachedData) {
-            return cachedData;
-        }
-
-        console.log('🌐 Fetching checklist items from Supabase...');
         const { data, error } = await supabase
             .from('checklist_items')
             .select('*')
@@ -916,9 +795,6 @@ export async function getChecklistItems() {
             console.error('❌ Error fetching checklist items from Supabase:', error.message);
             throw error;
         }
-        
-        // Cache the result
-        setCacheValue('checklistItems', data || []);
         
         return data || [];
     } catch (error) {
@@ -967,13 +843,11 @@ export async function addChecklistItem(category, label, sortPosition = 999) {
         }
         
         console.log(`✅ Added checklist item: "${label}"`);
-        invalidateCache('checklistItems');
         return data?.[0];
     } catch (error) {
         console.error('❌ Error adding checklist item:', error.message);
         throw error;
     }
-
 }
 
 // Update checklist item
@@ -1024,7 +898,6 @@ export async function updateChecklistItem(id, category, label, sortPosition) {
         }
         
         console.log(`✅ Updated checklist item: "${label}"`);
-        invalidateCache('checklistItems');
         return data?.[0];
     } catch (error) {
         console.error('❌ Error updating checklist item:', error.message);
@@ -1062,7 +935,6 @@ export async function deleteChecklistItem(id) {
         }
         
         console.log(`✅ Deleted checklist item with ID: ${id}`);
-        invalidateCache('checklistItems');
         return true;
     } catch (error) {
         console.error('❌ Error deleting checklist item:', error.message);
