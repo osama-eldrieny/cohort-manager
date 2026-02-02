@@ -797,11 +797,6 @@ function renderOverview() {
     } catch (e) {
         console.error('❌ Error in renderAnalyticsCharts:', e);
     }
-    try {
-        renderOverviewPage();
-    } catch (e) {
-        console.error('❌ Error in renderOverviewPage:', e);
-    }
 }
 
 function updateStats() {
@@ -881,9 +876,11 @@ function renderCharts() {
         return;
     }
 
-    // Check if chart elements exist in DOM
-    if (!document.getElementById('statusChart') || !document.getElementById('revenueChart') || !document.getElementById('locationsChart')) {
-        console.warn('Chart elements not found in DOM, skipping chart rendering');
+    // Check if chart elements exist in DOM - they won't on the overview page
+    const chartsNeeded = ['statusChart', 'revenueChart', 'locationsChart', 'cohort2PaymentChart', 'standbyPaymentChart', 'cohort3PaymentChart'];
+    const hasCharts = chartsNeeded.some(id => document.getElementById(id));
+    if (!hasCharts) {
+        console.warn('⚠️ No chart canvas elements found, skipping renderCharts');
         return;
     }
 
@@ -1955,14 +1952,11 @@ function updateCohortChartsControls() {
 
 function renderAnalyticsCharts() {
     // Check if analytics chart containers exist (they won't on Overview page)
-    const hasAnalyticsCharts = document.getElementById('cohortRevenueChart') || 
-                               document.getElementById('cohortStudentsChart') ||
-                               document.getElementById('languageChart') ||
-                               document.getElementById('locationCohortChart') ||
-                               document.getElementById('locationsChart');
+    const chartsToCheck = ['cohortRevenueChart', 'cohortStudentsChart', 'languageChart', 'locationCohortChart', 'locationsChart', 'paymentStatusChart'];
+    const hasAnalyticsCharts = chartsToCheck.some(id => document.getElementById(id));
     
     if (!hasAnalyticsCharts) {
-        // Charts don't exist on this page, skip rendering
+        console.warn('⚠️ No analytics chart elements found, skipping renderAnalyticsCharts');
         return;
     }
     
