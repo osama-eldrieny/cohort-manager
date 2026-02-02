@@ -73,6 +73,32 @@ const API_BASE_URL = isDev ? 'http://localhost:3002' : 'https://cohort-manager-x
 // Replace with your Google Apps Script deployment URL
 const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbyCPsBG3QKSPx84Dwzepm_Fruh7EXdG0mz84AM20NxT4fS8Vzhod875meY-oAHXqZW-/exec';
 
+// Utility function to get cohort color from the dynamic cohorts array
+function getCohortColor(cohortName) {
+    // First check dynamic cohorts loaded from API
+    if (cohorts && Array.isArray(cohorts)) {
+        const cohort = cohorts.find(c => c.name === cohortName);
+        if (cohort && cohort.color) {
+            return cohort.color;
+        }
+    }
+    
+    // Fallback to hardcoded colors for backwards compatibility
+    if (COHORT_COLORS[cohortName]) {
+        return COHORT_COLORS[cohortName];
+    }
+    
+    // Default color if not found
+    return '#95A5A6';
+}
+
+// Utility function to create status badge HTML with dynamic color
+function createStatusBadge(statusName) {
+    const color = getCohortColor(statusName);
+    const className = `status-${(statusName || 'unknown').toLowerCase().replace(/\s+/g, '-')}`;
+    return `<span class="status-badge ${className}" style="background-color: ${color}; color: white; font-weight: 600;">${statusName || 'Unknown'}</span>`;
+}
+
 // Utility Functions
 function escapeHtml(text) {
     const map = {
@@ -1159,28 +1185,13 @@ function renderStudentsTable() {
     }
 
     tbody.innerHTML = filtered.map((student, index) => {
-        // Get color for this student's cohort/status
-        let cohortColor = '#4ECDC4'; // default
-        const cohortName = student.status;
-        
-        // Check hardcoded cohorts first
-        if (COHORT_COLORS[cohortName]) {
-            cohortColor = COHORT_COLORS[cohortName];
-        } else {
-            // Check dynamic cohorts
-            const dynamicCohort = cohorts.find(c => c.name === cohortName);
-            if (dynamicCohort && dynamicCohort.color) {
-                cohortColor = dynamicCohort.color;
-            }
-        }
-        
         return `
         <tr>
             <td class="col-id" style="padding-right: 0px;"><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
             <td class="col-name"><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" class="student-name-link" data-student-id="${student.id}" title="Click to view details">${student.name}</strong></td>
             <td class="col-email"><span class="copy-email" title="Click to copy">${student.email}</span></td>
             <td class="col-figmaEmail">${student.figmaEmail ? `<span class="copy-email" title="Click to copy">${student.figmaEmail}</span>` : '-'}</td>
-            <td class="col-status"><span class="status-badge status-${(student.status || 'unknown').toLowerCase().replace(/\s+/g, '-')}" style="background-color: ${cohortColor}; color: white; font-weight: 600;">${student.status || 'Unknown'}</span></td>
+            <td class="col-status">${createStatusBadge(student.status)}</td>
             <td class="col-location">${student.location || '-'}</td>
             <td class="col-language">${student.language || '-'}</td>
             <td class="col-linkedin">
@@ -1351,7 +1362,7 @@ function renderCohortPage(cohortId) {
                             <td class="col-name"><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" class="student-name-link" data-student-id="${student.id}" title="Click to view details">${student.name}</strong></td>
                             <td class="col-email"><span class="copy-email" title="Click to copy">${student.email}</span></td>
                             <td class="col-figmaEmail">${student.figmaEmail ? `<span class="copy-email" title="Click to copy">${student.figmaEmail}</span>` : '-'}</td>
-                            <td class="col-status"><span class="status-badge status-${(student.status || 'unknown').toLowerCase().replace(/\s+/g, '-')}" style="background-color: ${cohortColor}; color: white; font-weight: 600;">${student.status || 'Unknown'}</span></td>
+                            <td class="col-status">${createStatusBadge(student.status)}</td>
                             <td class="col-location">${student.location || '-'}</td>
                             <td class="col-language">${student.language || '-'}</td>
                             <td class="col-linkedin">
@@ -1405,7 +1416,7 @@ function renderCohortPage(cohortId) {
                         <td class="col-name"><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" class="student-name-link" data-student-id="${student.id}" title="Click to view details">${student.name}</strong></td>
                         <td class="col-email"><span class="copy-email" title="Click to copy">${student.email}</span></td>
                         <td class="col-figmaEmail">${student.figmaEmail ? `<span class="copy-email" title="Click to copy">${student.figmaEmail}</span>` : '-'}</td>
-                        <td class="col-status"><span class="status-badge status-${(student.status || 'unknown').toLowerCase().replace(/\s+/g, '-')}" style="background-color: ${cohortColor}; color: white; font-weight: 600;">${student.status || 'Unknown'}</span></td>
+                        <td class="col-status">${createStatusBadge(student.status)}</td>
                         <td class="col-location">${student.location || '-'}</td>
                         <td class="col-language">${student.language || '-'}</td>
                         <td class="col-linkedin">
@@ -1560,7 +1571,7 @@ function renderStatusPage(status) {
                             <td class="col-name"><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" class="student-name-link" data-student-id="${student.id}" title="Click to view details">${student.name}</strong></td>
                             <td class="col-email"><span class="copy-email" title="Click to copy">${student.email}</span></td>
                             <td class="col-figmaEmail">${student.figmaEmail ? `<span class="copy-email" title="Click to copy">${student.figmaEmail}</span>` : '-'}</td>
-                            <td class="col-status"><span class="status-badge status-${(student.status || 'unknown').toLowerCase().replace(/\s+/g, '-')}" style="background-color: ${cohortColor}; color: white; font-weight: 600;">${student.status || 'Unknown'}</span></td>
+                            <td class="col-status">${createStatusBadge(student.status)}</td>
                             <td class="col-location">${student.location || '-'}</td>
                             <td class="col-language">${student.language || '-'}</td>
                             <td class="col-linkedin">
@@ -1614,7 +1625,7 @@ function renderStatusPage(status) {
                         <td class="col-name"><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" class="student-name-link" data-student-id="${student.id}" title="Click to view details">${student.name}</strong></td>
                         <td class="col-email"><span class="copy-email" title="Click to copy">${student.email}</span></td>
                         <td class="col-figmaEmail">${student.figmaEmail ? `<span class="copy-email" title="Click to copy">${student.figmaEmail}</span>` : '-'}</td>
-                        <td class="col-status"><span class="status-badge status-${(student.status || 'unknown').toLowerCase().replace(/\s+/g, '-')}" style="background-color: ${cohortColor}; color: white; font-weight: 600;">${student.status || 'Unknown'}</span></td>
+                        <td class="col-status">${createStatusBadge(student.status)}</td>
                         <td class="col-location">${student.location || '-'}</td>
                         <td class="col-language">${student.language || '-'}</td>
                         <td class="col-linkedin">
