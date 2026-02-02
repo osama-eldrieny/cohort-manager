@@ -827,19 +827,31 @@ export async function addChecklistItem(category, label, sortPosition = 999) {
             throw new Error('Supabase not initialized');
         }
 
-        // Get the maximum ID to avoid conflicts
-        const { data: existingItems, error: fetchError } = await supabase
+        // Get all existing IDs to find a safe one
+        const { data: allItems, error: fetchError } = await supabase
             .from('checklist_items')
             .select('id')
-            .order('id', { ascending: false })
-            .limit(1);
+            .order('id', { ascending: false });
 
         if (fetchError && fetchError.code !== 'PGRST116') {
-            console.warn('⚠️ Could not fetch max ID:', fetchError);
+            console.warn('⚠️ Could not fetch IDs:', fetchError);
         }
 
-        const maxId = existingItems && existingItems.length > 0 ? existingItems[0].id : 0;
-        const newId = maxId + 1;
+        // Find the next available ID by checking for gaps
+        let newId = 1;
+        if (allItems && allItems.length > 0) {
+            const existingIds = new Set(allItems.map(item => item.id));
+            // Find first available ID starting from max + 1
+            const maxId = Math.max(...allItems.map(item => item.id));
+            newId = maxId + 1;
+            
+            // Double-check this ID doesn't exist
+            while (existingIds.has(newId)) {
+                newId++;
+            }
+        }
+
+        console.log(`📝 Creating checklist item with ID: ${newId}, Label: "${label}"`);
 
         const { data, error } = await supabase
             .from('checklist_items')
@@ -853,7 +865,7 @@ export async function addChecklistItem(category, label, sortPosition = 999) {
             .select();
 
         if (error) {
-            console.error('❌ Error inserting checklist item:', error.message);
+            console.error('❌ Error inserting checklist item:', error.message, error);
             throw error;
         }
         
