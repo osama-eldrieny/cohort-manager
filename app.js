@@ -780,11 +780,31 @@ function renderPage(pageId) {
 // ============================================
 
 function renderOverview() {
-    updateStats();
-    renderCharts();
-    updateCohortSummary();
-    renderAnalyticsCharts();
-    renderOverviewPage();
+    try {
+        updateStats();
+    } catch (e) {
+        console.error('❌ Error in updateStats:', e);
+    }
+    try {
+        renderCharts();
+    } catch (e) {
+        console.error('❌ Error in renderCharts:', e);
+    }
+    try {
+        updateCohortSummary();
+    } catch (e) {
+        console.error('❌ Error in updateCohortSummary:', e);
+    }
+    try {
+        renderAnalyticsCharts();
+    } catch (e) {
+        console.error('❌ Error in renderAnalyticsCharts:', e);
+    }
+    try {
+        renderOverviewPage();
+    } catch (e) {
+        console.error('❌ Error in renderOverviewPage:', e);
+    }
 }
 
 function updateStats() {
@@ -796,23 +816,35 @@ function updateStats() {
     const totalRevenue = students.reduce((sum, s) => sum + s.paidAmount, 0);
     const pendingRevenue = students.reduce((sum, s) => sum + s.remaining, 0);
 
-    document.getElementById('statTotal').textContent = totalStudents;
-    document.getElementById('statCohorts').textContent = cohort3Students;
-    document.getElementById('statWaitingList').textContent = waitingListStudents;
-    document.getElementById('statNextCohort').textContent = nextCohortStudents;
+    // Only update elements if they exist (defensive programming)
+    const statTotal = document.getElementById('statTotal');
+    if (statTotal) statTotal.textContent = totalStudents;
+    
+    const statCohorts = document.getElementById('statCohorts');
+    if (statCohorts) statCohorts.textContent = cohort3Students;
+    
+    const statWaitingList = document.getElementById('statWaitingList');
+    if (statWaitingList) statWaitingList.textContent = waitingListStudents;
+    
+    const statNextCohort = document.getElementById('statNextCohort');
+    if (statNextCohort) statNextCohort.textContent = nextCohortStudents;
     
     const revenueElement = document.getElementById('statRevenue');
-    const revenueValue = '$' + totalRevenue.toFixed(2);
-    revenueElement.setAttribute('data-value', revenueValue);
-    if (!revenueElement.classList.contains('hidden')) {
-        revenueElement.textContent = revenueValue;
+    if (revenueElement) {
+        const revenueValue = '$' + totalRevenue.toFixed(2);
+        revenueElement.setAttribute('data-value', revenueValue);
+        if (!revenueElement.classList.contains('hidden')) {
+            revenueElement.textContent = revenueValue;
+        }
     }
     
     const pendingElement = document.getElementById('statPending');
-    const pendingValue = '$' + pendingRevenue.toFixed(2);
-    pendingElement.setAttribute('data-value', pendingValue);
-    if (!pendingElement.classList.contains('hidden')) {
-        pendingElement.textContent = pendingValue;
+    if (pendingElement) {
+        const pendingValue = '$' + pendingRevenue.toFixed(2);
+        pendingElement.setAttribute('data-value', pendingValue);
+        if (!pendingElement.classList.contains('hidden')) {
+            pendingElement.textContent = pendingValue;
+        }
     }
 }
 
@@ -1973,6 +2005,18 @@ function updateCohortChartsControls() {
 // ============================================
 
 function renderAnalyticsCharts() {
+    // Check if analytics chart containers exist (they won't on Overview page)
+    const hasAnalyticsCharts = document.getElementById('cohortRevenueChart') || 
+                               document.getElementById('cohortStudentsChart') ||
+                               document.getElementById('languageChart') ||
+                               document.getElementById('locationCohortChart') ||
+                               document.getElementById('locationsChart');
+    
+    if (!hasAnalyticsCharts) {
+        // Charts don't exist on this page, skip rendering
+        return;
+    }
+    
     // Use dynamic cohorts from Supabase
     const dynamicCohorts = cohorts && cohorts.length > 0 ? cohorts.map(c => c.name) : COHORTS;
     const visibleCohorts = getVisibleCohorts();
