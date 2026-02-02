@@ -949,24 +949,27 @@ export async function deleteChecklistItem(id) {
 
         // First, delete all student_checklist_completion records for this item
         console.log(`🗑️  Deleting completion records for item ${id}...`);
-        const { error: completionError } = await supabase
+        const { data: deletedCompletion, error: completionError } = await supabase
             .from('student_checklist_completion')
             .delete()
             .eq('checklist_item_id', id);
 
-        if (completionError && completionError.code !== 'PGRST116') {
-            console.warn('⚠️  Warning deleting completion records:', completionError);
+        if (completionError) {
+            console.warn('⚠️  Completion delete error:', completionError.message, completionError.code);
+        } else {
+            console.log(`✅ Deleted ${deletedCompletion ? 'completion records' : 'no completion records found'}`);
         }
 
         // Then delete the checklist item itself
         console.log(`🗑️  Deleting checklist item ${id}...`);
-        const { error } = await supabase
+        const { data: deletedItem, error } = await supabase
             .from('checklist_items')
             .delete()
             .eq('id', id);
 
         if (error) {
-            console.error('❌ Supabase error deleting item:', error.message);
+            console.error('❌ Supabase error deleting item:', error.message, error.code);
+            console.log('Full error details:', JSON.stringify(error, null, 2));
             // Fallback to JSON for Supabase errors
             console.log('📄 Using JSON fallback');
             const items = await getChecklistItems();
