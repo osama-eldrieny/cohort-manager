@@ -12,6 +12,10 @@ const COHORTS = ['Cohort 0', 'Cohort 1 - Cradis', 'Cohort 1 - Zomra', 'Cohort 2'
 // Track deleted hardcoded cohorts
 let deletedHardcodedCohorts = [];
 
+// Track editing cohort info for name change detection
+let editingCohortId = null;
+let editingCohortOldName = null;
+
 // Load deleted cohorts from localStorage on startup
 function loadDeletedCohorts() {
     const stored = localStorage.getItem('deletedHardcodedCohorts');
@@ -4399,7 +4403,6 @@ async function sendBulkEmail(event) {
 // ============================================
 
 let cohorts = [];
-let editingCohortId = null;
 
 function createDynamicCohortPage(pageId) {
     // Create a page container for a dynamic cohort
@@ -4588,6 +4591,7 @@ function openAddCohortModal() {
 
 function openEditCohortModal(id, name, icon = 'fa-map-pin', color = '#4ECDC4') {
     editingCohortId = id;
+    editingCohortOldName = name;  // Store original name to detect if it changed
     document.getElementById('cohortModalTitle').textContent = 'Edit Cohort';
     document.getElementById('cohortName').value = name;
     document.getElementById('cohortIcon').value = icon;
@@ -4607,6 +4611,7 @@ function openEditCohortModal(id, name, icon = 'fa-map-pin', color = '#4ECDC4') {
 function closeCohortModal() {
     document.getElementById('cohortModal').style.display = 'none';
     editingCohortId = null;
+    editingCohortOldName = null;
 }
 
 async function saveCohort(event) {
@@ -4635,9 +4640,40 @@ async function saveCohort(event) {
         });
         
         if (response.ok) {
+            // If editing and name changed, update all student records with the old name
+            if (editingCohortId && editingCohortOldName && editingCohortOldName !== name) {
+                // Update students whose status matches the old cohort name
+                const updatedStudents = students.map(student => {
+                    if (student.status === editingCohortOldName) {
+                        return { ...student, status: name };
+                    }
+                    return student;
+                });
+                
+                // Save updated students to database
+                const saveResponse = await fetch(`${API_BASE_URL}/api/students`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatedStudents)
+                });
+                
+                if (saveResponse.ok) {
+                    // Update local students array
+                    students = updatedStudents;
+                } else {
+                    console.error('⚠️  Warning: Failed to update student records with new cohort name');
+                }
+            }
+            
             showToast(editingCohortId ? 'Cohort updated successfully' : 'Cohort created successfully', 'success');
             closeCohortModal();
             await loadCohorts();
+            
+            // Reload students and UI to reflect cohort name changes
+            if (editingCohortId && editingCohortOldName && editingCohortOldName !== name) {
+                await loadStudents();
+                renderPage();
+            }
         } else {
             const error = await response.json();
             alert('Error: ' + (error.error || 'Failed to save cohort'));
