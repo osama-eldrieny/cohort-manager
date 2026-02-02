@@ -2359,13 +2359,26 @@ function renderDynamicChecklist(student) {
 // Get selected checklist items
 function getSelectedChecklistItems() {
     const selected = [];
-    document.querySelectorAll('.checklist-checkbox:checked').forEach(checkbox => {
+    const allCheckboxes = document.querySelectorAll('.checklist-checkbox');
+    const checkedCheckboxes = document.querySelectorAll('.checklist-checkbox:checked');
+    
+    console.log(`🔍 Checklist checkboxes: ${allCheckboxes.length} total, ${checkedCheckboxes.length} checked`);
+    
+    checkedCheckboxes.forEach(checkbox => {
         const itemId = parseInt(checkbox.dataset.itemId, 10);
         if (!isNaN(itemId)) {
             selected.push(itemId);
         }
     });
+    
     console.log('✅ Selected checklist items:', selected);
+    console.log('📋 All checkbox states:');
+    allCheckboxes.forEach(cb => {
+        const itemId = cb.dataset.itemId;
+        const isChecked = cb.checked;
+        console.log(`   Item ${itemId}: ${isChecked ? '✓' : '☐'}`);
+    });
+    
     return selected;
 }
 
