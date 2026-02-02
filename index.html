@@ -117,7 +117,22 @@
                 <!-- Charts Row -->
                 <div class="charts-grid">
                     <div class="chart-card">
-                        <div class="chart-title">Status Distribution</div>
+                        <div class="chart-title-with-settings">
+                            <span>Status Distribution</span>
+                            <div class="chart-settings-wrapper">
+                                <button class="chart-settings-btn" id="statusChartSettingsBtn" title="Filter by cohorts">
+                                    <i class="fas fa-cog"></i>
+                                </button>
+                                <div class="chart-settings-dropdown" id="statusChartDropdown" style="display: none;">
+                                    <div class="dropdown-header">Filter by Cohorts</div>
+                                    <div class="dropdown-content" id="statusChartCohortList"></div>
+                                    <div class="dropdown-footer">
+                                        <button class="btn-small btn-primary" onclick="applyStatusChartFilter()">Apply</button>
+                                        <button class="btn-small btn-secondary" onclick="resetStatusChartFilter()">Reset</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="chart-container">
                             <canvas id="statusChart"></canvas>
                         </div>
@@ -129,7 +144,22 @@
                         </div>
                     </div>
                     <div class="chart-card">
-                        <div class="chart-title">Student Locations</div>
+                        <div class="chart-title-with-settings">
+                            <div class="chart-title">Student Locations</div>
+                            <div class="chart-settings-wrapper">
+                                <button class="chart-settings-btn" id="locationsChartSettingsBtn" title="Filter locations">
+                                    <i class="fas fa-cog"></i>
+                                </button>
+                                <div class="chart-settings-dropdown" id="locationsChartDropdown" style="display: none;">
+                                    <div class="dropdown-header">Filter by Locations</div>
+                                    <div class="dropdown-content" id="locationsChartLocationList"></div>
+                                    <div class="dropdown-footer">
+                                        <button class="btn-small btn-primary" onclick="applyLocationsChartFilter()">Apply</button>
+                                        <button class="btn-small btn-secondary" onclick="resetLocationsChartFilter()">Reset</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="chart-container">
                             <canvas id="locationsChart"></canvas>
                         </div>
@@ -137,87 +167,23 @@
                 </div>
 
                 <!-- Cohort Summary -->
-                <div class="charts-grid">
-                    <div class="chart-card">
-                        <div class="chart-title">Cohort 0 Summary</div>
-                        <div class="cohort-stats">
-                            <div class="cohort-stat-item">
-                                <div class="cohort-stat-label">Students</div>
-                                <div class="cohort-stat-value" id="cohort0-count">0</div>
-                            </div>
-                            <div class="cohort-stat-item cohort-revenue-item">
-                                <button class="eye-toggle-small" data-revenue-id="cohort0-revenue" title="Toggle revenue visibility">
-                                    <i class="fas fa-eye-slash"></i>
-                                </button>
-                                <div class="cohort-stat-label">Revenue</div>
-                                <div class="cohort-stat-value hidden" id="cohort0-revenue" data-value="$0">●●●</div>
+                <div class="section-header-with-settings">
+                    <h2 style="margin: 0; padding-top: 20px; border-top: 2px solid #e0e0e0; color: #1a1a1a;"><i class="fas fa-users"></i> Cohort Summary</h2>
+                    <div class="cohort-settings-wrapper">
+                        <button class="chart-settings-btn" id="cohortsSettingsBtn" title="Show/hide cohorts">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                        <div class="chart-settings-dropdown" id="cohortsDropdown" style="display: none;">
+                            <div class="dropdown-header">Show/Hide Cohorts</div>
+                            <div class="dropdown-content" id="cohortsList"></div>
+                            <div class="dropdown-footer">
+                                <button class="btn-small btn-primary" onclick="applyCohortVisibility()">Apply</button>
                             </div>
                         </div>
                     </div>
-                    <div class="chart-card">
-                        <div class="chart-title">Cohort 1 - Cradis Summary</div>
-                        <div class="cohort-stats">
-                            <div class="cohort-stat-item">
-                                <div class="cohort-stat-label">Students</div>
-                                <div class="cohort-stat-value" id="cohort1cradis-count">0</div>
-                            </div>
-                            <div class="cohort-stat-item cohort-revenue-item">
-                                <button class="eye-toggle-small" data-revenue-id="cohort1cradis-revenue" title="Toggle revenue visibility">
-                                    <i class="fas fa-eye-slash"></i>
-                                </button>
-                                <div class="cohort-stat-label">Revenue</div>
-                                <div class="cohort-stat-value hidden" id="cohort1cradis-revenue" data-value="$0">●●●</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="chart-card">
-                        <div class="chart-title">Cohort 1 - Zomra Summary</div>
-                        <div class="cohort-stats">
-                            <div class="cohort-stat-item">
-                                <div class="cohort-stat-label">Students</div>
-                                <div class="cohort-stat-value" id="cohort1zomra-count">0</div>
-                            </div>
-                            <div class="cohort-stat-item cohort-revenue-item">
-                                <button class="eye-toggle-small" data-revenue-id="cohort1zomra-revenue" title="Toggle revenue visibility">
-                                    <i class="fas fa-eye-slash"></i>
-                                </button>
-                                <div class="cohort-stat-label">Revenue</div>
-                                <div class="cohort-stat-value hidden" id="cohort1zomra-revenue" data-value="$0">●●●</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="chart-card">
-                        <div class="chart-title">Cohort 2 Summary</div>
-                        <div class="cohort-stats">
-                            <div class="cohort-stat-item">
-                                <div class="cohort-stat-label">Students</div>
-                                <div class="cohort-stat-value" id="cohort2-count">0</div>
-                            </div>
-                            <div class="cohort-stat-item cohort-revenue-item">
-                                <button class="eye-toggle-small" data-revenue-id="cohort2-revenue" title="Toggle revenue visibility">
-                                    <i class="fas fa-eye-slash"></i>
-                                </button>
-                                <div class="cohort-stat-label">Revenue</div>
-                                <div class="cohort-stat-value hidden" id="cohort2-revenue" data-value="$0">●●●</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="chart-card">
-                        <div class="chart-title">Cohort 3 Summary</div>
-                        <div class="cohort-stats">
-                            <div class="cohort-stat-item">
-                                <div class="cohort-stat-label">Students</div>
-                                <div class="cohort-stat-value" id="cohort3-count">0</div>
-                            </div>
-                            <div class="cohort-stat-item cohort-revenue-item">
-                                <button class="eye-toggle-small" data-revenue-id="cohort3-revenue" title="Toggle revenue visibility">
-                                    <i class="fas fa-eye-slash"></i>
-                                </button>
-                                <div class="cohort-stat-label">Revenue</div>
-                                <div class="cohort-stat-value hidden" id="cohort3-revenue" data-value="$0">●●●</div>
-                            </div>
-                        </div>
-                    </div>
+                </div>
+                <div class="charts-grid" id="cohortsCardsContainer">
+                    <!-- Dynamically populated by JavaScript -->
                 </div>
 
                 <!-- Analytics Charts Section -->
@@ -225,13 +191,43 @@
                     <h2 style="margin-bottom: 20px; margin-top: 40px; padding-top: 20px; border-top: 2px solid #e0e0e0; color: #1a1a1a;"><i class="fas fa-chart-line"></i> Analytics</h2>
                     <div class="charts-grid">
                         <div class="chart-card">
-                            <div class="chart-title">Revenue by Cohort</div>
+                            <div class="chart-title-with-settings">
+                                <div class="chart-title">Revenue by Cohort</div>
+                                <div class="chart-settings-wrapper">
+                                    <button id="revenueChartSettingsBtn" class="chart-settings-btn" title="Filter cohorts">
+                                        <i class="fas fa-cog"></i>
+                                    </button>
+                                    <div id="revenueChartDropdown" class="chart-settings-dropdown" style="display: none;">
+                                        <div class="dropdown-header">Filter by Cohorts</div>
+                                        <div class="dropdown-content" id="revenueChartCohortList"></div>
+                                        <div class="dropdown-footer">
+                                            <button class="btn-small btn-primary" onclick="applyRevenueChartFilter()">Apply</button>
+                                            <button class="btn-small btn-secondary" onclick="resetRevenueChartFilter()">Reset</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="chart-container">
                                 <canvas id="cohortRevenueChart"></canvas>
                             </div>
                         </div>
                         <div class="chart-card">
-                            <div class="chart-title">Students by Cohort</div>
+                            <div class="chart-title-with-settings">
+                                <div class="chart-title">Students by Cohort</div>
+                                <div class="chart-settings-wrapper">
+                                    <button id="studentsChartSettingsBtn" class="chart-settings-btn" title="Filter cohorts">
+                                        <i class="fas fa-cog"></i>
+                                    </button>
+                                    <div id="studentsChartDropdown" class="chart-settings-dropdown" style="display: none;">
+                                        <div class="dropdown-header">Filter by Cohorts</div>
+                                        <div class="dropdown-content" id="studentsChartCohortList"></div>
+                                        <div class="dropdown-footer">
+                                            <button class="btn-small btn-primary" onclick="applyStudentsChartFilter()">Apply</button>
+                                            <button class="btn-small btn-secondary" onclick="resetStudentsChartFilter()">Reset</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="chart-container">
                                 <canvas id="cohortStudentsChart"></canvas>
                             </div>

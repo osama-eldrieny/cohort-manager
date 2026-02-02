@@ -4,6 +4,11 @@
 
 let students = [];
 let currentEditingId = null;
+let selectedStatusChartCohorts = null; // Track selected cohorts for status chart filter
+let selectedLocationsChartLocations = null; // Track selected locations for locations chart filter
+let selectedRevenueChartCohorts = null; // Track selected cohorts for revenue chart filter
+let selectedStudentsChartCohorts = null; // Track selected cohorts for students chart filter
+let visibleCohorts = null; // Track which cohorts to show/hide (null = show all)
 let originalEditingEmail = null; // Track original email when editing
 let emailWasChanged = false;
 let charts = {};
@@ -536,6 +541,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('✅ Loaded checklist items');
     await loadCohorts();
     console.log(`✅ Loaded ${cohorts.length} cohorts`);
+    // Sync student cohort names with database after cohorts are loaded
+    await syncStudentCohortNames();
     setupEventListeners();
     console.log('✅ Event listeners setup');
     
@@ -863,6 +870,26 @@ function renderOverview() {
         console.error('❌ Error in renderCharts:', e);
     }
     try {
+        initializeStatusChartFilter();
+    } catch (e) {
+        console.error('❌ Error initializing status chart filter:', e);
+    }
+    try {
+        initializeLocationsChartFilter();
+    } catch (e) {
+        console.error('❌ Error initializing locations chart filter:', e);
+    }
+    try {
+        initializeCohortsSettings();
+    } catch (e) {
+        console.error('❌ Error initializing cohorts settings:', e);
+    }
+    try {
+        renderCohortSummaryCards();
+    } catch (e) {
+        console.error('❌ Error rendering cohort summary cards:', e);
+    }
+    try {
         updateCohortSummary();
     } catch (e) {
         console.error('❌ Error in updateCohortSummary:', e);
@@ -871,6 +898,16 @@ function renderOverview() {
         renderAnalyticsCharts();
     } catch (e) {
         console.error('❌ Error in renderAnalyticsCharts:', e);
+    }
+    try {
+        initializeRevenueChartFilter();
+    } catch (e) {
+        console.error('❌ Error initializing revenue chart filter:', e);
+    }
+    try {
+        initializeStudentsChartFilter();
+    } catch (e) {
+        console.error('❌ Error initializing students chart filter:', e);
     }
 }
 
@@ -916,24 +953,28 @@ function updateStats() {
 }
 
 function updateCohortSummary() {
-    // Map all cohort names to their HTML IDs
-    const cohortMapping = {
-        'Cohort 0': 'cohort0',
-        'Cohort 1 - Cradis': 'cohort1cradis',
-        'Cohort 1 - Zomra': 'cohort1zomra',
-        'Cohort 2': 'cohort2',
-        'Cohort 3': 'cohort3'
-    };
-
-    Object.entries(cohortMapping).forEach(([cohortName, cohortKey]) => {
+    // Update all currently displayed cohort cards with latest data
+    const container = document.getElementById('cohortsCardsContainer');
+    if (!container) return;
+    
+    // Get all cohort cards
+    const cohortCards = container.querySelectorAll('.chart-card');
+    
+    cohortCards.forEach(card => {
+        const titleElement = card.querySelector('.chart-title');
+        if (!titleElement) return;
+        
+        const cohortName = titleElement.textContent.replace(' Summary', '').trim();
         const cohortStudents = students.filter(s => s.cohort === cohortName);
         const count = cohortStudents.length;
-        const revenue = cohortStudents.reduce((sum, s) => sum + s.paidAmount, 0);
-
-        const countElement = document.getElementById(`${cohortKey}-count`);
-        const revenueElement = document.getElementById(`${cohortKey}-revenue`);
+        const revenue = cohortStudents.reduce((sum, s) => sum + (s.paidAmount || 0), 0);
         
+        // Update student count
+        const countElement = card.querySelector('.cohort-stat-item:first-child .cohort-stat-value');
         if (countElement) countElement.textContent = count;
+        
+        // Update revenue
+        const revenueElement = card.querySelector('.cohort-revenue-item .cohort-stat-value');
         if (revenueElement) {
             const revenueValue = '$' + revenue.toFixed(2);
             revenueElement.setAttribute('data-value', revenueValue);
@@ -960,30 +1001,31 @@ function renderCharts() {
     }
 
     try {
-        // Status Distribution Chart
-        const statusCounts = {
-            'Waiting list': students.filter(s => s.status === 'Waiting list').length,
-            'Can\'t reach': students.filter(s => s.status === 'Can\'t reach').length,
-            'Next Cohort': students.filter(s => s.status === 'Next Cohort').length,
-            'Standby': students.filter(s => s.status === 'Standby').length,
-            'Cohort 0': students.filter(s => s.status === 'Cohort 0').length,
-            'Cohort 1 - Cradis': students.filter(s => s.status === 'Cohort 1 - Cradis').length,
-            'Cohort 1 - Zomra': students.filter(s => s.status === 'Cohort 1 - Zomra').length,
-            'Cohort 2': students.filter(s => s.status === 'Cohort 2').length,
-            'Cohort 3': students.filter(s => s.status === 'Cohort 3').length,
-            'English 1': students.filter(s => s.status === 'English 1').length
-        };
+        // Status Distribution Chart - Show only real cohorts from database with their colors
+        const statusCounts = {};
+        const statusColors = {};
+        
+        // Add ONLY real cohorts from database with their colors
+        if (cohorts && cohorts.length > 0) {
+            cohorts.forEach(cohort => {
+                statusCounts[cohort.name] = students.filter(s => s.status === cohort.name).length;
+                statusColors[cohort.name] = cohort.color || '#4ECDC4';
+            });
+        }
 
         const ctx1 = document.getElementById('statusChart');
         if (ctx1 && charts.status) charts.status.destroy();
         if (ctx1) {
+            const labels = Object.keys(statusCounts);
+            const colors = labels.map(label => statusColors[label]);
+            
             charts.status = new Chart(ctx1, {
                 type: 'doughnut',
                 data: {
-                    labels: Object.keys(statusCounts),
+                    labels: labels,
                     datasets: [{
                         data: Object.values(statusCounts),
-                        backgroundColor: ['#FFC107', '#F44336', '#2196F3', '#9C27B0', '#4CAF50', '#00BCD4', '#FF9800', '#009688', '#E91E63'],
+                        backgroundColor: colors,
                         borderColor: '#fff',
                         borderWidth: 2
                     }]
@@ -1022,175 +1064,130 @@ function renderCharts() {
             });
         }
 
-        // Student Locations Chart
-        const locationCounts = {};
-        students.forEach(s => {
-            // Skip empty locations and normalize location names
-            const location = s.location && s.location.trim() ? s.location : 'Unknown';
-            locationCounts[location] = (locationCounts[location] || 0) + 1;
-        });
+        // Student Locations Chart - will be rendered with filter if initialized
+        renderLocationsChartWithFilter();
 
-        // Sort by count and get top 15 locations
-        const sortedLocations = Object.entries(locationCounts)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 15);
+        // Payment Status Chart - Cohort 2
+        const cohort2Students = students.filter(s => s.cohort === 'Cohort 2');
+        const cohort2Paid = cohort2Students.reduce((sum, s) => sum + s.paidAmount, 0);
+        const cohort2Pending = cohort2Students.reduce((sum, s) => sum + s.remaining, 0);
 
-        const ctx3 = document.getElementById('locationsChart');
-        if (ctx3 && charts.locations) charts.locations.destroy();
-        if (ctx3) {
-            charts.locations = new Chart(ctx3, {
+        const ctx4 = document.getElementById('cohort2PaymentChart');
+        if (ctx4) {
+            if (charts.cohort2Payment) charts.cohort2Payment.destroy();
+            charts.cohort2Payment = new Chart(ctx4, {
                 type: 'doughnut',
                 data: {
-                    labels: sortedLocations.map(l => l[0]),
+                    labels: ['Paid', 'Pending'],
                     datasets: [{
-                        data: sortedLocations.map(l => l[1]),
-                        backgroundColor: sortedLocations.map(l => getColor(l[0])),
-                borderColor: '#fff',
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: { position: 'bottom', labels: { boxWidth: 14, boxHeight: 14 } },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const label = context.label || '';
-                            const value = context.parsed || 0;
-                            const total = Object.values(locationCounts).reduce((a, b) => a + b, 0);
-                            const percentage = ((value / total) * 100).toFixed(1);
-                            return label + ': ' + value + ' (' + percentage + '%)';
+                        data: [cohort2Paid, cohort2Pending],
+                        backgroundColor: ['#4CAF50', '#FF9800'],
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { 
+                        legend: { position: 'bottom', labels: { boxWidth: 16, boxHeight: 16, borderRadius: 8 } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (context.parsed !== null) {
+                                        label += ': $' + context.parsed.toFixed(2);
+                                    }
+                                    return label;
+                                }
+                            }
                         }
                     }
                 }
-            }
+            });
         }
-    });
 
-    // Payment Status Chart - Cohort 2
-    const cohort2Students = students.filter(s => s.cohort === 'Cohort 2');
-    const cohort2Paid = cohort2Students.reduce((sum, s) => sum + s.paidAmount, 0);
-    const cohort2Pending = cohort2Students.reduce((sum, s) => sum + s.remaining, 0);
+        // Payment Status Chart - Standby
+        const standbyStudents = students.filter(s => s.status === 'Standby');
+        const standbyPaid = standbyStudents.reduce((sum, s) => sum + s.paidAmount, 0);
+        const standbyPending = standbyStudents.reduce((sum, s) => sum + s.remaining, 0);
 
-    const ctx4 = document.getElementById('cohort2PaymentChart');
-    if (ctx4) {
-        if (charts.cohort2Payment) charts.cohort2Payment.destroy();
-        charts.cohort2Payment = new Chart(ctx4, {
-            type: 'doughnut',
-            data: {
-                labels: ['Paid', 'Pending'],
-                datasets: [{
-                    data: [cohort2Paid, cohort2Pending],
-                    backgroundColor: ['#4CAF50', '#FF9800'],
-                    borderColor: '#fff',
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: { 
-                    legend: { position: 'bottom', labels: { boxWidth: 16, boxHeight: 16, borderRadius: 8 } },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.label || '';
-                                if (context.parsed !== null) {
-                                    label += ': $' + context.parsed.toFixed(2);
+        const ctx5 = document.getElementById('standbyPaymentChart');
+        if (ctx5) {
+            if (charts.standbyPayment) charts.standbyPayment.destroy();
+            charts.standbyPayment = new Chart(ctx5, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Paid', 'Pending'],
+                    datasets: [{
+                        data: [standbyPaid, standbyPending],
+                        backgroundColor: ['#4CAF50', '#FF9800'],
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { 
+                        legend: { position: 'bottom', labels: { boxWidth: 16, boxHeight: 16, borderRadius: 8 } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (context.parsed !== null) {
+                                        label += ': $' + context.parsed.toFixed(2);
+                                    }
+                                    return label;
                                 }
-                                return label;
                             }
                         }
                     }
                 }
-            }
-        });
-    }
+            });
+        }
 
-    // Payment Status Chart - Standby
-    const standbyStudents = students.filter(s => s.status === 'Standby');
-    const standbyPaid = standbyStudents.reduce((sum, s) => sum + s.paidAmount, 0);
-    const standbyPending = standbyStudents.reduce((sum, s) => sum + s.remaining, 0);
+        // Payment Status Chart - Cohort 3
+        const cohort3Students = students.filter(s => s.cohort === 'Cohort 3');
+        
+        // Payment Status Chart - English 1
+        const english1Students = students.filter(s => s.cohort === 'English 1');
+        const cohort3Paid = cohort3Students.reduce((sum, s) => sum + s.paidAmount, 0);
+        const cohort3Pending = cohort3Students.reduce((sum, s) => sum + s.remaining, 0);
 
-    const ctx5 = document.getElementById('standbyPaymentChart');
-    if (ctx5) {
-        if (charts.standbyPayment) charts.standbyPayment.destroy();
-        charts.standbyPayment = new Chart(ctx5, {
-            type: 'doughnut',
-            data: {
-                labels: ['Paid', 'Pending'],
-                datasets: [{
-                    data: [standbyPaid, standbyPending],
-                    backgroundColor: ['#4CAF50', '#FF9800'],
-                    borderColor: '#fff',
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: { 
-                    legend: { position: 'bottom', labels: { boxWidth: 16, boxHeight: 16, borderRadius: 8 } },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.label || '';
-                                if (context.parsed !== null) {
-                                    label += ': $' + context.parsed.toFixed(2);
+        const ctx6 = document.getElementById('cohort3PaymentChart');
+        if (ctx6) {
+            if (charts.cohort3Payment) charts.cohort3Payment.destroy();
+            charts.cohort3Payment = new Chart(ctx6, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Paid', 'Pending'],
+                    datasets: [{
+                        data: [cohort3Paid, cohort3Pending],
+                        backgroundColor: ['#4CAF50', '#FF9800'],
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { 
+                        legend: { position: 'bottom', labels: { boxWidth: 16, boxHeight: 16, borderRadius: 8 } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (context.parsed !== null) {
+                                        label += ': $' + context.parsed.toFixed(2);
+                                    }
+                                    return label;
                                 }
-                                return label;
                             }
                         }
                     }
                 }
-            }
-        });
-    }
-
-    // Payment Status Chart - Cohort 3
-    const cohort3Students = students.filter(s => s.cohort === 'Cohort 3');
-    
-    // Payment Status Chart - English 1
-    const english1Students = students.filter(s => s.cohort === 'English 1');
-    const cohort3Paid = cohort3Students.reduce((sum, s) => sum + s.paidAmount, 0);
-    const cohort3Pending = cohort3Students.reduce((sum, s) => sum + s.remaining, 0);
-
-    const ctx6 = document.getElementById('cohort3PaymentChart');
-    if (ctx6) {
-        if (charts.cohort3Payment) charts.cohort3Payment.destroy();
-        charts.cohort3Payment = new Chart(ctx6, {
-            type: 'doughnut',
-            data: {
-                labels: ['Paid', 'Pending'],
-                datasets: [{
-                    data: [cohort3Paid, cohort3Pending],
-                    backgroundColor: ['#4CAF50', '#FF9800'],
-                    borderColor: '#fff',
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: { 
-                    legend: { position: 'bottom', labels: { boxWidth: 16, boxHeight: 16, borderRadius: 8 } },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.label || '';
-                                if (context.parsed !== null) {
-                                    label += ': $' + context.parsed.toFixed(2);
-                                }
-                                return label;
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
+            });
         }
     } catch (error) {
         console.error('Error rendering charts:', error);
@@ -2009,6 +2006,820 @@ function updateCohortChartsControls() {
         label.appendChild(checkbox);
         label.appendChild(document.createTextNode(cohortName));
         container.appendChild(label);
+    });
+}
+
+// ============================================
+// STATUS CHART FILTER FUNCTIONS
+// ============================================
+
+function initializeStatusChartFilter() {
+    const settingsBtn = document.getElementById('statusChartSettingsBtn');
+    const dropdown = document.getElementById('statusChartDropdown');
+    
+    if (!settingsBtn) return;
+    
+    // Toggle dropdown on settings button click
+    settingsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.chart-settings-wrapper')) {
+            dropdown.style.display = 'none';
+        }
+    });
+    
+    // Populate cohort list
+    populateStatusChartCohortList();
+    
+    // Load saved filter from localStorage
+    const saved = localStorage.getItem('statusChartCohortFilter');
+    if (saved) {
+        selectedStatusChartCohorts = JSON.parse(saved);
+        // Restore checkbox states
+        document.querySelectorAll('.status-chart-cohort-checkbox').forEach(cb => {
+            cb.checked = selectedStatusChartCohorts.includes(cb.value);
+        });
+        // Apply the filter
+        renderStatusChartWithFilter();
+    }
+}
+
+function populateStatusChartCohortList() {
+    const cohortList = document.getElementById('statusChartCohortList');
+    if (!cohortList) return;
+    
+    cohortList.innerHTML = '';
+    
+    // Get cohort names from the cohorts array (real cohorts from Manage Cohorts page)
+    if (!cohorts || cohorts.length === 0) {
+        cohortList.innerHTML = '<p style="padding: 10px 15px; color: #999; font-size: 12px;">No cohorts available</p>';
+        return;
+    }
+    
+    // Sort cohorts by name
+    const sortedCohorts = [...cohorts].sort((a, b) => a.name.localeCompare(b.name));
+    
+    sortedCohorts.forEach(cohort => {
+        const label = document.createElement('label');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = cohort.name;
+        checkbox.className = 'status-chart-cohort-checkbox';
+        checkbox.checked = true;
+        
+        const span = document.createElement('span');
+        span.textContent = cohort.name;
+        
+        label.appendChild(checkbox);
+        label.appendChild(span);
+        cohortList.appendChild(label);
+    });
+}
+
+function getSelectedStatusChartCohorts() {
+    const checkboxes = document.querySelectorAll('.status-chart-cohort-checkbox:checked');
+    return Array.from(checkboxes).map(cb => cb.value);
+}
+
+function applyStatusChartFilter() {
+    selectedStatusChartCohorts = getSelectedStatusChartCohorts();
+    if (selectedStatusChartCohorts.length === 0) {
+        showToast('Please select at least one cohort', 'warning');
+        return;
+    }
+    
+    // Save to localStorage
+    localStorage.setItem('statusChartCohortFilter', JSON.stringify(selectedStatusChartCohorts));
+    
+    // Re-render the status chart with filter
+    renderStatusChartWithFilter();
+    
+    // Close dropdown
+    document.getElementById('statusChartDropdown').style.display = 'none';
+    showToast('Chart filter applied & saved', 'success');
+}
+
+function resetStatusChartFilter() {
+    selectedStatusChartCohorts = null;
+    
+    // Clear localStorage
+    localStorage.removeItem('statusChartCohortFilter');
+    
+    // Reset all checkboxes to checked
+    document.querySelectorAll('.status-chart-cohort-checkbox').forEach(cb => {
+        cb.checked = true;
+    });
+    
+    // Re-render the status chart without filter
+    renderStatusChartWithFilter();
+    
+    // Close dropdown
+    document.getElementById('statusChartDropdown').style.display = 'none';
+    showToast('Chart filter reset', 'success');
+}
+
+function renderStatusChartWithFilter() {
+    // Filter students based on selected cohorts
+    const filteredStudents = selectedStatusChartCohorts 
+        ? students.filter(s => selectedStatusChartCohorts.includes(s.status))
+        : students;
+    
+    // Count ONLY selected real cohorts (not other statuses)
+    const statusCounts = {};
+    const statusColors = {};
+    
+    // Show only selected real cohorts from database
+    if (cohorts && cohorts.length > 0) {
+        cohorts.forEach(cohort => {
+            // Only include if this cohort is selected in the filter (or no filter applied)
+            if (!selectedStatusChartCohorts || selectedStatusChartCohorts.includes(cohort.name)) {
+                const cohortStudents = filteredStudents.filter(s => s.status === cohort.name);
+                statusCounts[cohort.name] = cohortStudents.length;
+                statusColors[cohort.name] = cohort.color || '#4ECDC4';
+            }
+        });
+    }
+    
+    const ctx1 = document.getElementById('statusChart');
+    if (ctx1 && charts.status) charts.status.destroy();
+    if (ctx1) {
+        const labels = Object.keys(statusCounts);
+        const colors = labels.map(label => statusColors[label]);
+        
+        charts.status = new Chart(ctx1, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: Object.values(statusCounts),
+                    backgroundColor: colors,
+                    borderColor: '#fff',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: { legend: { position: 'bottom', labels: { boxWidth: 16, boxHeight: 16, borderRadius: 8 } } }
+            }
+        });
+    }
+}
+
+// ============================================
+// LOCATIONS CHART FILTER
+// ============================================
+
+function initializeLocationsChartFilter() {
+    const settingsBtn = document.getElementById('locationsChartSettingsBtn');
+    const dropdown = document.getElementById('locationsChartDropdown');
+    
+    if (!settingsBtn) return;
+    
+    // Toggle dropdown on settings button click
+    settingsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.chart-settings-wrapper')) {
+            dropdown.style.display = 'none';
+        }
+    });
+    
+    // Populate locations list
+    populateLocationsChartLocationList();
+    
+    // Load saved filter from localStorage
+    const saved = localStorage.getItem('locationsChartLocationFilter');
+    if (saved) {
+        selectedLocationsChartLocations = JSON.parse(saved);
+        // Restore checkbox states
+        document.querySelectorAll('.locations-chart-location-checkbox').forEach(cb => {
+            cb.checked = selectedLocationsChartLocations.includes(cb.value);
+        });
+        // Apply the filter
+        renderLocationsChartWithFilter();
+    }
+}
+
+function populateLocationsChartLocationList() {
+    const locationList = document.getElementById('locationsChartLocationList');
+    if (!locationList) return;
+    
+    locationList.innerHTML = '';
+    
+    // Get all unique locations from students and count them
+    const locationCounts = {};
+    students.forEach(s => {
+        const location = s.location && s.location.trim() ? s.location : 'Unknown';
+        locationCounts[location] = (locationCounts[location] || 0) + 1;
+    });
+    
+    // Sort by count and get top 15 locations
+    const sortedLocations = Object.entries(locationCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 15)
+        .map(entry => entry[0]);
+    
+    if (sortedLocations.length === 0) {
+        locationList.innerHTML = '<p style="padding: 10px 15px; color: #999; font-size: 12px;">No locations available</p>';
+        return;
+    }
+    
+    // Create checkboxes for top 15 locations
+    sortedLocations.forEach(location => {
+        const label = document.createElement('label');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = location;
+        checkbox.className = 'locations-chart-location-checkbox';
+        checkbox.checked = true;
+        
+        const span = document.createElement('span');
+        span.textContent = location + ' (' + locationCounts[location] + ')';
+        
+        label.appendChild(checkbox);
+        label.appendChild(span);
+        locationList.appendChild(label);
+    });
+}
+
+function getSelectedLocationsChartLocations() {
+    const checkboxes = document.querySelectorAll('.locations-chart-location-checkbox:checked');
+    return Array.from(checkboxes).map(cb => cb.value);
+}
+
+function applyLocationsChartFilter() {
+    selectedLocationsChartLocations = getSelectedLocationsChartLocations();
+    if (selectedLocationsChartLocations.length === 0) {
+        showToast('Please select at least one location', 'warning');
+        return;
+    }
+    
+    // Save to localStorage
+    localStorage.setItem('locationsChartLocationFilter', JSON.stringify(selectedLocationsChartLocations));
+    
+    // Re-render the locations chart with filter
+    renderLocationsChartWithFilter();
+    
+    // Close dropdown
+    document.getElementById('locationsChartDropdown').style.display = 'none';
+    showToast('Chart filter applied & saved', 'success');
+}
+
+function resetLocationsChartFilter() {
+    selectedLocationsChartLocations = null;
+    
+    // Clear localStorage
+    localStorage.removeItem('locationsChartLocationFilter');
+    
+    // Reset all checkboxes to checked
+    document.querySelectorAll('.locations-chart-location-checkbox').forEach(cb => {
+        cb.checked = true;
+    });
+    
+    // Re-render the locations chart without filter
+    renderLocationsChartWithFilter();
+    
+    // Close dropdown
+    document.getElementById('locationsChartDropdown').style.display = 'none';
+    showToast('Chart filter reset', 'success');
+}
+
+function renderLocationsChartWithFilter() {
+    // Count all locations to have complete data
+    const allLocationCounts = {};
+    students.forEach(s => {
+        const location = s.location && s.location.trim() ? s.location : 'Unknown';
+        allLocationCounts[location] = (allLocationCounts[location] || 0) + 1;
+    });
+    
+    // Sort by count and get top 15
+    let sortedLocations = Object.entries(allLocationCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 15);
+    
+    // If locations are filtered, show only selected ones (still from top 15)
+    if (selectedLocationsChartLocations) {
+        sortedLocations = sortedLocations.filter(entry => 
+            selectedLocationsChartLocations.includes(entry[0])
+        );
+    }
+    
+    const ctx3 = document.getElementById('locationsChart');
+    if (ctx3 && charts.locations) charts.locations.destroy();
+    if (ctx3) {
+        charts.locations = new Chart(ctx3, {
+            type: 'doughnut',
+            data: {
+                labels: sortedLocations.map(l => l[0]),
+                datasets: [{
+                    data: sortedLocations.map(l => l[1]),
+                    backgroundColor: sortedLocations.map(l => getColor(l[0])),
+                    borderColor: '#fff',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { position: 'bottom', labels: { boxWidth: 14, boxHeight: 14 } },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = sortedLocations.reduce((a, b) => a + b[1], 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return label + ': ' + value + ' (' + percentage + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+}
+
+// ============================================
+// REVENUE BY COHORT CHART FILTER
+// ============================================
+
+function initializeRevenueChartFilter() {
+    const settingsBtn = document.getElementById('revenueChartSettingsBtn');
+    const dropdown = document.getElementById('revenueChartDropdown');
+    
+    if (!settingsBtn) return;
+    
+    // Toggle dropdown on settings button click
+    settingsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.chart-settings-wrapper')) {
+            dropdown.style.display = 'none';
+        }
+    });
+    
+    // Populate cohort list
+    populateRevenueChartCohortList();
+    
+    // Load saved filter from localStorage
+    const saved = localStorage.getItem('revenueChartCohortFilter');
+    if (saved) {
+        selectedRevenueChartCohorts = JSON.parse(saved);
+        // Restore checkbox states
+        document.querySelectorAll('.revenue-chart-cohort-checkbox').forEach(cb => {
+            cb.checked = selectedRevenueChartCohorts.includes(cb.value);
+        });
+        // Apply the filter
+        renderRevenueChartWithFilter();
+    }
+}
+
+function populateRevenueChartCohortList() {
+    const cohortList = document.getElementById('revenueChartCohortList');
+    if (!cohortList) return;
+    
+    cohortList.innerHTML = '';
+    
+    // Get cohort names from the cohorts array (real cohorts from Manage Cohorts page)
+    if (!cohorts || cohorts.length === 0) {
+        cohortList.innerHTML = '<p style="padding: 10px 15px; color: #999; font-size: 12px;">No cohorts available</p>';
+        return;
+    }
+    
+    // Sort cohorts by name
+    const sortedCohorts = [...cohorts].sort((a, b) => a.name.localeCompare(b.name));
+    
+    sortedCohorts.forEach(cohort => {
+        const label = document.createElement('label');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = cohort.name;
+        checkbox.className = 'revenue-chart-cohort-checkbox';
+        checkbox.checked = true;
+        
+        const span = document.createElement('span');
+        span.textContent = cohort.name;
+        
+        label.appendChild(checkbox);
+        label.appendChild(span);
+        cohortList.appendChild(label);
+    });
+}
+
+function getSelectedRevenueChartCohorts() {
+    const checkboxes = document.querySelectorAll('.revenue-chart-cohort-checkbox:checked');
+    return Array.from(checkboxes).map(cb => cb.value);
+}
+
+function applyRevenueChartFilter() {
+    selectedRevenueChartCohorts = getSelectedRevenueChartCohorts();
+    if (selectedRevenueChartCohorts.length === 0) {
+        showToast('Please select at least one cohort', 'warning');
+        return;
+    }
+    
+    // Save to localStorage
+    localStorage.setItem('revenueChartCohortFilter', JSON.stringify(selectedRevenueChartCohorts));
+    
+    // Re-render the revenue chart with filter
+    renderRevenueChartWithFilter();
+    
+    // Close dropdown
+    document.getElementById('revenueChartDropdown').style.display = 'none';
+    showToast('Chart filter applied & saved', 'success');
+}
+
+function resetRevenueChartFilter() {
+    selectedRevenueChartCohorts = null;
+    
+    // Clear localStorage
+    localStorage.removeItem('revenueChartCohortFilter');
+    
+    // Reset all checkboxes to checked
+    document.querySelectorAll('.revenue-chart-cohort-checkbox').forEach(cb => {
+        cb.checked = true;
+    });
+    
+    // Re-render the revenue chart without filter
+    renderRevenueChartWithFilter();
+    
+    // Close dropdown
+    document.getElementById('revenueChartDropdown').style.display = 'none';
+    showToast('Chart filter reset', 'success');
+}
+
+function renderRevenueChartWithFilter() {
+    const dynamicCohorts = cohorts && cohorts.length > 0 ? cohorts.map(c => c.name) : COHORTS;
+    
+    // Filter cohorts based on selection
+    const cohortsToDisplay = selectedRevenueChartCohorts || dynamicCohorts;
+    
+    // Calculate revenue for each cohort
+    const cohortRevenue = {};
+    cohortsToDisplay.forEach(cohort => {
+        cohortRevenue[cohort] = students
+            .filter(s => s.cohort === cohort)
+            .reduce((sum, s) => sum + (s.paidAmount || 0), 0);
+    });
+
+    const ctx1 = document.getElementById('cohortRevenueChart');
+    if (ctx1 && charts.cohortRevenue) charts.cohortRevenue.destroy();
+    if (ctx1) {
+        // Get colors from database cohorts
+        const colors = cohortsToDisplay.map(cohortName => {
+            const cohortRecord = cohorts && cohorts.find(c => c.name === cohortName);
+            return cohortRecord && cohortRecord.color ? cohortRecord.color : '#4ECDC4';
+        });
+        
+        charts.cohortRevenue = new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: cohortsToDisplay,
+                datasets: [{
+                    label: 'Revenue ($)',
+                    data: cohortsToDisplay.map(c => cohortRevenue[c] || 0),
+                    backgroundColor: colors
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+}
+
+// ============================================
+// STUDENTS BY COHORT CHART FILTER
+// ============================================
+
+function initializeStudentsChartFilter() {
+    const settingsBtn = document.getElementById('studentsChartSettingsBtn');
+    const dropdown = document.getElementById('studentsChartDropdown');
+    
+    if (!settingsBtn) return;
+    
+    // Toggle dropdown on settings button click
+    settingsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.chart-settings-wrapper')) {
+            dropdown.style.display = 'none';
+        }
+    });
+    
+    // Populate cohort list
+    populateStudentsChartCohortList();
+    
+    // Load saved filter from localStorage
+    const saved = localStorage.getItem('studentsChartCohortFilter');
+    if (saved) {
+        selectedStudentsChartCohorts = JSON.parse(saved);
+        // Restore checkbox states
+        document.querySelectorAll('.students-chart-cohort-checkbox').forEach(cb => {
+            cb.checked = selectedStudentsChartCohorts.includes(cb.value);
+        });
+        // Apply the filter
+        renderStudentsChartWithFilter();
+    }
+}
+
+function populateStudentsChartCohortList() {
+    const cohortList = document.getElementById('studentsChartCohortList');
+    if (!cohortList) return;
+    
+    cohortList.innerHTML = '';
+    
+    // Get cohort names from the cohorts array (real cohorts from Manage Cohorts page)
+    if (!cohorts || cohorts.length === 0) {
+        cohortList.innerHTML = '<p style="padding: 10px 15px; color: #999; font-size: 12px;">No cohorts available</p>';
+        return;
+    }
+    
+    // Sort cohorts by name
+    const sortedCohorts = [...cohorts].sort((a, b) => a.name.localeCompare(b.name));
+    
+    sortedCohorts.forEach(cohort => {
+        const label = document.createElement('label');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = cohort.name;
+        checkbox.className = 'students-chart-cohort-checkbox';
+        checkbox.checked = true;
+        
+        const span = document.createElement('span');
+        span.textContent = cohort.name;
+        
+        label.appendChild(checkbox);
+        label.appendChild(span);
+        cohortList.appendChild(label);
+    });
+}
+
+function getSelectedStudentsChartCohorts() {
+    const checkboxes = document.querySelectorAll('.students-chart-cohort-checkbox:checked');
+    return Array.from(checkboxes).map(cb => cb.value);
+}
+
+function applyStudentsChartFilter() {
+    selectedStudentsChartCohorts = getSelectedStudentsChartCohorts();
+    if (selectedStudentsChartCohorts.length === 0) {
+        showToast('Please select at least one cohort', 'warning');
+        return;
+    }
+    
+    // Save to localStorage
+    localStorage.setItem('studentsChartCohortFilter', JSON.stringify(selectedStudentsChartCohorts));
+    
+    // Re-render the students chart with filter
+    renderStudentsChartWithFilter();
+    
+    // Close dropdown
+    document.getElementById('studentsChartDropdown').style.display = 'none';
+    showToast('Chart filter applied & saved', 'success');
+}
+
+function resetStudentsChartFilter() {
+    selectedStudentsChartCohorts = null;
+    
+    // Clear localStorage
+    localStorage.removeItem('studentsChartCohortFilter');
+    
+    // Reset all checkboxes to checked
+    document.querySelectorAll('.students-chart-cohort-checkbox').forEach(cb => {
+        cb.checked = true;
+    });
+    
+    // Re-render the students chart without filter
+    renderStudentsChartWithFilter();
+    
+    // Close dropdown
+    document.getElementById('studentsChartDropdown').style.display = 'none';
+    showToast('Chart filter reset', 'success');
+}
+
+function renderStudentsChartWithFilter() {
+    const dynamicCohorts = cohorts && cohorts.length > 0 ? cohorts.map(c => c.name) : COHORTS;
+    
+    // Filter cohorts based on selection
+    const cohortsToDisplay = selectedStudentsChartCohorts || dynamicCohorts;
+    
+    // Calculate student count for each cohort
+    const cohortStudents = {};
+    cohortsToDisplay.forEach(cohort => {
+        cohortStudents[cohort] = students.filter(s => s.cohort === cohort).length;
+    });
+
+    const ctx2 = document.getElementById('cohortStudentsChart');
+    if (ctx2 && charts.cohortStudents) charts.cohortStudents.destroy();
+    if (ctx2) {
+        // Get colors from database cohorts
+        const colors = cohortsToDisplay.map(cohortName => {
+            const cohortRecord = cohorts && cohorts.find(c => c.name === cohortName);
+            return cohortRecord && cohortRecord.color ? cohortRecord.color : '#667EEA';
+        });
+        
+        charts.cohortStudents = new Chart(ctx2, {
+            type: 'bar',
+            data: {
+                labels: cohortsToDisplay,
+                datasets: [{
+                    label: 'Students',
+                    data: cohortsToDisplay.map(c => cohortStudents[c] || 0),
+                    backgroundColor: colors
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+}
+
+// ============================================
+// COHORT SUMMARY CARDS MANAGEMENT
+// ============================================
+
+function initializeCohortsSettings() {
+    const settingsBtn = document.getElementById('cohortsSettingsBtn');
+    const dropdown = document.getElementById('cohortsDropdown');
+    
+    if (!settingsBtn) return;
+    
+    // Toggle dropdown on settings button click
+    settingsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.cohort-settings-wrapper')) {
+            dropdown.style.display = 'none';
+        }
+    });
+    
+    // Populate cohorts list
+    populateCohortsCheckboxList();
+    
+    // Load saved visibility from localStorage
+    const saved = localStorage.getItem('cohortVisibility');
+    if (saved) {
+        visibleCohorts = JSON.parse(saved);
+        // Restore checkbox states
+        document.querySelectorAll('.cohort-visibility-checkbox').forEach(cb => {
+            cb.checked = visibleCohorts.includes(cb.value);
+        });
+    }
+}
+
+function populateCohortsCheckboxList() {
+    const cohortsList = document.getElementById('cohortsList');
+    if (!cohortsList) return;
+    
+    cohortsList.innerHTML = '';
+    
+    if (!cohorts || cohorts.length === 0) {
+        cohortsList.innerHTML = '<p style="padding: 10px 15px; color: #999; font-size: 12px;">No cohorts available</p>';
+        return;
+    }
+    
+    // Create checkboxes for all cohorts
+    cohorts.forEach(cohort => {
+        const label = document.createElement('label');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = cohort.name;
+        checkbox.className = 'cohort-visibility-checkbox';
+        checkbox.checked = !visibleCohorts || visibleCohorts.includes(cohort.name);
+        
+        const span = document.createElement('span');
+        span.textContent = cohort.name;
+        
+        label.appendChild(checkbox);
+        label.appendChild(span);
+        cohortsList.appendChild(label);
+    });
+}
+
+function getSelectedCohorts() {
+    const checkboxes = document.querySelectorAll('.cohort-visibility-checkbox:checked');
+    return Array.from(checkboxes).map(cb => cb.value);
+}
+
+function applyCohortVisibility() {
+    const selectedCohorts = getSelectedCohorts();
+    if (selectedCohorts.length === 0) {
+        showToast('Please select at least one cohort', 'warning');
+        return;
+    }
+    
+    visibleCohorts = selectedCohorts;
+    
+    // Save to localStorage
+    localStorage.setItem('cohortVisibility', JSON.stringify(visibleCohorts));
+    
+    renderCohortSummaryCards();
+    
+    // Close dropdown
+    document.getElementById('cohortsDropdown').style.display = 'none';
+    showToast('Cohort visibility updated & saved', 'success');
+}
+
+function renderCohortSummaryCards() {
+    const container = document.getElementById('cohortsCardsContainer');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    // Debug: Show all unique cohorts in students array
+    const uniqueStudentCohorts = [...new Set(students.map(s => s.cohort))];
+    console.log('🔍 Unique cohorts in students array:', uniqueStudentCohorts);
+    
+    // Determine which cohorts to show
+    const cohortsToShow = visibleCohorts || (cohorts ? cohorts.map(c => c.name) : []);
+    
+    // Only show cohorts that exist in the database
+    const validCohorts = cohorts ? cohorts.filter(c => cohortsToShow.includes(c.name)) : [];
+    
+    if (validCohorts.length === 0) {
+        container.innerHTML = '<p style="padding: 20px; color: #999;">No cohorts to display</p>';
+        return;
+    }
+    
+    validCohorts.forEach(cohort => {
+        // Count students and revenue for this cohort
+        const cohortStudents = students.filter(s => s.cohort === cohort.name);
+        const studentCount = cohortStudents.length;
+        const revenue = cohortStudents.reduce((sum, s) => sum + (s.paidAmount || 0), 0);
+        
+        console.log(`📊 Cohort "${cohort.name}": ${studentCount} students, $${revenue.toFixed(2)} revenue`);
+        
+        // Create sanitized ID for this cohort (replace spaces and special chars)
+        const sanitizedName = cohort.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+        const countId = `cohort-${sanitizedName}-count`;
+        const revenueId = `cohort-${sanitizedName}-revenue`;
+        
+        const card = document.createElement('div');
+        card.className = 'chart-card';
+        card.innerHTML = `
+            <div class="chart-title">${cohort.name} Summary</div>
+            <div class="cohort-stats">
+                <div class="cohort-stat-item">
+                    <div class="cohort-stat-label">Students</div>
+                    <div class="cohort-stat-value" id="${countId}">${studentCount}</div>
+                </div>
+                <div class="cohort-stat-item cohort-revenue-item">
+                    <button class="eye-toggle-small" data-revenue-id="${revenueId}" title="Toggle revenue visibility">
+                        <i class="fas fa-eye-slash"></i>
+                    </button>
+                    <div class="cohort-stat-label">Revenue</div>
+                    <div class="cohort-stat-value hidden" id="${revenueId}" data-value="$${revenue.toFixed(2)}">●●●</div>
+                </div>
+            </div>
+        `;
+        
+        container.appendChild(card);
+    });
+    
+    // Re-attach revenue toggle listeners
+    document.querySelectorAll('.eye-toggle-small').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const revenueId = this.getAttribute('data-revenue-id');
+            const revenueElement = document.getElementById(revenueId);
+            const isHidden = revenueElement.classList.contains('hidden');
+            
+            if (isHidden) {
+                // Show the actual value
+                revenueElement.textContent = revenueElement.getAttribute('data-value');
+                revenueElement.classList.remove('hidden');
+                this.innerHTML = '<i class="fas fa-eye"></i>';
+            } else {
+                // Hide and show circles
+                revenueElement.textContent = '●●●';
+                revenueElement.classList.add('hidden');
+                this.innerHTML = '<i class="fas fa-eye-slash"></i>';
+            }
+        });
     });
 }
 
@@ -2834,6 +3645,9 @@ async function loadStudents() {
                 students = serverStudents;
                 console.log(`✅ Loaded ${students.length} students from Supabase`);
                 
+                // Sync cohort names with database
+                await syncStudentCohortNames();
+                
                 // Load checklist completion data and WAIT for it to complete
                 // This ensures percentages are calculated correctly before rendering
                 await loadChecklistCompletionForAllStudents();
@@ -2856,6 +3670,75 @@ async function loadStudents() {
     await loadChecklistCompletionForAllStudents();
     
     logStudentStats();
+}
+
+async function syncStudentCohortNames() {
+    // Wait for cohorts to be loaded if not already
+    if (!cohorts || cohorts.length === 0) {
+        console.log('⏳ Waiting for cohorts to load before syncing...');
+        return; // Cohorts will be loaded, sync will happen later
+    }
+    
+    const cohortNamesInDb = cohorts.map(c => c.name);
+    const uniqueStudentCohorts = [...new Set(students.map(s => s.cohort))];
+    
+    // Find cohorts that exist in students but not in database
+    const mismatchedCohorts = uniqueStudentCohorts.filter(sCohort => !cohortNamesInDb.includes(sCohort));
+    
+    if (mismatchedCohorts.length > 0) {
+        console.warn(`⚠️  Found ${mismatchedCohorts.length} mismatched cohort names:`, mismatchedCohorts);
+        
+        let correctedStudents = JSON.parse(JSON.stringify(students)); // Deep copy
+        let updateCount = 0;
+        
+        // Try fuzzy matching: match "Cohort 000" to "Cohort 00" or "Cohort 0"
+        mismatchedCohorts.forEach(mismatchedCohort => {
+            const matchingDbCohort = cohortNamesInDb.find(dbCohort => {
+                // Exact match (case-insensitive)
+                if (dbCohort.toLowerCase().trim() === mismatchedCohort.toLowerCase().trim()) {
+                    return true;
+                }
+                
+                // Fuzzy match: normalize zeros (Cohort 0, Cohort 00, Cohort 000 all match)
+                const normalizeZeros = str => str.toLowerCase().replace(/\b0+/g, '0');
+                if (normalizeZeros(dbCohort) === normalizeZeros(mismatchedCohort)) {
+                    return true;
+                }
+                
+                return false;
+            });
+            
+            if (matchingDbCohort) {
+                console.log(`🔄 Syncing: "${mismatchedCohort}" -> "${matchingDbCohort}"`);
+                correctedStudents = correctedStudents.map(s => 
+                    s.cohort === mismatchedCohort ? { ...s, cohort: matchingDbCohort } : s
+                );
+                updateCount += correctedStudents.filter(s => s.cohort === matchingDbCohort).length;
+            }
+        });
+        
+        if (updateCount > 0) {
+            console.log(`✅ Synced ${updateCount} students to matching database cohorts`);
+            
+            // Save corrected students back to database
+            try {
+                const saveResponse = await fetch(`${API_BASE_URL}/api/students`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(correctedStudents)
+                });
+                
+                if (saveResponse.ok) {
+                    students = correctedStudents;
+                    console.log('✅ Saved corrected cohort assignments to database');
+                } else {
+                    console.error('❌ Failed to save corrected students');
+                }
+            } catch (error) {
+                console.error('❌ Error saving corrected students:', error);
+            }
+        }
+    }
 }
 
 function logStudentStats() {
@@ -4749,10 +5632,10 @@ async function saveCohort(event) {
         if (response.ok) {
             // If editing and name changed, update all student records with the old name
             if (editingCohortId && editingCohortOldName && editingCohortOldName !== name) {
-                // Update students whose status matches the old cohort name
+                // Update students whose cohort matches the old cohort name
                 const updatedStudents = students.map(student => {
-                    if (student.status === editingCohortOldName) {
-                        return { ...student, status: name };
+                    if (student.cohort === editingCohortOldName) {
+                        return { ...student, cohort: name };
                     }
                     return student;
                 });
@@ -4767,6 +5650,7 @@ async function saveCohort(event) {
                 if (saveResponse.ok) {
                     // Update local students array
                     students = updatedStudents;
+                    console.log(`✅ Updated ${updatedStudents.filter(s => s.cohort === name).length} students from "${editingCohortOldName}" to "${name}"`);
                 } else {
                     console.error('⚠️  Warning: Failed to update student records with new cohort name');
                 }
