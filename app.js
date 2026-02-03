@@ -1436,6 +1436,22 @@ function renderCohortPage(cohortId) {
 
     page.innerHTML = tableHtml;
 
+    // Add containers for links and videos
+    const sanitizedCohortName = cohort.replace(/[^a-z0-9]/gi, '');
+    const resourcesHtml = `
+        <div id="links-container-${sanitizedCohortName}" style="margin-top: 40px;"></div>
+        <div id="videos-container-${sanitizedCohortName}" style="margin-top: 40px;"></div>
+    `;
+    page.innerHTML += resourcesHtml;
+
+    // Load and render cohort resources (links and videos)
+    if (typeof renderCohortLinks === 'function') {
+        renderCohortLinks(cohort);
+    }
+    if (typeof renderCohortVideos === 'function') {
+        renderCohortVideos(cohort);
+    }
+
     // Add search functionality
     const searchInput = document.getElementById(`searchCohort-${cohortId}`);
     if (searchInput) {

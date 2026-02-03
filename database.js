@@ -1075,3 +1075,198 @@ export function closeDatabase() {
     console.log('✅ Supabase connection closed');
 }
 
+// ============================================
+// COHORT LINKS & VIDEOS MANAGEMENT
+// ============================================
+
+// Get all cohort links
+export async function getCohortLinks(cohortName) {
+    try {
+        if (!supabase) {
+            console.warn('⚠️ Supabase not available, returning empty links');
+            return [];
+        }
+
+        const { data, error } = await supabase
+            .from('cohort_links')
+            .select('*')
+            .eq('cohort_name', cohortName)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('❌ Error fetching cohort links:', error.message);
+            return [];
+        }
+        
+        return data || [];
+    } catch (error) {
+        console.error('❌ Error fetching cohort links:', error.message);
+        return [];
+    }
+}
+
+// Add cohort link
+export async function addCohortLink(cohortName, name, url) {
+    try {
+        if (!supabase) {
+            throw new Error('Supabase not initialized');
+        }
+
+        const { data, error } = await supabase
+            .from('cohort_links')
+            .insert([{
+                cohort_name: cohortName,
+                name,
+                url,
+                created_at: new Date().toISOString()
+            }])
+            .select();
+
+        if (error) throw error;
+        console.log(`✅ Added link "${name}" to ${cohortName}`);
+        return data?.[0];
+    } catch (error) {
+        console.error('❌ Error adding cohort link:', error.message);
+        throw error;
+    }
+}
+
+// Update cohort link
+export async function updateCohortLink(id, name, url) {
+    try {
+        if (!supabase) {
+            throw new Error('Supabase not initialized');
+        }
+
+        const { data, error } = await supabase
+            .from('cohort_links')
+            .update({ name, url })
+            .eq('id', id)
+            .select();
+
+        if (error) throw error;
+        console.log(`✅ Updated link "${name}"`);
+        return data?.[0];
+    } catch (error) {
+        console.error('❌ Error updating cohort link:', error.message);
+        throw error;
+    }
+}
+
+// Delete cohort link
+export async function deleteCohortLink(id) {
+    try {
+        if (!supabase) {
+            throw new Error('Supabase not initialized');
+        }
+
+        const { error } = await supabase
+            .from('cohort_links')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        console.log(`✅ Deleted link`);
+        return true;
+    } catch (error) {
+        console.error('❌ Error deleting cohort link:', error.message);
+        throw error;
+    }
+}
+
+// Get all cohort videos
+export async function getCohortVideos(cohortName) {
+    try {
+        if (!supabase) {
+            console.warn('⚠️ Supabase not available, returning empty videos');
+            return [];
+        }
+
+        const { data, error } = await supabase
+            .from('cohort_videos')
+            .select('*')
+            .eq('cohort_name', cohortName)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('❌ Error fetching cohort videos:', error.message);
+            return [];
+        }
+        
+        return data || [];
+    } catch (error) {
+        console.error('❌ Error fetching cohort videos:', error.message);
+        return [];
+    }
+}
+
+// Add cohort video
+export async function addCohortVideo(cohortName, name, thumbnail, url) {
+    try {
+        if (!supabase) {
+            throw new Error('Supabase not initialized');
+        }
+
+        const { data, error } = await supabase
+            .from('cohort_videos')
+            .insert([{
+                cohort_name: cohortName,
+                name,
+                thumbnail,
+                url,
+                created_at: new Date().toISOString()
+            }])
+            .select();
+
+        if (error) throw error;
+        console.log(`✅ Added video "${name}" to ${cohortName}`);
+        return data?.[0];
+    } catch (error) {
+        console.error('❌ Error adding cohort video:', error.message);
+        throw error;
+    }
+}
+
+// Update cohort video
+export async function updateCohortVideo(id, name, thumbnail, url) {
+    try {
+        if (!supabase) {
+            throw new Error('Supabase not initialized');
+        }
+
+        const { data, error } = await supabase
+            .from('cohort_videos')
+            .update({ name, thumbnail, url })
+            .eq('id', id)
+            .select();
+
+        if (error) throw error;
+        console.log(`✅ Updated video "${name}"`);
+        return data?.[0];
+    } catch (error) {
+        console.error('❌ Error updating cohort video:', error.message);
+        throw error;
+    }
+}
+
+// Delete cohort video
+export async function deleteCohortVideo(id) {
+    try {
+        if (!supabase) {
+            throw new Error('Supabase not initialized');
+        }
+
+        const { error } = await supabase
+            .from('cohort_videos')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        console.log(`✅ Deleted video`);
+        return true;
+    } catch (error) {
+        console.error('❌ Error deleting cohort video:', error.message);
+        throw error;
+    }
+}
+

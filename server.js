@@ -145,7 +145,7 @@ let dbReady = false;
 let dbInitError = null;
 (async () => {
     try {
-        await initializeDatabase();
+        global.supabase = await initializeDatabase();
         await initializeColumnPreferencesTable();
         dbReady = true;
         console.log('🔧 Database initialization complete');
@@ -711,6 +711,210 @@ app.delete('/api/cohorts/:id', async (req, res) => {
     } catch (error) {
         console.error('❌ Error deleting cohort:', error);
         res.status(500).json({ error: 'Failed to delete cohort' });
+    }
+});
+
+// ============================================
+// COHORT LINKS ENDPOINTS
+// ============================================
+
+// Get all links for a cohort
+app.get('/api/cohort-links/:cohortName', async (req, res) => {
+    try {
+        const { cohortName } = req.params;
+        if (!global.supabase) {
+            res.json([]);
+            return;
+        }
+        
+        const { data, error } = await global.supabase
+            .from('cohort_links')
+            .select('*')
+            .eq('cohort_name', decodeURIComponent(cohortName))
+            .order('created_at', { ascending: true });
+        
+        if (error) throw error;
+        res.json(data || []);
+    } catch (error) {
+        console.error('❌ Error fetching cohort links:', error);
+        res.status(500).json({ error: 'Failed to fetch links' });
+    }
+});
+
+// Add a new link
+app.post('/api/cohort-links', async (req, res) => {
+    try {
+        const { cohort_name, name, url } = req.body;
+        console.log('📝 Adding cohort link:', { cohort_name, name, url });
+        
+        if (!global.supabase) {
+            console.error('❌ Supabase not initialized');
+            res.status(500).json({ error: 'Database not available' });
+            return;
+        }
+        
+        const { data, error } = await global.supabase
+            .from('cohort_links')
+            .insert([{ cohort_name, name, url }])
+            .select();
+        
+        if (error) {
+            console.error('❌ Supabase error:', error.message, error.code, error.details);
+            throw error;
+        }
+        console.log('✅ Link added:', data);
+        res.json(data[0]);
+    } catch (error) {
+        console.error('❌ Error adding cohort link:', error.message);
+        res.status(500).json({ error: 'Failed to add link', details: error.message });
+    }
+});
+
+// Update a link
+app.put('/api/cohort-links/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, url } = req.body;
+        if (!global.supabase) {
+            res.status(500).json({ error: 'Database not available' });
+            return;
+        }
+        
+        const { data, error } = await global.supabase
+            .from('cohort_links')
+            .update({ name, url })
+            .eq('id', parseInt(id))
+            .select();
+        
+        if (error) throw error;
+        res.json(data[0]);
+    } catch (error) {
+        console.error('❌ Error updating cohort link:', error);
+        res.status(500).json({ error: 'Failed to update link' });
+    }
+});
+
+// Delete a link
+app.delete('/api/cohort-links/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!global.supabase) {
+            res.status(500).json({ error: 'Database not available' });
+            return;
+        }
+        
+        const { error } = await global.supabase
+            .from('cohort_links')
+            .delete()
+            .eq('id', parseInt(id));
+        
+        if (error) throw error;
+        res.json({ success: true });
+    } catch (error) {
+        console.error('❌ Error deleting cohort link:', error);
+        res.status(500).json({ error: 'Failed to delete link' });
+    }
+});
+
+// ============================================
+// COHORT VIDEOS ENDPOINTS
+// ============================================
+
+// Get all videos for a cohort
+app.get('/api/cohort-videos/:cohortName', async (req, res) => {
+    try {
+        const { cohortName } = req.params;
+        if (!global.supabase) {
+            res.json([]);
+            return;
+        }
+        
+        const { data, error } = await global.supabase
+            .from('cohort_videos')
+            .select('*')
+            .eq('cohort_name', decodeURIComponent(cohortName))
+            .order('created_at', { ascending: true });
+        
+        if (error) throw error;
+        res.json(data || []);
+    } catch (error) {
+        console.error('❌ Error fetching cohort videos:', error);
+        res.status(500).json({ error: 'Failed to fetch videos' });
+    }
+});
+
+// Add a new video
+app.post('/api/cohort-videos', async (req, res) => {
+    try {
+        const { cohort_name, name, thumbnail, url } = req.body;
+        console.log('📹 Adding cohort video:', { cohort_name, name, thumbnail, url });
+        
+        if (!global.supabase) {
+            console.error('❌ Supabase not initialized');
+            res.status(500).json({ error: 'Database not available' });
+            return;
+        }
+        
+        const { data, error } = await global.supabase
+            .from('cohort_videos')
+            .insert([{ cohort_name, name, thumbnail, url }])
+            .select();
+        
+        if (error) {
+            console.error('❌ Supabase error:', error.message, error.code, error.details);
+            throw error;
+        }
+        console.log('✅ Video added:', data);
+        res.json(data[0]);
+    } catch (error) {
+        console.error('❌ Error adding cohort video:', error.message);
+        res.status(500).json({ error: 'Failed to add video', details: error.message });
+    }
+});
+
+// Update a video
+app.put('/api/cohort-videos/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, thumbnail, url } = req.body;
+        if (!global.supabase) {
+            res.status(500).json({ error: 'Database not available' });
+            return;
+        }
+        
+        const { data, error } = await global.supabase
+            .from('cohort_videos')
+            .update({ name, thumbnail, url })
+            .eq('id', parseInt(id))
+            .select();
+        
+        if (error) throw error;
+        res.json(data[0]);
+    } catch (error) {
+        console.error('❌ Error updating cohort video:', error);
+        res.status(500).json({ error: 'Failed to update video' });
+    }
+});
+
+// Delete a video
+app.delete('/api/cohort-videos/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!global.supabase) {
+            res.status(500).json({ error: 'Database not available' });
+            return;
+        }
+        
+        const { error } = await global.supabase
+            .from('cohort_videos')
+            .delete()
+            .eq('id', parseInt(id));
+        
+        if (error) throw error;
+        res.json({ success: true });
+    } catch (error) {
+        console.error('❌ Error deleting cohort video:', error);
+        res.status(500).json({ error: 'Failed to delete video' });
     }
 });
 
