@@ -1141,7 +1141,7 @@ app.post('/api/admin/set-student-password', async (req, res) => {
 });
 
 // Get student password for email templates
-app.all('/api/admin/get-student-password', async (req, res) => {
+app.post('/api/password', async (req, res) => {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }

@@ -3610,7 +3610,7 @@ async function sendEmailTemplatesWithDelay(student, templates) {
     if (templatesNeedPassword) {
         try {
             const sessionToken = localStorage.getItem('token');
-            const response = await fetch(`${API_BASE_URL}/api/admin/get-student-password`, {
+            const response = await fetch(`${API_BASE_URL}/api/password`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -5148,7 +5148,7 @@ async function sendEmailToStudent(templateId, studentId) {
     if (templateNeedsPassword) {
         try {
             const sessionToken = localStorage.getItem('token');
-            const response = await fetch(`${API_BASE_URL}/api/admin/get-student-password`, {
+            const response = await fetch(`${API_BASE_URL}/api/password`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
