@@ -560,7 +560,21 @@ export async function getAllCohorts() {
             .order('created_at', { ascending: true });
 
         if (error) throw error;
-        return data || [];
+        
+        // Enrich cohorts with their links and videos
+        const enrichedCohorts = await Promise.all(
+            (data || []).map(async (cohort) => {
+                const links = await getCohortLinks(cohort.name);
+                const videos = await getCohortVideos(cohort.name);
+                return {
+                    ...cohort,
+                    links: links || [],
+                    videos: videos || []
+                };
+            })
+        );
+        
+        return enrichedCohorts;
     } catch (error) {
         console.error('❌ Error fetching cohorts:', error.message);
         return [];
@@ -1270,3 +1284,370 @@ export async function deleteCohortVideo(id) {
     }
 }
 
+// ============================================
+// AUTHENTICATION FUNCTIONS
+// ============================================
+
+// Login user - verify credentials
+export async function loginAdmin(email, password) {
+    if (!supabase) {
+        throw new Error('Supabase not initialized');
+    }
+
+    try {
+        const { data, error } = await supabase
+            .from('admin_users')
+            .select('id, email, name, is_admin, is_active')
+            .eq('email', email)
+            .eq('is_active', true)
+            .single();
+
+        if (error || !data) {
+            throw new Error('User not found');
+        }
+
+        // Verify password (in production, use bcrypt)
+        const { data: passwordCheck } = await supabase
+            .from('admin_users')
+            .select('password_hash')
+            .eq('id', data.id)
+            .single();
+
+        if (!passwordCheck || passwordCheck.password_hash !== password) {
+            throw new Error('Invalid password');
+        }
+
+        // Update last login timestamp
+        await supabase
+            .from('admin_users')
+            .update({ last_login: new Date().toISOString() })
+            .eq('id', data.id);
+
+        console.log(`✅ Admin user logged in: ${email}`);
+        return data;
+    } catch (error) {
+        console.error('❌ Error logging in admin:', error.message);
+        throw error;
+    }
+}
+
+// Create session token
+export async function createSessionToken(userId) {
+    if (!supabase) {
+        throw new Error('Supabase not initialized');
+    }
+
+    try {
+        const sessionToken = generateSessionToken();
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+        const { data, error } = await supabase
+            .from('admin_sessions')
+            .insert({
+                user_id: userId,
+                session_token: sessionToken,
+                expires_at: expiresAt.toISOString(),
+                is_active: true
+            })
+            .select()
+            .single();
+
+        if (error) throw error;
+        console.log(`✅ Session created for user ${userId}`);
+        return sessionToken;
+    } catch (error) {
+        console.error('❌ Error creating session:', error.message);
+        throw error;
+    }
+}
+
+// Verify session token
+export async function verifySessionToken(sessionToken) {
+    if (!supabase) {
+        throw new Error('Supabase not initialized');
+    }
+
+    try {
+        const { data, error } = await supabase
+            .from('admin_sessions')
+            .select('user_id, expires_at, is_active')
+            .eq('session_token', sessionToken)
+            .single();
+
+        if (error || !data) {
+            throw new Error('Session not found');
+        }
+
+        if (!data.is_active) {
+            throw new Error('Session inactive');
+        }
+
+        // Check if session expired
+        if (new Date(data.expires_at) < new Date()) {
+            throw new Error('Session expired');
+        }
+
+        return data.user_id;
+    } catch (error) {
+        console.error('❌ Error verifying session:', error.message);
+        throw error;
+    }
+}
+
+// Logout - invalidate session
+export async function logoutSession(sessionToken) {
+    if (!supabase) {
+        throw new Error('Supabase not initialized');
+    }
+
+    try {
+        const { error } = await supabase
+            .from('admin_sessions')
+            .update({ is_active: false })
+            .eq('session_token', sessionToken);
+
+        if (error) throw error;
+        console.log('✅ Session logged out');
+        return true;
+    } catch (error) {
+        console.error('❌ Error logging out:', error.message);
+        throw error;
+    }
+}
+
+// Get admin user by ID
+export async function getAdminUserById(userId) {
+    if (!supabase) {
+        throw new Error('Supabase not initialized');
+    }
+
+    try {
+        const { data, error } = await supabase
+            .from('admin_users')
+            .select('id, email, name, is_admin, is_active')
+            .eq('id', userId)
+            .single();
+
+        if (error || !data) {
+            throw new Error('User not found');
+        }
+
+        return data;
+    } catch (error) {
+        console.error('❌ Error fetching user:', error.message);
+        throw error;
+    }
+}
+
+// Generate random session token
+function generateSessionToken() {
+    return Math.random().toString(36).substring(2) + Date.now().toString(36);
+}
+
+// ============================================
+// STUDENT PASSWORD MANAGEMENT
+// ============================================
+
+// Set/Update student password
+export async function setStudentPassword(studentId, email, password) {
+    if (!supabase) {
+        throw new Error('Supabase not initialized');
+    }
+
+    try {
+        const { data: existing, error: fetchError } = await supabase
+            .from('student_passwords')
+            .select('id')
+            .eq('student_id', studentId)
+            .single();
+
+        if (existing) {
+            // Update existing password
+            const { error } = await supabase
+                .from('student_passwords')
+                .update({ 
+                    password_hash: password, // In production, use bcrypt
+                    updated_at: new Date().toISOString()
+                })
+                .eq('student_id', studentId);
+
+            if (error) throw error;
+            console.log(`✅ Password updated for student: ${email}`);
+            return true;
+        } else {
+            // Create new password record
+            const { error } = await supabase
+                .from('student_passwords')
+                .insert([{
+                    student_id: studentId,
+                    email: email,
+                    password_hash: password, // In production, use bcrypt
+                    created_at: new Date().toISOString()
+                }]);
+
+            if (error) throw error;
+            console.log(`✅ Password set for student: ${email}`);
+            return true;
+        }
+    } catch (error) {
+        console.error('❌ Error setting student password:', error.message);
+        throw error;
+    }
+}
+
+// Authenticate student with email and password
+export async function authenticateStudent(email, password) {
+    if (!supabase) {
+        throw new Error('Supabase not initialized');
+    }
+
+    try {
+        // Check if student has a password set
+        const { data: studentPass, error: passError } = await supabase
+            .from('student_passwords')
+            .select('student_id, password_hash')
+            .eq('email', email)
+            .single();
+
+        console.log(`🔍 Auth attempt for email: ${email}`);
+        console.log(`📋 Query result:`, { studentPass, passError });
+
+        if (passError || !studentPass) {
+            console.error(`❌ No password record found for ${email}:`, passError);
+            throw new Error('Invalid email or password');
+        }
+
+        // Compare password (in production, use bcrypt)
+        if (studentPass.password_hash !== password) {
+            console.error(`❌ Password mismatch for ${email}`);
+            console.log(`   Stored: ${studentPass.password_hash}`);
+            console.log(`   Provided: ${password}`);
+            throw new Error('Invalid email or password');
+        }
+
+        console.log(`✅ Password matched for ${email}, fetching student details`);
+
+        // Get student details
+        const { data: student, error: studentError } = await supabase
+            .from('students')
+            .select('*')
+            .eq('id', studentPass.student_id)
+            .single();
+
+        if (studentError || !student) {
+            console.error(`❌ Student not found for ID ${studentPass.student_id}:`, studentError);
+            throw new Error('Student not found');
+        }
+
+        return convertStudentFromDatabase(student);
+    } catch (error) {
+        console.error('❌ Error authenticating student:', error.message);
+        throw error;
+    }
+}
+
+// Create student session token
+export async function createStudentSessionToken(studentId) {
+    if (!supabase) {
+        throw new Error('Supabase not initialized');
+    }
+
+    try {
+        const sessionToken = generateSessionToken();
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
+        const { error } = await supabase
+            .from('student_sessions')
+            .insert([{
+                student_id: studentId,
+                session_token: sessionToken,
+                created_at: new Date().toISOString(),
+                expires_at: expiresAt,
+                is_active: true
+            }]);
+
+        if (error) throw error;
+        return sessionToken;
+    } catch (error) {
+        console.error('❌ Error creating student session:', error.message);
+        throw error;
+    }
+}
+
+// Verify student session token
+export async function verifyStudentSessionToken(sessionToken) {
+    if (!supabase) {
+        throw new Error('Supabase not initialized');
+    }
+
+    try {
+        const { data, error } = await supabase
+            .from('student_sessions')
+            .select('student_id, expires_at, is_active')
+            .eq('session_token', sessionToken)
+            .single();
+
+        if (error || !data) {
+            throw new Error('Session not found');
+        }
+
+        if (!data.is_active) {
+            throw new Error('Session inactive');
+        }
+
+        // Check if session expired
+        if (new Date(data.expires_at) < new Date()) {
+            throw new Error('Session expired');
+        }
+
+        return data.student_id;
+    } catch (error) {
+        console.error('❌ Error verifying student session:', error.message);
+        throw error;
+    }
+}
+
+// Get student by ID
+export async function getStudentById(studentId) {
+    if (!supabase) {
+        throw new Error('Supabase not initialized');
+    }
+
+    try {
+        const { data, error } = await supabase
+            .from('students')
+            .select('*')
+            .eq('id', studentId)
+            .single();
+
+        if (error || !data) {
+            throw new Error('Student not found');
+        }
+
+        return convertStudentFromDatabase(data);
+    } catch (error) {
+        console.error('❌ Error fetching student:', error.message);
+        throw error;
+    }
+}
+
+// Logout student - invalidate session
+export async function logoutStudentSession(sessionToken) {
+    if (!supabase) {
+        throw new Error('Supabase not initialized');
+    }
+
+    try {
+        const { error } = await supabase
+            .from('student_sessions')
+            .update({ is_active: false })
+            .eq('session_token', sessionToken);
+
+        if (error) throw error;
+        console.log('✅ Student session logged out');
+        return true;
+    } catch (error) {
+        console.error('❌ Error logging out student:', error.message);
+        throw error;
+    }
+}

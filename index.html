@@ -568,6 +568,19 @@
                     </div>
                 </div>
 
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="studentPassword">Student Login Password <span style="color: #ff6b6b; font-size: 12px;">(Optional)</span></label>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <input type="password" id="studentPassword" placeholder="Leave empty to keep existing password">
+                            <button type="button" onclick="generateRandomPassword()" class="btn-small" title="Generate random password" style="white-space: nowrap;">
+                                <i class="fas fa-dice"></i> Generate
+                            </button>
+                        </div>
+                        <small style="color: #666; margin-top: 4px; display: block;">Set a password for the student to login to their dashboard</small>
+                    </div>
+                </div>
+
                 <div class="form-row form-row-3col">
                     <div class="form-group">
                         <label for="totalAmount">Total Amount</label>
@@ -939,6 +952,7 @@
         </div>
     </div>
 
+    <script src="auth.js"></script>
     <script src="app.js"></script>
     <script src="cohort_resources.js"></script>
 </body>

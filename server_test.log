@@ -1,0 +1,73 @@
+📧 Gmail SMTP configured for osama.eldrieny@gmail.com
+🔍 Checking environment variables:
+   SUPABASE_URL: ✓ set
+   SUPABASE_KEY: ✓ set
+✅ Connected to Supabase PostgreSQL database
+🚀 Course Dashboard Server running on http://localhost:3002
+🌍 Environment: Local
+💾 Data storage: SQLite Database
+📊 API Endpoints:
+   POST /api/auth/login - Login admin
+   POST /api/auth/verify - Verify session
+   POST /api/auth/logout - Logout admin
+   GET  /api/students - Load students
+   POST /api/students - Save students
+   DELETE /api/students/:id - Delete student
+   GET  /api/export - Export students
+   GET  /api/health - Health check
+✅ Column preferences table ready
+🔧 Database initialization complete
+❌ Error logging in admin: User not found
+❌ Login error: Error: User not found
+    at loginAdmin (file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/database.js:1292:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/server.js:940:22
+❌ Error logging in admin: User not found
+❌ Login error: Error: User not found
+    at loginAdmin (file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/database.js:1292:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/server.js:940:22
+❌ Error logging in admin: User not found
+❌ Login error: Error: User not found
+    at loginAdmin (file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/database.js:1292:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/server.js:940:22
+❌ Error logging in admin: User not found
+❌ Login error: Error: User not found
+    at loginAdmin (file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/database.js:1292:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/server.js:940:22
+✅ Admin user logged in: osama.eldrieny@gmail.com
+✅ Session created for user 1
+✅ Loaded 5 email template categories from Supabase
+✅ Loaded 20 email templates from Supabase
+✅ Admin user logged in: osama.eldrieny@gmail.com
+✅ Session created for user 1
+✅ Loaded 5 email template categories from Supabase
+✅ Loaded 20 email templates from Supabase
+✅ Loaded 5 email template categories from Supabase
+❌ Error fetching from Supabase: <html>
+<head><title>500 Internal Server Error</title></head>
+<body>
+<center><h1>500 Internal Server Error</h1></center>
+<hr><center>cloudflare</center>
+</body>
+</html>
+
+❌ Error fetching student checklist completion: <html>
+<head><title>500 Internal Server Error</title></head>
+<body>
+<center><h1>500 Internal Server Error</h1></center>
+<hr><center>cloudflare</center>
+</body>
+</html>
+
+❌ Error fetching checklist completion: <html>
+<head><title>500 Internal Server Error</title></head>
+<body>
+<center><h1>500 Internal Server Error</h1></center>
+<hr><center>cloudflare</center>
+</body>
+</html>
+
+✅ Loaded 20 email templates from Supabase

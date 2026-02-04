@@ -5,7 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import nodemailer from 'nodemailer';
 import 'dotenv/config.js';
-import { 
+import {
     initializeDatabase, 
     getAllStudents, 
     saveAllStudents, 
@@ -19,6 +19,11 @@ import {
     logEmailSentToDB,
     getEmailLogsFromDB,
     getAllEmailLogsFromDB,
+    loginAdmin,
+    createSessionToken,
+    verifySessionToken,
+    logoutSession,
+    getAdminUserById,
     deleteEmailLogsForStudent,
     initializeColumnPreferencesTable,
     getColumnPreferences,
@@ -40,7 +45,13 @@ import {
     updateChecklistItem,
     deleteChecklistItem,
     getStudentChecklistCompletion,
-    saveStudentChecklistCompletion
+    saveStudentChecklistCompletion,
+    authenticateStudent,
+    createStudentSessionToken,
+    verifyStudentSessionToken,
+    getStudentById,
+    logoutStudentSession,
+    setStudentPassword
 } from './database.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -918,6 +929,216 @@ app.delete('/api/cohort-videos/:id', async (req, res) => {
     }
 });
 
+// ============================================
+// AUTHENTICATION ENDPOINTS
+// ============================================
+
+// Login endpoint
+app.post('/api/auth/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        if (!email || !password) {
+            return res.status(400).json({ message: 'Email and password required' });
+        }
+
+        // Login user
+        const user = await loginAdmin(email, password);
+
+        // Create session token
+        const sessionToken = await createSessionToken(user.id);
+
+        res.json({
+            success: true,
+            user: {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                isAdmin: user.is_admin
+            },
+            sessionToken
+        });
+    } catch (error) {
+        console.error('❌ Login error:', error);
+        res.status(401).json({ message: 'Invalid credentials' });
+    }
+});
+
+// Verify session endpoint
+app.post('/api/auth/verify', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ message: 'No session token' });
+        }
+
+        const sessionToken = authHeader.substring(7);
+
+        // Verify session
+        const userId = await verifySessionToken(sessionToken);
+
+        // Get user details
+        const user = await getAdminUserById(userId);
+
+        res.json({
+            success: true,
+            user: {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                isAdmin: user.is_admin
+            }
+        });
+    } catch (error) {
+        console.error('❌ Session verification error:', error);
+        res.status(401).json({ message: 'Invalid or expired session' });
+    }
+});
+
+// Logout endpoint
+app.post('/api/auth/logout', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(400).json({ message: 'No session token' });
+        }
+
+        const sessionToken = authHeader.substring(7);
+
+        // Logout session
+        await logoutSession(sessionToken);
+
+        res.json({ success: true, message: 'Logged out successfully' });
+    } catch (error) {
+        console.error('❌ Logout error:', error);
+        res.status(500).json({ error: 'Logout failed' });
+    }
+});
+
+// ============================================
+// STUDENT AUTHENTICATION ENDPOINTS
+// ============================================
+
+// Student login endpoint
+app.post('/api/student/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        if (!email || !password) {
+            return res.status(400).json({ message: 'Email and password required' });
+        }
+
+        // Authenticate student
+        const student = await authenticateStudent(email, password);
+
+        // Create student session token
+        const sessionToken = await createStudentSessionToken(student.id);
+
+        res.json({
+            success: true,
+            user: {
+                id: student.id,
+                email: student.email,
+                name: student.name,
+                cohort: student.cohort,
+                figmaEmail: student.figmaEmail,
+                totalAmount: student.totalAmount,
+                paidAmount: student.paidAmount,
+                remaining: student.remaining,
+                isStudent: true
+            },
+            sessionToken
+        });
+    } catch (error) {
+        console.error('❌ Student login error:', error);
+        res.status(401).json({ message: 'Invalid email or password' });
+    }
+});
+
+// Student verify session endpoint
+app.post('/api/student/verify', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ message: 'No session token' });
+        }
+
+        const sessionToken = authHeader.substring(7);
+
+        // Verify student session
+        const studentId = await verifyStudentSessionToken(sessionToken);
+
+        // Get student details
+        const student = await getStudentById(studentId);
+
+        res.json({
+            success: true,
+            user: {
+                id: student.id,
+                email: student.email,
+                name: student.name,
+                cohort: student.cohort,
+                figmaEmail: student.figmaEmail,
+                totalAmount: student.totalAmount,
+                paidAmount: student.paidAmount,
+                remaining: student.remaining,
+                isStudent: true
+            }
+        });
+    } catch (error) {
+        console.error('❌ Student session verification error:', error.message);
+        res.status(401).json({ message: 'Invalid or expired session', error: error.message });
+    }
+});
+
+// Student logout endpoint
+app.post('/api/student/logout', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(400).json({ message: 'No session token' });
+        }
+
+        const sessionToken = authHeader.substring(7);
+
+        // Logout student session
+        await logoutStudentSession(sessionToken);
+
+        res.json({ success: true, message: 'Logged out successfully' });
+    } catch (error) {
+        console.error('❌ Student logout error:', error);
+        res.status(500).json({ error: 'Logout failed' });
+    }
+});
+
+// Set student password (admin endpoint)
+app.post('/api/admin/set-student-password', async (req, res) => {
+    try {
+        const { studentId, email, password } = req.body;
+
+        if (!studentId || !email || !password) {
+            return res.status(400).json({ message: 'Student ID, email, and password required' });
+        }
+
+        // Verify admin is logged in (check token in headers)
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ message: 'Admin authentication required' });
+        }
+
+        const sessionToken = authHeader.substring(7);
+        await verifySessionToken(sessionToken); // Will throw if invalid
+
+        // Set student password
+        await setStudentPassword(studentId, email, password);
+
+        res.json({ success: true, message: 'Password set successfully' });
+    } catch (error) {
+        console.error('❌ Error setting student password:', error);
+        res.status(500).json({ error: 'Failed to set password' });
+    }
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
     res.json({ 
@@ -948,6 +1169,9 @@ app.listen(PORT, () => {
     console.log(`🌍 Environment: ${environment}`);
     console.log(`💾 Data storage: ${process.env.VERCEL ? 'JSON File (Serverless)' : 'SQLite Database'}`);
     console.log(`📊 API Endpoints:`);
+    console.log(`   POST /api/auth/login - Login admin`);
+    console.log(`   POST /api/auth/verify - Verify session`);
+    console.log(`   POST /api/auth/logout - Logout admin`);
     console.log(`   GET  /api/students - Load students`);
     console.log(`   POST /api/students - Save students`);
     console.log(`   DELETE /api/students/:id - Delete student`);

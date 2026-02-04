@@ -1,7 +1,3 @@
-
-> course-dashboard@1.0.0 start
-> node server.js
-
 📧 Gmail SMTP configured for osama.eldrieny@gmail.com
 🔍 Checking environment variables:
    SUPABASE_URL: ✓ set
@@ -11,6 +7,9 @@
 🌍 Environment: Local
 💾 Data storage: SQLite Database
 📊 API Endpoints:
+   POST /api/auth/login - Login admin
+   POST /api/auth/verify - Verify session
+   POST /api/auth/logout - Logout admin
    GET  /api/students - Load students
    POST /api/students - Save students
    DELETE /api/students/:id - Delete student
@@ -18,148 +17,124 @@
    GET  /api/health - Health check
 ✅ Column preferences table ready
 🔧 Database initialization complete
-📝 Adding cohort link: {
-  cohort_name: 'Test Cohort',
-  name: 'Test Link',
-  url: 'https://example.com'
-}
-❌ Supabase error: Could not find the table 'public.cohort_links' in the schema cache PGRST205 null
-❌ Error adding cohort link: Could not find the table 'public.cohort_links' in the schema cache
-📝 Adding cohort link: {
-  cohort_name: 'Test Cohort',
-  name: 'Example Link',
-  url: 'https://example.com'
-}
-✅ Link added: [
-  {
-    id: 1,
-    cohort_name: 'Test Cohort',
-    name: 'Example Link',
-    url: 'https://example.com',
-    created_at: '2026-02-03T14:35:34.869505+00:00',
-    updated_at: '2026-02-03T14:35:34.869505+00:00'
-  }
-]
-📝 Adding cohort link: {
-  cohort_name: 'Test Cohort',
-  name: 'Example Link',
-  url: 'https://example.com'
-}
-✅ Link added: [
-  {
-    id: 2,
-    cohort_name: 'Test Cohort',
-    name: 'Example Link',
-    url: 'https://example.com',
-    created_at: '2026-02-03T14:35:38.841125+00:00',
-    updated_at: '2026-02-03T14:35:38.841125+00:00'
-  }
-]
 ✅ Loaded 5 email template categories from Supabase
 ✅ Loaded 20 email templates from Supabase
-📝 Adding cohort link: {
-  cohort_name: "Can't reach",
-  name: 'Main Figma file',
-  url: 'https://www.figma.com/design/ygDZoJa2OnLABhrJ16LpAA/Design-Tokens-Bootcamp—Osama–Copy-?node-id=0-1&t=dbqLszh6yjanMSy3-1'
-}
-✅ Link added: [
-  {
-    id: 3,
-    cohort_name: "Can't reach",
-    name: 'Main Figma file',
-    url: 'https://www.figma.com/design/ygDZoJa2OnLABhrJ16LpAA/Design-Tokens-Bootcamp—Osama–Copy-?node-id=0-1&t=dbqLszh6yjanMSy3-1',
-    created_at: '2026-02-03T14:36:54.611122+00:00',
-    updated_at: '2026-02-03T14:36:54.611122+00:00'
-  }
-]
-✅ Loaded 5 email template categories from Supabase
-✅ Loaded 20 email templates from Supabase
-📝 Adding cohort link: {
-  cohort_name: "Can't reach",
-  name: 'google Drive folder',
-  url: 'https://drive.google.com/drive/folders/1pVmgOvy2MUXnGQhMkAxWJQCl5xmrabJy?usp=sharing'
-}
-✅ Link added: [
-  {
-    id: 4,
-    cohort_name: "Can't reach",
-    name: 'google Drive folder',
-    url: 'https://drive.google.com/drive/folders/1pVmgOvy2MUXnGQhMkAxWJQCl5xmrabJy?usp=sharing',
-    created_at: '2026-02-03T14:39:24.994314+00:00',
-    updated_at: '2026-02-03T14:39:24.994314+00:00'
-  }
-]
-📝 Adding cohort link: {
-  cohort_name: "Can't reach",
-  name: 'Cam Roles & Agreement',
-  url: 'https://forms.gle/UpQ4D53TKJeLFieP8'
-}
-✅ Link added: [
-  {
-    id: 5,
-    cohort_name: "Can't reach",
-    name: 'Cam Roles & Agreement',
-    url: 'https://forms.gle/UpQ4D53TKJeLFieP8',
-    created_at: '2026-02-03T14:40:51.372188+00:00',
-    updated_at: '2026-02-03T14:40:51.372188+00:00'
-  }
-]
-📝 Adding cohort link: {
-  cohort_name: "Can't reach",
-  name: 'Camp Grouping form',
-  url: 'https://forms.gle/4GPqkDvo6tEw8YCZA'
-}
-✅ Link added: [
-  {
-    id: 6,
-    cohort_name: "Can't reach",
-    name: 'Camp Grouping form',
-    url: 'https://forms.gle/4GPqkDvo6tEw8YCZA',
-    created_at: '2026-02-03T14:41:30.390715+00:00',
-    updated_at: '2026-02-03T14:41:30.390715+00:00'
-  }
-]
-📹 Adding cohort video: {
-  cohort_name: "Can't reach",
-  name: 'Design Tokens Bootcamp - Cohort 2 - Session 1 Final',
-  thumbnail: null,
-  url: 'https://www.loom.com/share/ec55ce61590444c19f8d2c54cb14739d'
-}
-✅ Video added: [
-  {
-    id: 1,
-    cohort_name: "Can't reach",
-    name: 'Design Tokens Bootcamp - Cohort 2 - Session 1 Final',
-    thumbnail: null,
-    url: 'https://www.loom.com/share/ec55ce61590444c19f8d2c54cb14739d',
-    created_at: '2026-02-03T14:44:11.052009+00:00',
-    updated_at: '2026-02-03T14:44:11.052009+00:00'
-  }
-]
-✅ Loaded 5 email template categories from Supabase
-✅ Loaded 20 email templates from Supabase
-📹 Adding cohort video: {
-  cohort_name: "Can't reach",
-  name: 'Design Tokens Bootcamp - Cohort 2 - Session 2 Final',
-  thumbnail: 'data:image/png;base64,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'... 1147542 more characters,
-  url: 'https://www.loom.com/share/746a078ab8544ca386bc24bfebc6a2c3'
-}
-✅ Video added: [
-  {
-    id: 2,
-    cohort_name: "Can't reach",
-    name: 'Design Tokens Bootcamp - Cohort 2 - Session 2 Final',
-    thumbnail: 'data:image/png;base64,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'... 1147542 more characters,
-    url: 'https://www.loom.com/share/746a078ab8544ca386bc24bfebc6a2c3',
-    created_at: '2026-02-03T14:49:31.670767+00:00',
-    updated_at: '2026-02-03T14:49:31.670767+00:00'
-  }
-]
+✅ Admin user logged in: osama.eldrieny@gmail.com
+✅ Session created for user 1
 ✅ Loaded 5 email template categories from Supabase
 ✅ Loaded 20 email templates from Supabase
 ✅ Loaded 5 email template categories from Supabase
 ✅ Loaded 20 email templates from Supabase
 ✅ Loaded 5 email template categories from Supabase
 ✅ Loaded 20 email templates from Supabase
+❌ Error authenticating student: Invalid email or password
+❌ Student login error: Error: Invalid email or password
+    at authenticateStudent (file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/database.js:1499:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/server.js:1032:25
+❌ Error authenticating student: Invalid email or password
+❌ Student login error: Error: Invalid email or password
+    at authenticateStudent (file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/database.js:1499:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/server.js:1032:25
+❌ Error authenticating student: Invalid email or password
+❌ Student login error: Error: Invalid email or password
+    at authenticateStudent (file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/database.js:1499:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/server.js:1032:25
+❌ Error logging in admin: User not found
+❌ Login error: Error: User not found
+    at loginAdmin (file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/database.js:1292:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/server.js:946:22
+❌ Error authenticating student: Invalid email or password
+❌ Student login error: Error: Invalid email or password
+    at authenticateStudent (file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/database.js:1499:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/server.js:1032:25
+❌ Error authenticating student: Invalid email or password
+❌ Student login error: Error: Invalid email or password
+    at authenticateStudent (file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/database.js:1499:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/server.js:1032:25
+❌ Error authenticating student: Invalid email or password
+❌ Student login error: Error: Invalid email or password
+    at authenticateStudent (file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/database.js:1499:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/server.js:1032:25
+❌ Error logging in admin: User not found
+❌ Login error: Error: User not found
+    at loginAdmin (file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/database.js:1292:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/server.js:946:22
+✅ Admin user logged in: osama.eldrieny@gmail.com
+✅ Session created for user 1
+✅ Loaded 5 email template categories from Supabase
+✅ Loaded 20 email templates from Supabase
+❌ Error authenticating student: Invalid email or password
+❌ Student login error: Error: Invalid email or password
+    at authenticateStudent (file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/database.js:1499:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/server.js:1032:25
+✅ Admin user logged in: osama.eldrieny@gmail.com
+✅ Session created for user 1
+✅ Loaded 5 email template categories from Supabase
+✅ Loaded 20 email templates from Supabase
+✅ Saved 1 students to Supabase (deduplicated from 1)
+✅ Auto-saved 1 students to database
+✅ Saved checklist completion for student 1769192389
+❌ Error authenticating student: Invalid email or password
+❌ Student login error: Error: Invalid email or password
+    at authenticateStudent (file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/database.js:1499:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/server.js:1032:25
+❌ Error logging in admin: User not found
+❌ Login error: Error: User not found
+    at loginAdmin (file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/database.js:1292:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/server.js:946:22
+❌ Error authenticating student: Invalid email or password
+❌ Student login error: Error: Invalid email or password
+    at authenticateStudent (file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/database.js:1499:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/server.js:1032:25
+❌ Error authenticating student: Invalid email or password
+❌ Student login error: Error: Invalid email or password
+    at authenticateStudent (file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/database.js:1499:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/server.js:1032:25
+✅ Admin user logged in: osama.eldrieny@gmail.com
+✅ Session created for user 1
+✅ Loaded 5 email template categories from Supabase
+✅ Loaded 20 email templates from Supabase
+✅ Saved 1 students to Supabase (deduplicated from 1)
+✅ Auto-saved 1 students to database
+✅ Saved checklist completion for student 1769192389
+❌ Error logging in admin: User not found
+❌ Login error: Error: User not found
+    at loginAdmin (file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/database.js:1292:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/server.js:946:22
+❌ Error authenticating student: Invalid email or password
+❌ Student login error: Error: Invalid email or password
+    at authenticateStudent (file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/database.js:1499:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///Users/oo/Library/CloudStorage/GoogleDrive-osama.eldrieny@gmail.com/My%20Drive/Design%20Tokens/Course%20Dashboard/server.js:1032:25
+✅ Admin user logged in: osama.eldrieny@gmail.com
+✅ Session created for user 1
+✅ Loaded 5 email template categories from Supabase
+✅ Loaded 20 email templates from Supabase
+✅ Saved 1 students to Supabase (deduplicated from 1)
+✅ Auto-saved 1 students to database
+✅ Saved checklist completion for student 1769192389
+✅ Loaded 5 email template categories from Supabase
+✅ Loaded 20 email templates from Supabase
+✅ Saved 1 students to Supabase (deduplicated from 1)
+✅ Auto-saved 1 students to database
+✅ Password set for student: hello@osamaeldrieny.com
+✅ Saved checklist completion for student 1769192389
+✅ Student session logged out
+✅ Admin user logged in: osama.eldrieny@gmail.com
+✅ Session created for user 1
 ✅ Loaded 5 email template categories from Supabase
 ✅ Loaded 20 email templates from Supabase

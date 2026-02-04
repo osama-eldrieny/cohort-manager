@@ -531,6 +531,16 @@ async function resetColumnPreferences(pageId) {
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('🔄 DOMContentLoaded event fired');
+    
+    // Check if user is authenticated
+    if (!isLoggedIn()) {
+        window.location.href = 'login.html';
+        return;
+    }
+    
+    // Add logout button
+    addLogoutButton();
+    
     loadDeletedCohorts(); // Load deleted cohorts from localStorage
     loadEmailTemplateCategories(); // Load email template categories from localStorage
     await loadStudents();
@@ -3073,6 +3083,13 @@ function editStudent(id) {
     document.getElementById('paidAmount').value = student.paidAmount || '0';
     document.getElementById('note').value = student.note || '';
     document.getElementById('paymentMethod').value = student.paymentMethod || '';
+    
+    // 🔐 Clear password field for editing (optional - user can set new password)
+    const passwordField = document.getElementById('studentPassword');
+    if (passwordField) {
+        passwordField.value = '';
+        passwordField.type = 'password'; // Reset type to password
+    }
 
     // Always show checklist now
     document.getElementById('checklistSection').style.display = 'block';
@@ -3429,6 +3446,9 @@ function saveStudent(event) {
         paymentMethod: document.getElementById('paymentMethod').value || null
     };
 
+    // 🔐 Capture password field if present
+    const studentPassword = document.getElementById('studentPassword') ? document.getElementById('studentPassword').value.trim() : '';
+
     console.log('📝 Saving student:', student.name, '| Status:', student.status, '| ID:', student.id, '| Email:', student.email);
     console.log('💰 Payment: Method=' + student.paymentMethod + ', Total=' + student.totalAmount + ', Paid=' + student.paidAmount, ', Remaining=' + student.remaining);
 
@@ -3477,6 +3497,37 @@ function saveStudent(event) {
     console.log(`💾 Saving student to server (${actionType}): ${newEmail}`);
     
     saveToStorage(student).then(async () => {
+        // 🔐 Handle password update if provided
+        if (studentPassword) {
+            try {
+                console.log(`🔑 Setting password for student: ${newEmail}`);
+                const adminToken = localStorage.getItem('admin_session_token');
+                console.log(`🔑 Admin token present: ${!!adminToken}`);
+                
+                const passwordResponse = await fetch(`${API_BASE_URL}/api/admin/set-student-password`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminToken || ''}`
+                    },
+                    body: JSON.stringify({
+                        studentId: student.id,
+                        email: newEmail,
+                        password: studentPassword
+                    })
+                });
+                
+                if (passwordResponse.ok) {
+                    console.log(`✅ Password successfully set for ${newEmail}`);
+                } else {
+                    console.warn(`⚠️ Failed to set password: HTTP ${passwordResponse.status}`);
+                    const errorData = await passwordResponse.json();
+                    console.warn('Error details:', errorData);
+                }
+            } catch (error) {
+                console.error('❌ Error setting password:', error);
+            }
+        }
         console.log(`📤 Saving checklist: isEditing=${isEditing}, items=${selectedChecklistItems.length}`);
         
         // ALWAYS save checklist when editing an existing student (to capture unchecks)
@@ -6230,5 +6281,37 @@ async function deleteChecklistCategory(categoryName) {
     } catch (error) {
         console.error('❌ Error deleting category:', error);
         alert('Error deleting category: ' + error.message);
+    }
+}
+
+// 🔐 Generate random password and fill input field
+function generateRandomPassword() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+    let password = '';
+    const length = 12; // 12-character password
+    
+    for (let i = 0; i < length; i++) {
+        password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    
+    // Set the password field value
+    const passwordField = document.getElementById('studentPassword');
+    if (passwordField) {
+        passwordField.value = password;
+        
+        // Copy to clipboard
+        navigator.clipboard.writeText(password).then(() => {
+            showToast(`✅ Password copied to clipboard: ${password}`, 'success');
+        }).catch(() => {
+            showToast(`✅ Password generated: ${password}`, 'success');
+        });
+        
+        // Temporarily show password in plain text
+        passwordField.type = 'text';
+        setTimeout(() => {
+            passwordField.type = 'password';
+        }, 3000); // Show for 3 seconds, then hide
+    } else {
+        console.error('❌ Student Password field not found');
     }
 }
