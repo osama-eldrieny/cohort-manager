@@ -3600,7 +3600,7 @@ async function sendEmailTemplatesWithDelay(student, templates) {
     console.log(`📧 Student: ${student.name} (ID: ${student.id}, Email: ${student.email})`);
     console.log(`📋 Templates to send:`, templates.map(t => `${t.name} (ID: ${t.id})`).join(', '));
     
-    // Fetch student password from server if template contains {password} placeholder
+    // Password substitution now handled on backend
     let studentPassword = '';
     const templatesNeedPassword = templates.some(t => 
         (t.subject && t.subject.includes('{password}')) || 
@@ -3608,30 +3608,7 @@ async function sendEmailTemplatesWithDelay(student, templates) {
     );
     
     if (templatesNeedPassword) {
-        try {
-            const sessionToken = localStorage.getItem('token');
-            const response = await fetch(`${API_BASE_URL}/api/password`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${sessionToken}`
-                },
-                body: JSON.stringify({
-                    studentId: student.id,
-                    studentEmail: student.email
-                })
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                studentPassword = data.password || '';
-                console.log(`✅ Retrieved student password from server`);
-            } else {
-                console.warn(`⚠️  Could not retrieve student password: ${response.statusText}`);
-            }
-        } catch (error) {
-            console.warn(`⚠️  Error retrieving student password:`, error.message);
-        }
+        console.log('💡 Password placeholders will be filled by server if password exists');
     }
     
     for (let i = 0; i < templates.length; i++) {
@@ -5139,36 +5116,14 @@ async function sendEmailToStudent(templateId, studentId) {
     const loadingIndicator = document.getElementById('emailLoadingIndicator');
     if (loadingIndicator) loadingIndicator.style.display = 'flex';
 
-    // Fetch student password if template contains {password} placeholder
+    // Password substitution now handled on backend
     let studentPassword = '';
     const templateNeedsPassword = 
         (template.subject && template.subject.includes('{password}')) || 
         (template.body && template.body.includes('{password}'));
     
     if (templateNeedsPassword) {
-        try {
-            const sessionToken = localStorage.getItem('token');
-            const response = await fetch(`${API_BASE_URL}/api/password`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${sessionToken}`
-                },
-                body: JSON.stringify({
-                    studentId: student.id,
-                    studentEmail: student.email
-                })
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                studentPassword = data.password || '';
-            } else {
-                console.warn('Could not retrieve student password');
-            }
-        } catch (error) {
-            console.warn('Error retrieving password:', error.message);
-        }
+        console.log('💡 Password placeholder will be filled by server if password exists');
     }
 
     // Replace all dynamic placeholders in template
