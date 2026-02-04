@@ -561,7 +561,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Call handleRouteChange immediately to set initial state
     setTimeout(handleRouteChange, 0);
+    
+    // Hide loading spinner after all data is loaded
+    hideLoadingSpinner();
 });
+
+// Hide loading spinner
+function hideLoadingSpinner() {
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) {
+        overlay.classList.add('hidden');
+    }
+}
 
 function handleRouteChange() {
     // Get page from URL hash (e.g., #overview, #students, etc.)
