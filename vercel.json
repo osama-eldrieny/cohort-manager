@@ -23,5 +23,7 @@
   "env": {
     "NODE_ENV": "production"
   },
-  "public": true
+  "protectionBypass": {
+    "deploymentUrl": true
+  }
 }
