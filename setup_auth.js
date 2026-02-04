@@ -69,7 +69,7 @@ async function setupAuth() {
             .from('admin_users')
             .upsert({
                 email: 'osama.eldrieny@gmail.com',
-                password_hash: 'Al7amdulla@8206',
+                password_hash: 'CHANGE_ME_IN_PRODUCTION',
                 name: 'Admin User',
                 is_admin: true,
                 is_active: true
@@ -84,7 +84,7 @@ async function setupAuth() {
         console.log('✅ Admin user created/updated');
         console.log('\n📊 Admin Account Details:');
         console.log('   Email: osama.eldrieny@gmail.com');
-        console.log('   Password: Al7amdulla@8206\n');
+        console.log('   Password: Set in environment variables\n');
 
         // Verify admin user exists
         const { data: checkData, error: checkError } = await supabase
