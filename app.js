@@ -5165,10 +5165,11 @@ async function sendEmailToStudent(templateId, studentId) {
                 studentPassword = data.password || '';
                 console.log(`✅ Retrieved student password`);
             } else {
-                console.warn(`⚠️  Could not retrieve student password: ${response.statusText}`);
+                console.warn(`⚠️  Could not retrieve student password. Password placeholder will remain unfilled.`);
             }
         } catch (error) {
-            console.warn(`⚠️  Error retrieving student password:`, error.message);
+            console.warn(`⚠️  Error retrieving student password (this is normal on first deployment):`, error.message);
+            console.log('💡 Hint: Make sure the server is running and credentials are valid.');
         }
     }
 
