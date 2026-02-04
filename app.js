@@ -76,7 +76,7 @@ function getColor(label) {
 // API Server Configuration
 // Determine API base URL based on environment
 const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const API_BASE_URL = isDev ? 'http://localhost:3002' : 'https://cohort-manager-xi.vercel.app';
+const API_BASE_URL = isDev ? 'http://localhost:3002' : 'https://cohort-manager-bao4aij45-osama-eldrienys-projects.vercel.app';
 
 // Google Sheets Integration
 // Replace with your Google Apps Script deployment URL
