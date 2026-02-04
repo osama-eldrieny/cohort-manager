@@ -1141,6 +1141,7 @@ app.post('/api/admin/set-student-password', async (req, res) => {
 });
 
 // Get student password for email templates
+// Endpoint to retrieve student passwords for email template {password} placeholder
 app.post('/api/admin/get-student-password', async (req, res) => {
     try {
         const { studentId, studentEmail } = req.body;
