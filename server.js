@@ -1172,7 +1172,7 @@ app.post('/api/admin/get-student-password', async (req, res) => {
 
         res.json({ success: true, password });
     } catch (error) {
-        console.error('Error retrieving student password:', error);
+        console.error('Password endpoint error:', error);
         res.status(500).json({ error: 'Failed to retrieve password' });
     }
 });
