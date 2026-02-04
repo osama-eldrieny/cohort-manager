@@ -1495,6 +1495,32 @@ export async function setStudentPassword(studentId, email, password) {
     }
 }
 
+// Get student password for email templates
+export async function getStudentPassword(studentId, email) {
+    if (!supabase) {
+        throw new Error('Supabase not initialized');
+    }
+
+    try {
+        const { data, error } = await supabase
+            .from('student_passwords')
+            .select('password_hash')
+            .eq('student_id', studentId)
+            .eq('email', email)
+            .single();
+
+        if (error) {
+            console.warn(`⚠️  Could not retrieve password for student ${studentId}:`, error.message);
+            return null;
+        }
+
+        return data ? data.password_hash : null;
+    } catch (error) {
+        console.error('❌ Error getting student password:', error.message);
+        return null;
+    }
+}
+
 // Authenticate student with email and password
 export async function authenticateStudent(email, password) {
     if (!supabase) {

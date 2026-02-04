@@ -3600,6 +3600,40 @@ async function sendEmailTemplatesWithDelay(student, templates) {
     console.log(`📧 Student: ${student.name} (ID: ${student.id}, Email: ${student.email})`);
     console.log(`📋 Templates to send:`, templates.map(t => `${t.name} (ID: ${t.id})`).join(', '));
     
+    // Fetch student password from server if template contains {password} placeholder
+    let studentPassword = '';
+    const templatesNeedPassword = templates.some(t => 
+        (t.subject && t.subject.includes('{password}')) || 
+        (t.body && t.body.includes('{password}'))
+    );
+    
+    if (templatesNeedPassword) {
+        try {
+            const sessionToken = localStorage.getItem('token');
+            const response = await fetch(`${API_BASE_URL}/api/admin/get-student-password`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${sessionToken}`
+                },
+                body: JSON.stringify({
+                    studentId: student.id,
+                    studentEmail: student.email
+                })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                studentPassword = data.password || '';
+                console.log(`✅ Retrieved student password from server`);
+            } else {
+                console.warn(`⚠️  Could not retrieve student password: ${response.statusText}`);
+            }
+        } catch (error) {
+            console.warn(`⚠️  Error retrieving student password:`, error.message);
+        }
+    }
+    
     for (let i = 0; i < templates.length; i++) {
         const template = templates[i];
         
@@ -3632,6 +3666,7 @@ async function sendEmailTemplatesWithDelay(student, templates) {
             body = body.replace(/{paidAmount}/g, student.paidAmount || '0');
             body = body.replace(/{remaining}/g, student.remaining || '0');
             body = body.replace(/{note}/g, student.note || '');
+            body = body.replace(/{password}/g, studentPassword || '');
             
             console.log(`📧 Sending email ${i + 1}/${templates.length}: "${template.name}" to ${student.email}`);
             console.log(`   Subject: ${subject.substring(0, 60)}${subject.length > 60 ? '...' : ''}`);
@@ -5104,6 +5139,39 @@ async function sendEmailToStudent(templateId, studentId) {
     const loadingIndicator = document.getElementById('emailLoadingIndicator');
     if (loadingIndicator) loadingIndicator.style.display = 'flex';
 
+    // Fetch student password if template contains {password} placeholder
+    let studentPassword = '';
+    const templateNeedsPassword = 
+        (template.subject && template.subject.includes('{password}')) || 
+        (template.body && template.body.includes('{password}'));
+    
+    if (templateNeedsPassword) {
+        try {
+            const sessionToken = localStorage.getItem('token');
+            const response = await fetch(`${API_BASE_URL}/api/admin/get-student-password`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${sessionToken}`
+                },
+                body: JSON.stringify({
+                    studentId: student.id,
+                    studentEmail: student.email
+                })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                studentPassword = data.password || '';
+                console.log(`✅ Retrieved student password`);
+            } else {
+                console.warn(`⚠️  Could not retrieve student password: ${response.statusText}`);
+            }
+        } catch (error) {
+            console.warn(`⚠️  Error retrieving student password:`, error.message);
+        }
+    }
+
     // Replace all dynamic placeholders in template
     let subject = template.subject;
     let body = template.body;
@@ -5125,6 +5193,7 @@ async function sendEmailToStudent(templateId, studentId) {
     subject = subject.replace(/{totalAmount}/g, student.totalAmount || '0');
     subject = subject.replace(/{paidAmount}/g, student.paidAmount || '0');
     subject = subject.replace(/{remaining}/g, student.remaining || '0');
+    subject = subject.replace(/{password}/g, studentPassword || '');
 
     body = body.replace(/{name}/g, student.name || '');
     body = body.replace(/{email}/g, student.email || '');
@@ -5142,6 +5211,7 @@ async function sendEmailToStudent(templateId, studentId) {
     body = body.replace(/{totalAmount}/g, student.totalAmount || '0');
     body = body.replace(/{paidAmount}/g, student.paidAmount || '0');
     body = body.replace(/{remaining}/g, student.remaining || '0');
+    body = body.replace(/{password}/g, studentPassword || '');
 
     // Validate email address
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
