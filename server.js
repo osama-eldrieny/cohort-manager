@@ -51,8 +51,7 @@ import {
     verifyStudentSessionToken,
     getStudentById,
     logoutStudentSession,
-    setStudentPassword,
-    getStudentPassword
+    setStudentPassword
 } from './database.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -519,30 +518,10 @@ app.post('/api/send-email', async (req, res) => {
             return res.status(400).json({ error: `Invalid email format: "${trimmedEmail}"` });
         }
         
-        // If template contains {password} placeholder, try to fetch and substitute
-        let finalSubject = subject;
-        let finalBody = body;
-        
-        if ((subject && subject.includes('{password}')) || (body && body.includes('{password}'))) {
-            try {
-                const password = await getStudentPassword(studentId, studentEmail);
-                if (password) {
-                    finalSubject = subject.replace(/{password}/g, password);
-                    finalBody = body.replace(/{password}/g, password);
-                    console.log(`✅ Password substituted for student ${studentId}`);
-                } else {
-                    console.warn(`⚠️ Password not found for student ${studentId}, placeholder will remain blank`);
-                }
-            } catch (pwError) {
-                console.warn(`⚠️ Could not retrieve password: ${pwError.message}`);
-                // Continue with blank placeholders
-            }
-        }
-        
         // Check if Gmail is configured
         if (!transporter) {
             console.log(`📧 Email prepared for: ${studentName} <${trimmedEmail}>`);
-            console.log(`Subject: ${finalSubject}`);
+            console.log(`Subject: ${subject}`);
             console.log(`⚠️  Gmail SMTP not configured. Set GMAIL_APP_PASSWORD environment variable.`);
             await logEmailSentToDB(studentId, templateId, templateName, 'failed');
             return res.status(503).json({ 
@@ -555,11 +534,11 @@ app.post('/api/send-email', async (req, res) => {
         const mailOptions = {
             from: `"Design Tokens Camp" <${SENDER_EMAIL}>`,
             to: trimmedEmail,
-            subject: finalSubject,
-            html: `<pre style="font-family: Arial, sans-serif; white-space: pre-wrap; word-wrap: break-word;">${finalBody.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>`
+            subject: subject,
+            html: `<pre style="font-family: Arial, sans-serif; white-space: pre-wrap; word-wrap: break-word;">${body.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>`
         };
 
-        console.log(`📧 Email headers: From=${mailOptions.from}, To=${trimmedEmail}, Subject="${finalSubject.substring(0, 50)}..."`);
+        console.log(`📧 Email headers: From=${mailOptions.from}, To=${trimmedEmail}, Subject="${subject.substring(0, 50)}..."`);
         
         const info = await transporter.sendMail(mailOptions);
         console.log(`✅ Email sent to ${studentName} <${trimmedEmail}>`);

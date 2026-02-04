@@ -3600,15 +3600,14 @@ async function sendEmailTemplatesWithDelay(student, templates) {
     console.log(`📧 Student: ${student.name} (ID: ${student.id}, Email: ${student.email})`);
     console.log(`📋 Templates to send:`, templates.map(t => `${t.name} (ID: ${t.id})`).join(', '));
     
-    // Password substitution now handled on backend
-    let studentPassword = '';
+    // Check if any templates need password placeholder
     const templatesNeedPassword = templates.some(t => 
         (t.subject && t.subject.includes('{password}')) || 
         (t.body && t.body.includes('{password}'))
     );
     
     if (templatesNeedPassword) {
-        console.log('💡 Password placeholders will be filled by server if password exists');
+        console.warn('⚠️ Password placeholders detected but not available in this deployment');
     }
     
     for (let i = 0; i < templates.length; i++) {
@@ -5116,14 +5115,13 @@ async function sendEmailToStudent(templateId, studentId) {
     const loadingIndicator = document.getElementById('emailLoadingIndicator');
     if (loadingIndicator) loadingIndicator.style.display = 'flex';
 
-    // Password substitution now handled on backend
-    let studentPassword = '';
+    // Check if template has password placeholder
     const templateNeedsPassword = 
         (template.subject && template.subject.includes('{password}')) || 
         (template.body && template.body.includes('{password}'));
     
     if (templateNeedsPassword) {
-        console.log('💡 Password placeholder will be filled by server if password exists');
+        console.warn('⚠️ Password placeholders detected but not available in this deployment');
     }
 
     // Replace all dynamic placeholders in template
@@ -5147,8 +5145,8 @@ async function sendEmailToStudent(templateId, studentId) {
     subject = subject.replace(/{totalAmount}/g, student.totalAmount || '0');
     subject = subject.replace(/{paidAmount}/g, student.paidAmount || '0');
     subject = subject.replace(/{remaining}/g, student.remaining || '0');
-    subject = subject.replace(/{password}/g, studentPassword || '');
-
+    subject = subject.replace(/{password}/g, '');
+    
     body = body.replace(/{name}/g, student.name || '');
     body = body.replace(/{email}/g, student.email || '');
     body = body.replace(/{cohort}/g, student.cohort || 'N/A');
@@ -5165,7 +5163,7 @@ async function sendEmailToStudent(templateId, studentId) {
     body = body.replace(/{totalAmount}/g, student.totalAmount || '0');
     body = body.replace(/{paidAmount}/g, student.paidAmount || '0');
     body = body.replace(/{remaining}/g, student.remaining || '0');
-    body = body.replace(/{password}/g, studentPassword || '');
+    body = body.replace(/{password}/g, '');
 
     // Validate email address
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
