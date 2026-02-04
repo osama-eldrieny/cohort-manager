@@ -36,6 +36,16 @@
             font-weight: 700;
             font-size: 24px;
             color: white !important;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .navbar-brand img {
+            height: 40px;
+            width: 40px;
+            border-radius: 8px;
+            object-fit: cover;
         }
 
         .navbar-text {
@@ -60,6 +70,8 @@
         .dashboard-container {
             padding-top: 30px;
             padding-bottom: 30px;
+            display: flex;
+            flex-direction: column;
         }
 
         /* Sidebar Sticky */
@@ -105,6 +117,59 @@
         .info-card-subtext {
             font-size: 11px;
             color: var(--text-muted);
+            line-height: 1.2;
+            margin: 2px 0;
+        }
+
+        /* Compact Payment Card */
+        .payment-card {
+            padding: 12px !important;
+        }
+
+        .payment-card .info-card-label {
+            margin-bottom: 3px;
+        }
+
+        .payment-card .info-card-value {
+            font-size: 13px;
+            margin-bottom: 2px;
+        }
+
+        .payment-card .info-card-subtext {
+            margin: 1px 0 !important;
+        }
+
+        .payment-card .payment-progress {
+            margin-top: 6px;
+            margin-bottom: 4px;
+            height: 6px;
+        }
+
+        /* Payment Card Layout */
+        .payment-info-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .payment-amount {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-dark);
+            min-width: fit-content;
+        }
+
+        .payment-details {
+            display: flex;
+            flex-direction: row;
+            gap: 4px;
+            font-size: 11px;
+            color: var(--text-muted);
+            flex: 1;
+            text-align: right;
+            align-items: center;
+            justify-content: flex-end;
         }
 
         /* Payment Progress */
@@ -245,6 +310,7 @@
             flex-direction: column;
             text-decoration: none;
             color: inherit;
+            height: fit-content;
         }
 
         .video-card:hover {
@@ -341,6 +407,18 @@
             .links-grid {
                 grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
             }
+            
+            .row.g-3[style*="height"] {
+                height: auto !important;
+                min-height: auto !important;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .row.g-3[style*="height"] {
+                height: auto !important;
+                min-height: auto !important;
+            }
         }
 
         @media (max-width: 768px) {
@@ -351,6 +429,11 @@
             .links-grid,
             .videos-grid {
                 grid-template-columns: 1fr;
+            }
+            
+            .row.g-3[style*="height"] {
+                height: auto !important;
+                min-height: auto !important;
             }
         }
 
@@ -442,7 +525,8 @@
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
             <a class="navbar-brand" href="#">
-                <i class="fas fa-graduation-cap"></i> Dashboard
+                <img src="navbar-logo.png" alt="Dashboard Logo">
+                Design Tokens Bootcamp
             </a>
             <div class="d-flex align-items-center ms-auto">
                 <div class="navbar-text me-3">
@@ -459,91 +543,94 @@
 
     <!-- Main Container -->
     <div class="container-fluid dashboard-container">
-        <div class="row">
-            <!-- Left Sidebar -->
-            <div class="col-lg-2">
-                <div class="sticky-top d-flex flex-column" style="top: 100px; height: fit-content;">
-                    <div class="info-card">
-                        <div class="info-card-icon">
-                            <i class="fas fa-envelope"></i>
-                        </div>
-                        <div class="info-card-label">Email</div>
-                        <div class="info-card-value" id="cardEmail">Loading...</div>
+        <!-- Top Row - Student Info Cards -->
+        <div class="row mb-4 g-3">
+            <!-- Email Card -->
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="info-card">
+                    <div class="info-card-icon">
+                        <i class="fas fa-envelope"></i>
                     </div>
-
-                    <div class="info-card">
-                        <div class="info-card-icon">
-                            <i class="fas fa-envelope"></i>
-                        </div>
-                        <div class="info-card-label">Figma Email</div>
-                        <div class="info-card-value" id="cardFigmaEmail">Not Set</div>
-                    </div>
-
-                    <div class="info-card">
-                        <div class="info-card-icon">
-                            <i class="fas fa-book"></i>
-                        </div>
-                        <div class="info-card-label">Current Cohort</div>
-                        <div class="info-card-value" id="cardCohort">Loading...</div>
-                    </div>
-
-                    <div class="info-card">
-                        <div class="info-card-icon">
-                            <i class="fas fa-credit-card"></i>
-                        </div>
-                        <div class="info-card-label">Amount Paid</div>
-                        <div class="info-card-value" id="cardAmountPaid">$0</div>
-                        <div class="info-card-subtext" id="cardTotalAmount">of $0 total</div>
-                        <div class="payment-progress">
-                            <div class="payment-progress-bar" id="paymentBar" style="width: 0%"></div>
-                        </div>
-                        <div class="info-card-subtext" id="cardPaymentStatus">No payments made</div>
-                    </div>
-
-                    <!-- <div class="info-card">
-                        <div class="info-card-icon">
-                            <i class="fas fa-chart-pie"></i>
-                        </div>
-                        <div class="info-card-label">Attendance Balance</div>
-                        <div class="info-card-value" id="cardAttendance">50</div>
-                        <div class="info-card-subtext">No hour assignment</div>
-                    </div> -->
+                    <div class="info-card-label">Email</div>
+                    <div class="info-card-value" id="cardEmail">Loading...</div>
                 </div>
             </div>
 
-            <!-- Center Content -->
-            <div class="col-lg-2">
-                <div class="sticky-top d-flex flex-column" style="top: 100px; height: fit-content;">
-                    <div class="section-card h-100">
-                        <div class="section-header">
-                            <div class="section-header-icon">
-                                <i class="fas fa-link"></i>
-                            </div>
-                            <h2 class="section-header-title">Important Links</h2>
+            <!-- Figma Email Card -->
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="info-card">
+                    <div class="info-card-icon">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <div class="info-card-label">Figma Email</div>
+                    <div class="info-card-value" id="cardFigmaEmail">Not Set</div>
+                </div>
+            </div>
+
+            <!-- Cohort Card -->
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="info-card">
+                    <div class="info-card-icon">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <div class="info-card-label">Current Cohort</div>
+                    <div class="info-card-value" id="cardCohort">Loading...</div>
+                </div>
+            </div>
+
+            <!-- Payment Card -->
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="info-card payment-card">
+                    <div class="info-card-icon">
+                        <i class="fas fa-credit-card"></i>
+                    </div>
+                    <div class="info-card-label">Amount Paid</div>
+                    <div class="payment-info-row">
+                        <div class="payment-amount" id="cardAmountPaid">$0</div>
+                        <div class="payment-details">
+                            <div id="cardTotalAmount">of $0 total</div>
+                            <div id="cardPaymentStatus">No payments made</div>
                         </div>
-                        <div class="links-grid" id="linksContainer">
-                            <div class="empty-state">
-                                <div class="empty-state-icon">
-                                    <i class="fas fa-inbox"></i>
-                                </div>
-                                <div class="empty-state-text">No links available</div>
+                    </div>
+                    <div class="payment-progress">
+                        <div class="payment-progress-bar" id="paymentBar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Row - Two Full Height Columns -->
+        <div class="row g-3" style="height: calc(100vh - 300px); min-height: 600px;">
+            <!-- Left Column - Important Links -->
+            <div class="col-lg-3 d-flex">
+                <div class="section-card w-100">
+                    <div class="section-header">
+                        <div class="section-header-icon">
+                            <i class="fas fa-link"></i>
+                        </div>
+                        <h2 class="section-header-title">Important Links</h2>
+                    </div>
+                    <div class="links-grid flex-grow-1 overflow-auto" id="linksContainer">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <i class="fas fa-inbox"></i>
                             </div>
+                            <div class="empty-state-text">No links available</div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Right Sidebar - Recorded Videos -->
-            <div class="col-lg-8">
-                <!-- Videos Section -->
-                <div class="section-card">
+            <!-- Right Column - Recorded Videos -->
+            <div class="col-lg-9 d-flex">
+                <div class="section-card w-100">
                     <div class="section-header">
                         <div class="section-header-icon">
                             <i class="fas fa-video"></i>
                         </div>
                         <h2 class="section-header-title">Recorded Videos</h2>
                     </div>
-                    <div class="videos-grid" id="videosContainer">
+                    <div class="videos-grid flex-grow-1 overflow-auto" id="videosContainer">
                         <div class="empty-state">
                             <div class="empty-state-icon">
                                 <i class="fas fa-inbox"></i>
