@@ -51,8 +51,7 @@ import {
     verifyStudentSessionToken,
     getStudentById,
     logoutStudentSession,
-    setStudentPassword,
-    getStudentPassword
+    setStudentPassword
 } from './database.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -1137,39 +1136,6 @@ app.post('/api/admin/set-student-password', async (req, res) => {
     } catch (error) {
         console.error('❌ Error setting student password:', error);
         res.status(500).json({ error: 'Failed to set password' });
-    }
-});
-
-// Get student password for email templates
-// Endpoint to retrieve student passwords for email template {password} placeholder
-app.post('/api/admin/get-student-password', async (req, res) => {
-    try {
-        const { studentId, studentEmail } = req.body;
-
-        if (!studentId || !studentEmail) {
-            return res.status(400).json({ error: 'Student ID and email required' });
-        }
-
-        // Verify admin is logged in (check token in headers)
-        const authHeader = req.headers.authorization;
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            return res.status(401).json({ error: 'Admin authentication required' });
-        }
-
-        const sessionToken = authHeader.substring(7);
-        await verifySessionToken(sessionToken); // Will throw if invalid
-
-        // Get student password from database
-        const password = await getStudentPassword(studentId, studentEmail);
-        
-        if (!password) {
-            return res.status(404).json({ error: 'Password not found for student' });
-        }
-
-        res.json({ success: true, password });
-    } catch (error) {
-        console.error('❌ Error retrieving student password:', error);
-        res.status(500).json({ error: 'Failed to retrieve password' });
     }
 });
 

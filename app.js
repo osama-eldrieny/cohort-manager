@@ -5145,32 +5145,10 @@ async function sendEmailToStudent(templateId, studentId) {
         (template.subject && template.subject.includes('{password}')) || 
         (template.body && template.body.includes('{password}'));
     
+    // Note: Password placeholder feature requires local server with database access
+    // On production, password placeholders will remain unfilled
     if (templateNeedsPassword) {
-        try {
-            const sessionToken = localStorage.getItem('token');
-            const response = await fetch(`${API_BASE_URL}/api/admin/get-student-password`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${sessionToken}`
-                },
-                body: JSON.stringify({
-                    studentId: student.id,
-                    studentEmail: student.email
-                })
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                studentPassword = data.password || '';
-                console.log(`✅ Retrieved student password`);
-            } else {
-                console.warn(`⚠️  Could not retrieve student password. Password placeholder will remain unfilled.`);
-            }
-        } catch (error) {
-            console.warn(`⚠️  Error retrieving student password (this is normal on first deployment):`, error.message);
-            console.log('💡 Hint: Make sure the server is running and credentials are valid.');
-        }
+        console.log('💡 Note: {password} placeholder feature is available on local server only');
     }
 
     // Replace all dynamic placeholders in template
