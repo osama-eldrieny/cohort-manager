@@ -80,7 +80,7 @@ const API_BASE_URL = isDev ? 'http://localhost:3002' : 'https://cohort-manager-b
 
 // Google Sheets Integration
 // Replace with your Google Apps Script deployment URL
-const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbyCPsBG3QKSPx84Dwzepm_Fruh7EXdG0mz84AM20NxT4fS8Vzhod875meY-oAHXqZW-/exec';
+const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbzyymEq0g8HIDgEPRzUmn34IlSse1CaNxvHIZsSs9HO-Do4PDE2If40_ArJ3W53SbFI/exec';
 
 // Utility function to get cohort color from the dynamic cohorts array
 function getCohortColor(cohortName) {
@@ -1361,7 +1361,7 @@ function renderStudentsTable() {
 
 // Event delegation handler for students table clicks
 function studentsTableClickHandler(event) {
-    const target = event.target.closest('button, a, span');
+    const target = event.target.closest('button, a, span, strong');
     if (!target) return;
 
     if (target.classList.contains('btn-edit')) {
@@ -4000,44 +4000,206 @@ function logStudentStats() {
     // Stats logging removed
 }
 
-function exportData() {
-    const dataStr = JSON.stringify(students, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `students-backup-${new Date().toISOString().split('T')[0]}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
-    console.log('✅ Exported', students.length, 'students to file');
+async function exportData() {
+    try {
+        const statusDiv = document.getElementById('exportStatus') || createTempStatusDiv('exportStatus');
+        statusDiv.style.display = 'block';
+        statusDiv.style.backgroundColor = '#e3f2fd';
+        statusDiv.style.color = '#1565c0';
+        statusDiv.innerHTML = '<i class="fas fa-hourglass-half"></i> Preparing data with email history and checklist items...';
+
+        // Load current checklist items from API
+        console.log('📋 Loading current checklist items...');
+        let currentChecklistItems = [];
+        try {
+            const checklistRes = await fetch(`${API_BASE_URL}/api/checklist-items`);
+            if (checklistRes.ok) {
+                currentChecklistItems = await checklistRes.json();
+                console.log('✅ Loaded', currentChecklistItems.length, 'checklist items');
+                console.log('📋 Checklist items from API:', currentChecklistItems.map(item => `ID ${item.id}: "${item.label}" (${item.category})`));
+            }
+        } catch (error) {
+            console.warn('⚠️  Could not load checklist items, exporting without them:', error.message);
+        }
+
+        // Fetch email logs for all students
+        console.log('📧 Fetching email history for all students...');
+        const emailLogsPromises = students.map(student =>
+            fetch(`${API_BASE_URL}/api/email-logs/${student.id}`)
+                .then(res => res.ok ? res.json() : [])
+                .catch(() => [])
+        );
+        
+        const allEmailLogs = await Promise.all(emailLogsPromises);
+
+        // Create enriched data with email logs
+        const enrichedStudents = students.map((student, index) => ({
+            ...student,
+            emailLogs: allEmailLogs[index] || []
+        }));
+
+        const exportData = {
+            exportDate: new Date().toISOString(),
+            version: '2.1',
+            checklistItems: currentChecklistItems,
+            studentsCount: enrichedStudents.length,
+            students: enrichedStudents
+        };
+
+        const dataStr = JSON.stringify(exportData, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `students-backup-${new Date().toISOString().split('T')[0]}.json`;
+        link.click();
+        URL.revokeObjectURL(url);
+
+        statusDiv.style.backgroundColor = '#d4edda';
+        statusDiv.style.color = '#155724';
+        statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> ✅ Exported ' + enrichedStudents.length + ' students with email history and ' + currentChecklistItems.length + ' checklist items!';
+        
+        setTimeout(() => {
+            statusDiv.style.display = 'none';
+        }, 3000);
+
+        console.log('✅ Exported', enrichedStudents.length, 'students with email history and', currentChecklistItems.length, 'checklist items to file');
+    } catch (error) {
+        console.error('❌ Export error:', error);
+        alert('❌ Error exporting data: ' + error.message);
+    }
 }
 
-function importData() {
+function createTempStatusDiv(id) {
+    const div = document.createElement('div');
+    div.id = id;
+    div.style.cssText = 'padding: 12px 16px; margin: 10px 0; border-radius: 4px; display: none;';
+    document.body.appendChild(div);
+    return div;
+}
+
+async function importData() {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.json';
-    input.onchange = (e) => {
+    input.onchange = async (e) => {
         const file = e.target.files[0];
         const reader = new FileReader();
-        reader.onload = (event) => {
+        reader.onload = async (event) => {
             try {
                 const imported = JSON.parse(event.target.result);
+                
+                // Handle both old format (direct array) and new format (with metadata)
+                let importedStudents = [];
+                let emailLogsData = {};
+                let importedChecklistItems = [];
+
                 if (Array.isArray(imported)) {
-                    students = imported;
-                    saveToStorage();
-                    alert(`✅ Imported ${students.length} students successfully!`);
-                    renderPage(document.querySelector('.page.active').id);
-                    logStudentStats();
-                } else {
-                    alert('❌ Invalid file format. Please select a valid students backup file.');
+                    // Old format - just array of students
+                    importedStudents = imported;
+                } else if (imported.students && Array.isArray(imported.students)) {
+                    // New format - with metadata, email logs, and checklist items
+                    importedStudents = imported.students;
+                    importedChecklistItems = imported.checklistItems || [];
+                    
+                    // Extract email logs
+                    importedStudents.forEach(student => {
+                        if (student.emailLogs && Array.isArray(student.emailLogs)) {
+                            emailLogsData[student.id] = student.emailLogs;
+                        }
+                    });
                 }
+
+                if (importedStudents.length === 0) {
+                    alert('❌ No students found in file');
+                    return;
+                }
+
+                // Get current checklist items from API for validation
+                let currentChecklistItemIds = new Set();
+                try {
+                    const checklistRes = await fetch(`${API_BASE_URL}/api/checklist-items`);
+                    if (checklistRes.ok) {
+                        const currentItems = await checklistRes.json();
+                        currentChecklistItemIds = new Set(currentItems.map(item => item.id));
+                        console.log('✅ Loaded current system with', currentItems.length, 'checklist items');
+                    }
+                } catch (error) {
+                    console.warn('⚠️  Could not validate checklist items:', error.message);
+                }
+
+                // Filter checklist completions to only include items that exist in current system
+                importedStudents = importedStudents.map(student => {
+                    if (student.checklist && Array.isArray(student.checklist)) {
+                        const validChecklist = student.checklist.filter(item => {
+                            const isValid = currentChecklistItemIds.size === 0 || currentChecklistItemIds.has(item.id);
+                            if (!isValid && currentChecklistItemIds.size > 0) {
+                                console.log(`⚠️  Skipping checklist item ${item.id} for ${student.name} - not found in current system`);
+                            }
+                            return isValid;
+                        });
+                        return { ...student, checklist: validChecklist };
+                    }
+                    return student;
+                });
+
+                // Remove email logs from student objects (they'll be restored to DB separately)
+                importedStudents = importedStudents.map(student => {
+                    const { emailLogs, ...studentData } = student;
+                    return studentData;
+                });
+
+                // Update students array
+                students = importedStudents;
+                await saveToStorage();
+
+                // Restore email logs to database if any exist
+                let importStatus = `✅ Imported ${importedStudents.length} students`;
+                if (importedChecklistItems.length > 0) {
+                    importStatus += ` (${importedChecklistItems.length} checklist items exported)`;
+                }
+                if (Object.keys(emailLogsData).length > 0) {
+                    importStatus += ` with email history`;
+                    console.log('📧 Restoring email history...');
+                    await restoreEmailLogs(emailLogsData);
+                }
+                importStatus += '!';
+                alert(importStatus);
+
+                renderPage(document.querySelector('.page.active')?.id || 'overview');
+                logStudentStats();
             } catch (error) {
+                console.error('❌ Import error:', error);
                 alert('❌ Error reading file: ' + error.message);
             }
         };
         reader.readAsText(file);
     };
     input.click();
+}
+
+async function restoreEmailLogs(emailLogsData) {
+    try {
+        const restorePayload = {
+            action: 'restoreEmailLogs',
+            data: emailLogsData
+        };
+
+        const response = await fetch(`${API_BASE_URL}/api/restore-email-logs`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(restorePayload)
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            console.log('✅ Restored email logs:', result);
+        } else {
+            console.warn('⚠️  Could not restore all email logs, but students imported successfully');
+        }
+    } catch (error) {
+        console.warn('⚠️  Email history import skipped (optional):', error.message);
+    }
 }
 
 function handleImport(event) {
@@ -4312,54 +4474,144 @@ function getSampleData() {
 // GOOGLE SHEETS SYNC
 // ============================================
 
-function syncToGoogleSheets() {
+async function syncToGoogleSheets() {
     const statusDiv = document.getElementById('syncStatus');
     
     // Show syncing status
     statusDiv.style.display = 'block';
     statusDiv.style.backgroundColor = '#e3f2fd';
     statusDiv.style.color = '#1565c0';
-    statusDiv.innerHTML = '<i class="fas fa-hourglass-half"></i> Syncing data to Google Sheets...';
+    statusDiv.innerHTML = '<i class="fas fa-hourglass-half"></i> Preparing data...';
 
-    // Create JSON payload
-    const payload = {
-        action: 'updateSheet',
-        data: students
-    };
+    try {
+        // ENSURE all data is loaded before syncing
+        console.log('🔄 Ensuring checklist items are loaded...');
+        await loadChecklistItems();
+        
+        console.log('🔄 Ensuring all student checklist completions are loaded...');
+        await loadChecklistCompletionForAllStudents();
+        
+        statusDiv.innerHTML = '<i class="fas fa-hourglass-half"></i> Building sync payload...';
 
-    console.log('Syncing:', payload);
+        // Verify data is loaded
+        if (!Array.isArray(checklistItems) || checklistItems.length === 0) {
+            throw new Error('Checklist items not loaded. Please try again.');
+        }
+        
+        if (!Array.isArray(students) || students.length === 0) {
+            throw new Error('Student data not loaded. Please try again.');
+        }
 
-    // Send to Google Apps Script using no-cors mode to bypass CORS restrictions
-    fetch(GOOGLE_SHEET_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: {
-            'Content-Type': 'text/plain'
-        },
-        body: JSON.stringify(payload)
-    })
-    .then(() => {
-        console.log('Sync request sent successfully');
+        // Debug: Log what we have
+        console.log('📋 Sync Data Summary:', {
+            totalStudents: students.length,
+            totalChecklistItems: checklistItems.length,
+            checklistItemsList: checklistItems.map(item => ({ id: item.id, label: item.label, category: item.category }))
+        });
+
+        // Build complete student data with ALL checklist items
+        const enrichedStudents = students.map(student => {
+            // Create a Set of completed item IDs for fast lookup
+            // Each record in checklistCompletion represents a COMPLETED item
+            const completedItemIds = new Set();
+            if (student.checklistCompletion && Array.isArray(student.checklistCompletion)) {
+                student.checklistCompletion.forEach(completion => {
+                    // The existence of a record means the item is completed
+                    // Normalize to number for consistent comparison
+                    const itemId = parseInt(completion.checklist_item_id, 10);
+                    if (!isNaN(itemId)) {
+                        completedItemIds.add(itemId);
+                    }
+                });
+            }
+
+            // Build checklist data for EVERY item
+            const checklistData = {};
+            checklistItems.forEach(item => {
+                const itemId = parseInt(item.id, 10);
+                // If item ID is in completedItemIds set, it's checked (Yes), otherwise No
+                const isCompleted = !isNaN(itemId) && completedItemIds.has(itemId);
+                checklistData[item.label] = isCompleted ? 'Yes' : 'No';
+            });
+
+            // Debug for first student
+            if (student.id === students[0].id) {
+                console.log('📊 Sample Student Data:', {
+                    name: student.name,
+                    completedItemIds: Array.from(completedItemIds),
+                    checklistData: checklistData,
+                    completedCount: Object.values(checklistData).filter(v => v === 'Yes').length,
+                    totalCount: Object.keys(checklistData).length
+                });
+            }
+
+            return {
+                id: student.id,
+                name: student.name,
+                email: student.email,
+                figmaEmail: student.figmaEmail || '',
+                linkedin: student.linkedin || '',
+                whatsapp: student.whatsapp || '',
+                location: student.location || '',
+                language: student.language || '',
+                status: student.status || '',
+                cohort: student.cohort || '',
+                paymentMethod: student.paymentMethod || '',
+                totalAmount: student.totalAmount || 0,
+                paidAmount: student.paidAmount || 0,
+                remaining: student.remaining || 0,
+                note: student.note || '',
+                checklist: checklistData,
+                checklistItemsCount: Object.keys(checklistData).length,
+                checklistCompletedCount: Object.values(checklistData).filter(v => v === 'Yes').length
+            };
+        });
+
+        // Create JSON payload with enriched data
+        const payload = {
+            action: 'updateSheet',
+            data: enrichedStudents,
+            checklistItemsInfo: checklistItems.map(item => ({ id: item.id, label: item.label, category: item.category }))
+        };
+
+        console.log('📤 Payload ready to send:', {
+            totalStudents: enrichedStudents.length,
+            totalChecklistItems: checklistItems.length,
+            payloadSize: JSON.stringify(payload).length + ' bytes'
+        });
+
+        statusDiv.innerHTML = '<i class="fas fa-hourglass-half"></i> Syncing data to Google Sheets...';
+
+        // Send to Google Apps Script using no-cors mode to bypass CORS restrictions
+        const response = await fetch(GOOGLE_SHEET_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: {
+                'Content-Type': 'text/plain'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        console.log('✅ Sync request sent successfully');
         // Show success message
         statusDiv.style.backgroundColor = '#d4edda';
         statusDiv.style.color = '#155724';
-        statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> ✅ Successfully synced! Your Google Sheet has been updated with ' + students.length + ' students.';
+        statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> ✅ Successfully synced! Your Google Sheet has been updated with ' + enrichedStudents.length + ' students and ' + checklistItems.length + ' checklist items.';
         
         // Auto-hide after 5 seconds
         setTimeout(() => {
             statusDiv.style.display = 'none';
         }, 5000);
-    })
-    .catch(error => {
-        console.error('Sync error:', error);
-        statusDiv.style.backgroundColor = '#d4edda';
-        statusDiv.style.color = '#155724';
-        statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> ✅ Sync completed! Check your Google Sheet to verify all ' + students.length + ' students have been added.';
+    } catch (error) {
+        console.error('❌ Sync error:', error);
+        statusDiv.style.backgroundColor = '#f8d7da';
+        statusDiv.style.color = '#721c24';
+        statusDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> ❌ Sync failed: ' + error.message;
         
         setTimeout(() => {
             statusDiv.style.display = 'none';
         }, 5000);
-    });
+    }
 }
 
 function generateCSV(data) {
