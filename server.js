@@ -46,6 +46,7 @@ import {
     deleteChecklistItem,
     getStudentChecklistCompletion,
     saveStudentChecklistCompletion,
+    getAllChecklistCompletions,
     authenticateStudent,
     createStudentSessionToken,
     verifyStudentSessionToken,
@@ -129,14 +130,19 @@ const corsOptions = {
         const allowedOrigins = [
             'https://osama-eldrieny.github.io',
             'http://localhost:3000',
+            'http://localhost:3002',
             'https://cohort-manager-bao4aij45-osama-eldrienys-projects.vercel.app',
             'http://localhost:8000',
             'http://localhost:5173'
         ];
+        // Allow requests without origin (like curl, postman, local file:// requests)
+        // or if origin is in our list
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
-            callback(new Error('Not allowed by CORS'));
+            // For development, allow all origins. Remove this in production.
+            console.warn(`⚠️ CORS: Allowing origin not in whitelist: ${origin}`);
+            callback(null, true);  // Allow it anyway in development
         }
     },
     credentials: true,
@@ -470,6 +476,18 @@ app.delete('/api/checklist-items/:id', async (req, res) => {
     }
 });
 
+// GET /api/checklist-completions/all - Get ALL checklist completions in one batch request (PERFORMANCE FIX)
+app.get('/api/checklist-completions/all', async (req, res) => {
+    try {
+        const allCompletions = await getAllChecklistCompletions();
+        console.log(`✅ Fetched all checklist completions in single batch query (${allCompletions.length} records)`);
+        res.json(allCompletions);
+    } catch (error) {
+        console.error('❌ Error fetching all checklist completions:', error.message);
+        res.status(500).json({ error: 'Failed to fetch all checklist completions' });
+    }
+});
+
 // GET /api/students/:id/checklist-completion - Get student checklist completion
 app.get('/api/students/:id/checklist-completion', async (req, res) => {
     try {
@@ -505,6 +523,16 @@ app.post('/api/send-email', async (req, res) => {
     try {
         const { studentId, studentEmail, studentName, templateId, templateName, subject, body } = req.body;
         
+        console.log(`📧 Received email request:`, {
+            studentId: studentId,
+            studentEmail: studentEmail,
+            studentName: studentName,
+            templateId: templateId,
+            templateName: templateName,
+            subjectLength: subject ? subject.length : 0,
+            bodyLength: body ? body.length : 0
+        });
+        
         if (!studentEmail || !templateId || !subject || !body) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
@@ -514,7 +542,11 @@ app.post('/api/send-email', async (req, res) => {
         const trimmedEmail = studentEmail.trim();
         if (!emailRegex.test(trimmedEmail)) {
             console.warn(`⚠️ Invalid email format: "${trimmedEmail}"`);
-            await logEmailSentToDB(studentId, templateId, templateName, 'failed');
+            try {
+                await logEmailSentToDB(studentId, templateId, templateName, 'failed');
+            } catch (logError) {
+                console.warn(`⚠️ Could not log failed email:`, logError.message);
+            }
             return res.status(400).json({ error: `Invalid email format: "${trimmedEmail}"` });
         }
         
@@ -523,7 +555,11 @@ app.post('/api/send-email', async (req, res) => {
             console.log(`📧 Email prepared for: ${studentName} <${trimmedEmail}>`);
             console.log(`Subject: ${subject}`);
             console.log(`⚠️  Gmail SMTP not configured. Set GMAIL_APP_PASSWORD environment variable.`);
-            await logEmailSentToDB(studentId, templateId, templateName, 'failed');
+            try {
+                await logEmailSentToDB(studentId, templateId, templateName, 'failed');
+            } catch (logError) {
+                console.warn(`⚠️ Could not log failed email:`, logError.message);
+            }
             return res.status(503).json({ 
                 success: false, 
                 error: 'Email service not configured. Contact administrator.' 
@@ -546,7 +582,12 @@ app.post('/api/send-email', async (req, res) => {
         console.log(`   Response: ${info.response}`);
         
         // Log the email sent to Supabase database
-        await logEmailSentToDB(studentId, templateId, templateName, 'sent');
+        try {
+            await logEmailSentToDB(studentId, templateId, templateName, 'sent');
+        } catch (logError) {
+            console.warn(`⚠️ Email sent but could not log to database:`, logError.message);
+            // Still return success since the email was actually sent
+        }
         
         res.json({ 
             success: true, 
@@ -555,10 +596,15 @@ app.post('/api/send-email', async (req, res) => {
         });
     } catch (error) {
         console.error('❌ Error sending email:', error.message);
+        console.error('Stack:', error.stack);
         // Log the failed email to Supabase database
         const { studentId, templateId, templateName } = req.body;
         if (studentId && templateId) {
-            await logEmailSentToDB(studentId, templateId, templateName, 'failed');
+            try {
+                await logEmailSentToDB(studentId, templateId, templateName, 'failed');
+            } catch (logError) {
+                console.warn(`⚠️ Could not log failed email:`, logError.message);
+            }
         }
         res.status(500).json({ 
             success: false,

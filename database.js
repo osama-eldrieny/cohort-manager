@@ -319,11 +319,15 @@ export async function logEmailSentToDB(studentId, templateId, templateName, stat
                 created_at: new Date().toISOString()
             });
 
-        if (error) throw error;
+        if (error) {
+            console.error('❌ Supabase error saving email log:', error.message);
+            // Don't throw - just log the warning
+            return;
+        }
         console.log(`💾 Email log saved to Supabase: Student ${studentId}, Template: ${templateName}, Status: ${status}`);
     } catch (error) {
         console.error('❌ Error saving email log to database:', error.message);
-        throw error;
+        // Don't throw - just log it
     }
 }
 
@@ -1079,6 +1083,29 @@ export async function saveStudentChecklistCompletion(studentId, completedItemIds
         return data || [];
     } catch (error) {
         console.error('❌ Error saving student checklist completion:', error.message);
+        throw error;
+    }
+}
+
+// Get all checklist completions in one query (batch endpoint)
+export async function getAllChecklistCompletions() {
+    try {
+        if (!supabase) {
+            throw new Error('Supabase not initialized');
+        }
+
+        const { data, error } = await supabase
+            .from('student_checklist_completion')
+            .select('*');
+
+        if (error) {
+            console.error('❌ Error fetching all checklist completions:', error.message);
+            throw error;
+        }
+        
+        return data || [];
+    } catch (error) {
+        console.error('❌ Error fetching all checklist completions:', error.message);
         throw error;
     }
 }

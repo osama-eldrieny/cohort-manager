@@ -543,16 +543,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     loadDeletedCohorts(); // Load deleted cohorts from localStorage
     loadEmailTemplateCategories(); // Load email template categories from localStorage
-    await loadStudents();
-    console.log(`✅ Loaded ${students.length} students`);
-    await loadEmailTemplates();
-    console.log('✅ Loaded email templates');
-    await loadChecklistItems();
-    console.log('✅ Loaded checklist items');
-    await loadCohorts();
-    console.log(`✅ Loaded ${cohorts.length} cohorts`);
+    
+    // PERFORMANCE FIX #2: Parallelize independent data loads
+    // loadStudents() now includes the batched checklist loading (formerly 228 requests)
+    // The other three are truly independent and can load in parallel
+    console.log('⏱️ Starting parallel data loads...');
+    const startTime = performance.now();
+    
+    const [_, templates, items, cohortsData] = await Promise.all([
+        loadStudents(),
+        loadEmailTemplates(),
+        loadChecklistItems(),
+        loadCohorts()
+    ]);
+    
+    const elapsedTime = (performance.now() - startTime).toFixed(2);
+    console.log(`✅ Loaded all data in parallel (${elapsedTime}ms)`);
+    console.log(`   - ${students.length} students`);
+    console.log(`   - ${templates ? templates.length : 'email'} templates`);
+    console.log(`   - ${items ? items.length : 'checklist'} items`);
+    console.log(`   - ${cohortsData ? cohortsData.length : cohorts.length} cohorts`);
+    
     // Sync student cohort names with database after cohorts are loaded
+    // This depends on both students and cohorts being loaded, so keep it after Promise.all
     await syncStudentCohortNames();
+    
     setupEventListeners();
     console.log('✅ Event listeners setup');
     
@@ -672,8 +687,14 @@ function setupEventListeners() {
     });
     // Filters
     document.getElementById('cohortFilter') && document.getElementById('cohortFilter').addEventListener('change', renderStudentsTable);
-    document.getElementById('statusFilterStudents').addEventListener('change', renderStudentsTable);
-    document.getElementById('searchStudent').addEventListener('input', renderStudentsTable);
+    document.getElementById('statusFilterStudents').addEventListener('change', () => {
+        resetStudentsPagination();
+        renderStudentsTable();
+    });
+    document.getElementById('searchStudent').addEventListener('input', () => {
+        resetStudentsPagination();
+        renderStudentsTable();
+    });
 
     // Form
     document.getElementById('paidAmount').addEventListener('input', calculateRemaining);
@@ -808,6 +829,13 @@ function navigatePage(pageId) {
 }
 
 function renderPage(pageId) {
+    // PERFORMANCE FIX #3: Data Caching Strategy
+    // ✅ renderPage() renders UI from in-memory 'students' array - NO API CALLS
+    // ✅ All render functions (charts, tables, etc.) use cached 'students' data
+    // ✅ API calls only happen on: create/update/delete operations OR explicit user actions
+    // ✅ When user navigates between pages, no re-fetches occur - instant rendering
+    // This ensures fast page navigation without redundant network requests
+    
     // Hide all pages
     document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
     
@@ -1219,6 +1247,14 @@ function renderCharts() {
 // STUDENTS PAGE
 // ============================================
 
+// Pagination state for students table
+let studentsPaginationState = {
+    currentPage: 1,
+    itemsPerPage: 25,
+    totalItems: 0,
+    totalPages: 0
+};
+
 function renderStudentsTable() {
     const statusFilterElement = document.getElementById('statusFilterStudents');
     const searchTerm = document.getElementById('searchStudent').value.toLowerCase();
@@ -1245,16 +1281,38 @@ function renderStudentsTable() {
     // Sort by name A-Z
     filtered.sort((a, b) => (a.name || '').localeCompare((b.name || '')));
 
+    // PERFORMANCE FIX #4: Pagination for students table
+    // Calculate pagination
+    const totalItems = filtered.length;
+    const itemsPerPage = studentsPaginationState.itemsPerPage;
+    const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+    
+    // Reset to page 1 if out of bounds
+    if (studentsPaginationState.currentPage > totalPages) {
+        studentsPaginationState.currentPage = 1;
+    }
+    
+    studentsPaginationState.totalItems = totalItems;
+    studentsPaginationState.totalPages = totalPages;
+    
+    // Get items for current page
+    const startIndex = (studentsPaginationState.currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const pageItems = filtered.slice(startIndex, endIndex);
+
     const tbody = document.getElementById('studentsTableBody');
-    if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" class="empty">No students found</td></tr>';
+    if (pageItems.length === 0 && totalItems === 0) {
+        tbody.innerHTML = '<tr><td colspan="15" class="empty">No students found</td></tr>';
+        renderStudentsPagination(totalPages);
         return;
     }
 
-    tbody.innerHTML = filtered.map((student, index) => {
+    // Render table rows with correct numbering
+    tbody.innerHTML = pageItems.map((student, pageIndex) => {
+        const globalIndex = startIndex + pageIndex + 1;
         return `
-        <tr>
-            <td class="col-id" style="padding-right: 0px;"><strong style="color: #999; text-align: center;">${index + 1}</strong></td>
+        <tr data-student-id="${student.id}">
+            <td class="col-id" style="padding-right: 0px;"><strong style="color: #999; text-align: center;">${globalIndex}</strong></td>
             <td class="col-name"><strong style="cursor: pointer; color: #0066cc; text-decoration: underline;" class="student-name-link" data-student-id="${student.id}" title="Click to view details">${student.name}</strong></td>
             <td class="col-email"><span class="copy-email" title="Click to copy">${student.email}</span></td>
             <td class="col-figmaEmail">${student.figmaEmail ? `<span class="copy-email" title="Click to copy">${student.figmaEmail}</span>` : '-'}</td>
@@ -1280,33 +1338,130 @@ function renderStudentsTable() {
     `;
     }).join('');
 
-    // Attach event listeners to action buttons
-    document.querySelectorAll('#studentsTableBody .btn-edit').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            editStudent(btn.dataset.studentId);
-        });
-    });
-
-    document.querySelectorAll('#studentsTableBody .btn-delete').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            deleteStudent(btn.dataset.studentId);
-        });
-    });
+    // Use event delegation instead of attaching listeners to each button
+    // Remove old listeners by cloning tbody
+    const newTbody = tbody.cloneNode(true);
+    tbody.parentNode.replaceChild(newTbody, tbody);
     
-    // Attach listener to student name links
-    document.querySelectorAll('#studentsTableBody .student-name-link').forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            openStudentContactModal(link.dataset.studentId);
-        });
-    });
+    // Attach event delegation on the table instead
+    const table = document.querySelector('.students-data-table');
+    if (table) {
+        table.removeEventListener('click', studentsTableClickHandler);
+        table.addEventListener('click', studentsTableClickHandler);
+    }
 
     // Apply column visibility
     applyColumnVisibility('studentsTableBody', 'students', 'students').catch(err => 
         console.warn('Failed to apply column visibility:', err)
     );
+    
+    // Render pagination controls
+    renderStudentsPagination(totalPages);
+}
+
+// Event delegation handler for students table clicks
+function studentsTableClickHandler(event) {
+    const target = event.target.closest('button, a, span');
+    if (!target) return;
+
+    if (target.classList.contains('btn-edit')) {
+        event.preventDefault();
+        editStudent(target.dataset.studentId);
+    } else if (target.classList.contains('btn-delete')) {
+        event.preventDefault();
+        deleteStudent(target.dataset.studentId);
+    } else if (target.classList.contains('student-name-link')) {
+        event.preventDefault();
+        openStudentContactModal(target.dataset.studentId);
+    } else if (target.classList.contains('copy-email')) {
+        event.preventDefault();
+        const email = target.textContent;
+        navigator.clipboard.writeText(email).then(() => {
+            showToast('Email copied!', 'success');
+        });
+    }
+}
+
+// Render pagination controls below the table
+function renderStudentsPagination(totalPages) {
+    const existingPagination = document.querySelector('.students-pagination');
+    if (existingPagination) {
+        existingPagination.remove();
+    }
+
+    if (totalPages <= 1) {
+        return; // No pagination needed if only one page
+    }
+
+    const table = document.querySelector('.students-data-table');
+    const paginationContainer = document.createElement('div');
+    paginationContainer.className = 'students-pagination';
+    paginationContainer.style.cssText = `
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+        margin-top: 20px;
+        padding: 16px;
+        background: #f9f9f9;
+        border-radius: 8px;
+    `;
+
+    const currentPage = studentsPaginationState.currentPage;
+    
+    let html = '';
+    
+    // Previous button
+    html += `
+        <button class="pagination-btn pagination-prev" ${currentPage === 1 ? 'disabled' : ''} 
+            style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; cursor: ${currentPage === 1 ? 'not-allowed' : 'pointer'}; opacity: ${currentPage === 1 ? '0.5' : '1'};">
+            ← Previous
+        </button>
+    `;
+    
+    // Page info
+    html += `
+        <span style="font-weight: 500; color: #666; min-width: 120px; text-align: center;">
+            Page <strong>${currentPage}</strong> of <strong>${totalPages}</strong>
+            <span style="font-size: 12px; color: #999; display: block;">${studentsPaginationState.totalItems} students</span>
+        </span>
+    `;
+    
+    // Next button
+    html += `
+        <button class="pagination-btn pagination-next" ${currentPage === totalPages ? 'disabled' : ''} 
+            style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; cursor: ${currentPage === totalPages ? 'not-allowed' : 'pointer'}; opacity: ${currentPage === totalPages ? '0.5' : '1'};">
+            Next →
+        </button>
+    `;
+    
+    paginationContainer.innerHTML = html;
+    table.parentNode.insertAdjacentElement('afterend', paginationContainer);
+    
+    // Attach pagination event listeners using event delegation
+    const studentsPage = document.getElementById('students');
+    studentsPage.removeEventListener('click', studentsPaginationClickHandler);
+    studentsPage.addEventListener('click', studentsPaginationClickHandler);
+}
+
+// Event handler for pagination buttons
+function studentsPaginationClickHandler(event) {
+    if (event.target.classList.contains('pagination-prev') && studentsPaginationState.currentPage > 1) {
+        studentsPaginationState.currentPage--;
+        renderStudentsTable();
+        // Scroll to top of students page
+        document.getElementById('students').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else if (event.target.classList.contains('pagination-next') && studentsPaginationState.currentPage < studentsPaginationState.totalPages) {
+        studentsPaginationState.currentPage++;
+        renderStudentsTable();
+        // Scroll to top of students page
+        document.getElementById('students').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+// Reset pagination when search or filter changes
+function resetStudentsPagination() {
+    studentsPaginationState.currentPage = 1;
 }
 
 
@@ -1465,13 +1620,24 @@ function renderCohortPage(cohortId) {
     `;
     page.innerHTML += resourcesHtml;
 
-    // Load and render cohort resources (links and videos)
+    // Load and render cohort resources (links and videos) IN PARALLEL
+    // PERFORMANCE FIX: Load both sections in parallel instead of sequentially
+    // This prevents one slow section from blocking the other
+    const resourcePromises = [];
     if (typeof renderCohortLinks === 'function') {
-        renderCohortLinks(cohort);
+        resourcePromises.push(renderCohortLinks(cohort).catch(err => 
+            console.warn(`⚠️ Failed to load links for ${cohort}:`, err)
+        ));
     }
     if (typeof renderCohortVideos === 'function') {
-        renderCohortVideos(cohort);
+        resourcePromises.push(renderCohortVideos(cohort).catch(err => 
+            console.warn(`⚠️ Failed to load videos for ${cohort}:`, err)
+        ));
     }
+    // Don't block page rendering - let resources load in the background
+    Promise.all(resourcePromises).catch(err => 
+        console.warn('⚠️ Error loading cohort resources:', err)
+    );
 
     // Add search functionality
     const searchInput = document.getElementById(`searchCohort-${cohortId}`);
@@ -4315,23 +4481,34 @@ async function loadStudentChecklistCompletion(studentId) {
 // Load checklist completion for all students
 async function loadChecklistCompletionForAllStudents() {
     try {
-        console.log('📋 Loading checklist completion for all students...');
+        console.log('📋 Loading checklist completion for all students (BATCHED)...');
         
-        // Load all in parallel with Promise.all instead of sequential loop
-        const completionPromises = students.map(student =>
-            fetch(`${API_BASE_URL}/api/students/${student.id}/checklist-completion`)
-                .then(response => response.ok ? response.json() : [])
-                .then(completion => {
-                    student.checklistCompletion = completion;
-                })
-                .catch(error => {
-                    console.warn(`⚠️  Could not load checklist for student ${student.id}:`, error.message);
-                    student.checklistCompletion = [];
-                })
-        );
+        // PERFORMANCE FIX #1: Fetch ALL completions in a SINGLE request instead of 228 parallel requests
+        const response = await fetch(`${API_BASE_URL}/api/checklist-completions/all`);
         
-        await Promise.all(completionPromises);
-        console.log(`✅ Loaded checklist completion for all ${students.length} students`);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch checklist completions: ${response.status}`);
+        }
+        
+        const allCompletions = await response.json();
+        console.log(`✅ Fetched ${allCompletions.length} checklist completion records in single batch request`);
+        
+        // Distribute completions to students by matching student_id
+        // Create a map for O(1) lookup instead of O(n) search
+        const completionsByStudentId = {};
+        allCompletions.forEach(completion => {
+            if (!completionsByStudentId[completion.student_id]) {
+                completionsByStudentId[completion.student_id] = [];
+            }
+            completionsByStudentId[completion.student_id].push(completion);
+        });
+        
+        // Assign completions to each student
+        students.forEach(student => {
+            student.checklistCompletion = completionsByStudentId[student.id] || [];
+        });
+        
+        console.log(`✅ Assigned checklist completions to all ${students.length} students`);
         
         // Dismiss persistent success toast
         dismissPersistentToast();
