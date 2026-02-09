@@ -58,12 +58,33 @@
             border: 1px solid rgba(255, 255, 255, 0.3);
             color: white;
             transition: all 0.3s ease;
+            padding: 8px 12px;
+            font-size: 14px;
         }
 
         .btn-logout:hover {
             background: rgba(255, 255, 255, 0.3);
             border-color: rgba(255, 255, 255, 0.5);
             color: white;
+        }
+
+        .logout-text {
+            margin-left: 6px;
+        }
+
+        /* Mobile: Hide navbar text and show logout icon only */
+        @media (max-width: 576px) {
+            .navbar-text {
+                display: none;
+            }
+
+            .btn-logout {
+                padding: 8px 10px;
+            }
+
+            .logout-text {
+                display: none;
+            }
         }
 
         /* Main Layout */
@@ -535,8 +556,8 @@
                     <br>
                     <small id="studentCohort">Loading...</small>
                 </div>
-                <button class="btn btn-logout" onclick="logoutStudent()">
-                    <i class="fas fa-sign-out-alt"></i> Logout
+                <button class="btn btn-logout" onclick="logoutStudent()" title="Logout">
+                    <i class="fas fa-sign-out-alt"></i><span class="logout-text"> Logout</span>
                 </button>
             </div>
         </div>

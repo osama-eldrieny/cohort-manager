@@ -350,6 +350,45 @@ body {
     gap: 12px;
 }
 
+.btn-logout-admin {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-logout-admin:hover {
+    background: rgba(239, 68, 68, 0.25);
+    border-color: rgba(239, 68, 68, 0.5);
+}
+
+.logout-text {
+    margin-left: 4px;
+}
+
+/* Mobile: Hide button text and user info */
+@media (max-width: 576px) {
+    .btn-text {
+        display: none;
+    }
+
+    .btn-logout-admin {
+        padding: 8px 10px;
+    }
+
+    .logout-text {
+        display: none;
+    }
+}
+
 .content-wrapper {
     flex: 1;
     overflow-y: auto;
@@ -1384,6 +1423,27 @@ button {
     gap: 6px; */
 }
 
+.btn-logout-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.logout-label {
+    white-space: nowrap;
+}
+
+/* Mobile: Hide logout label on small screens */
+@media (max-width: 576px) {
+    .btn-logout-header {
+        padding: 8px 10px;
+    }
+
+    .logout-label {
+        display: none;
+    }
+}
+
 /* ============================================
    TABLE CONTAINER
    ============================================ */
@@ -1720,7 +1780,7 @@ button {
     .header-bar {
         padding: 12px 15px;
         padding-left: 60px;
-        gap: 150px;
+        gap: 110px;
     }
 
     .page-title {
@@ -1797,8 +1857,8 @@ button {
     }
 
     .header-buttons button {
-        flex: 1;
-        max-width: 130px;
+        /* flex: 1;
+        max-width: 130px; */
     }
 
     /* Mobile table scrolling - keep same style, just add scroll */

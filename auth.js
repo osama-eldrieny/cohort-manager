@@ -140,8 +140,9 @@ async function addLogoutButton() {
         }
 
         const logoutBtn = document.createElement('button');
-        logoutBtn.className = 'btn-secondary';
-        logoutBtn.innerHTML = `<i class="fas fa-sign-out-alt"></i> Logout (${displayName})`;
+        logoutBtn.className = 'btn-secondary btn-logout-header';
+        logoutBtn.innerHTML = `<i class="fas fa-sign-out-alt"></i><span class="logout-label"> Logout (${displayName})</span>`;
+        logoutBtn.title = 'Logout';
         logoutBtn.onclick = logoutUser;
         headerButtons.appendChild(logoutBtn);
     }
