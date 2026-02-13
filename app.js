@@ -78,6 +78,45 @@ function getColor(label) {
 const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 const API_BASE_URL = isDev ? 'http://localhost:3002' : 'https://cohort-manager-xi.vercel.app';
 
+// JWT Token Management (STEP 5 - Frontend JWT Integration)
+function getJWTToken() {
+    const adminToken = localStorage.getItem('admin_jwt_token');
+    const studentToken = localStorage.getItem('student_jwt_token');
+    return adminToken || studentToken;
+}
+
+function storeJWTToken(token) {
+    const userType = localStorage.getItem('user_type');
+    if (userType === 'admin') {
+        localStorage.setItem('admin_jwt_token', token);
+    } else if (userType === 'student') {
+        localStorage.setItem('student_jwt_token', token);
+    }
+}
+
+function getJWTHeaders() {
+    const token = getJWTToken();
+    if (token) {
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        };
+    }
+    return { 'Content-Type': 'application/json' };
+}
+
+// API Fetch Wrapper with JWT Headers (STEP 5)
+async function apiFetch(url, options = {}) {
+    const headers = {
+        ...getJWTHeaders(),
+        ...(options.headers || {})
+    };
+    return fetch(url, {
+        ...options,
+        headers
+    });
+}
+
 // Google Sheets Integration
 // Replace with your Google Apps Script deployment URL
 const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbzyymEq0g8HIDgEPRzUmn34IlSse1CaNxvHIZsSs9HO-Do4PDE2If40_ArJ3W53SbFI/exec';
@@ -314,7 +353,7 @@ const PAGE_COLUMNS = {
 async function getColumnPreferences(pageId) {
     try {
         // Try to fetch from database first
-        const response = await fetch(`${API_BASE_URL}/api/column-preferences/${pageId}`);
+        const response = await apiFetch(`${API_BASE_URL}/api/column-preferences/${pageId}`);
         if (response.ok) {
             const data = await response.json();
             if (data.found && data.visibleColumns) {
@@ -349,7 +388,7 @@ async function getColumnPreferences(pageId) {
 async function saveColumnPreferences(pageId, visibleColumns) {
     try {
         // Save to database
-        const response = await fetch(`${API_BASE_URL}/api/column-preferences`, {
+        const response = await apiFetch(`${API_BASE_URL}/api/column-preferences`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ pageId, visibleColumns })
@@ -510,7 +549,7 @@ async function applyColumnPreferences(pageId) {
 async function resetColumnPreferences(pageId) {
     try {
         // Delete from database
-        await fetch(`${API_BASE_URL}/api/column-preferences/${pageId}`, {
+        await apiFetch(`${API_BASE_URL}/api/column-preferences/${pageId}`, {
             method: 'DELETE'
         });
     } catch (error) {
@@ -564,9 +603,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log(`   - ${items ? items.length : 'checklist'} items`);
     console.log(`   - ${cohortsData ? cohortsData.length : cohorts.length} cohorts`);
     
-    // Sync student cohort names with database after cohorts are loaded
-    // This depends on both students and cohorts being loaded, so keep it after Promise.all
-    await syncStudentCohortNames();
+    // PERFORMANCE FIX: Load checklist and sync cohorts in parallel after other data loads
+    // These two operations are independent of each other, so run them together
+    const checklistSyncStart = performance.now();
+    await Promise.all([
+        loadChecklistCompletionForAllStudents(),
+        syncStudentCohortNames()
+    ]);
+    const checklistSyncTime = (performance.now() - checklistSyncStart).toFixed(2);
+    console.log(`✅ Completed checklist and cohort sync in ${checklistSyncTime}ms`);
     
     setupEventListeners();
     console.log('✅ Event listeners setup');
@@ -3295,7 +3340,7 @@ function deleteStudent(id) {
         console.log('🗑️ Deleting student:', studentName, 'with ID:', id);
         
         // Call dedicated delete endpoint
-        fetch(`${API_BASE_URL}/api/students/${id}`, {
+        apiFetch(`${API_BASE_URL}/api/students/${id}`, {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' }
         })
@@ -3321,7 +3366,7 @@ function deleteStudent(id) {
 // Delete student by ID (for handling email changes during edit)
 async function deleteStudentById(id) {
     try {
-        const response = await fetch(`${API_BASE_URL}/api/students/${id}`, {
+        const response = await apiFetch(`${API_BASE_URL}/api/students/${id}`, {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' }
         });
@@ -3343,7 +3388,7 @@ async function deleteStudentById(id) {
 // Delete student by email (for handling email changes during edit) - DEPRECATED: Use deleteStudentById instead
 async function deleteStudentByEmail(email) {
     return new Promise((resolve, reject) => {
-        fetch(`${API_BASE_URL}/api/students`, {
+        apiFetch(`${API_BASE_URL}/api/students`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ deleteByEmail: email })
@@ -3681,7 +3726,7 @@ function saveStudent(event) {
                 const adminToken = localStorage.getItem('admin_session_token');
                 console.log(`🔑 Admin token present: ${!!adminToken}`);
                 
-                const passwordResponse = await fetch(`${API_BASE_URL}/api/admin/set-student-password`, {
+                const passwordResponse = await apiFetch(`${API_BASE_URL}/api/admin/set-student-password`, {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
@@ -3711,7 +3756,7 @@ function saveStudent(event) {
         // For new students, only save if they selected items
         if (isEditing || selectedChecklistItems.length > 0) {
             try {
-                const checklistResponse = await fetch(`${API_BASE_URL}/api/students/${student.id}/checklist-completion`, {
+                const checklistResponse = await apiFetch(`${API_BASE_URL}/api/students/${student.id}/checklist-completion`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ completedItemIds: selectedChecklistItems })
@@ -3813,7 +3858,7 @@ async function sendEmailTemplatesWithDelay(student, templates) {
             console.log(`📧 Sending email ${i + 1}/${templates.length}: "${template.name}" to ${student.email}`);
             console.log(`   Subject: ${subject.substring(0, 60)}${subject.length > 60 ? '...' : ''}`);
             
-            const response = await fetch(`${API_BASE_URL}/api/send-email`, {
+            const response = await apiFetch(`${API_BASE_URL}/api/send-email`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -3865,7 +3910,7 @@ async function saveToStorage(studentToSave = null) {
     
     // Save to server
     try {
-        const response = await fetch(`${API_BASE_URL}/api/students`, {
+        const response = await apiFetch(`${API_BASE_URL}/api/students`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(dataArray)
@@ -3893,20 +3938,12 @@ async function saveToStorage(studentToSave = null) {
 async function loadStudents() {
     try {
         // Load from server (Supabase via students.json endpoint)
-        const response = await fetch(`${API_BASE_URL}/api/students`);
+        const response = await apiFetch(`${API_BASE_URL}/api/students`);
         if (response.ok) {
             const serverStudents = await response.json();
             if (serverStudents && Array.isArray(serverStudents) && serverStudents.length > 0) {
                 students = serverStudents;
                 console.log(`✅ Loaded ${students.length} students from Supabase`);
-                
-                // Sync cohort names with database
-                await syncStudentCohortNames();
-                
-                // Load checklist completion data and WAIT for it to complete
-                // This ensures percentages are calculated correctly before rendering
-                await loadChecklistCompletionForAllStudents();
-                
                 logStudentStats();
                 return;
             }
@@ -3920,10 +3957,6 @@ async function loadStudents() {
     // Fallback to sample data if server unavailable
     students = getSampleData();
     console.log(`⚠️ Server unavailable - Loaded ${students.length} students from sample data (local fallback)`);
-    
-    // Still load checklist completion data and WAIT for it
-    await loadChecklistCompletionForAllStudents();
-    
     logStudentStats();
 }
 
@@ -3977,7 +4010,7 @@ async function syncStudentCohortNames() {
             
             // Save corrected students back to database
             try {
-                const saveResponse = await fetch(`${API_BASE_URL}/api/students`, {
+                const saveResponse = await apiFetch(`${API_BASE_URL}/api/students`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(correctedStudents)
@@ -4012,7 +4045,7 @@ async function exportData() {
         console.log('📋 Loading current checklist items...');
         let currentChecklistItems = [];
         try {
-            const checklistRes = await fetch(`${API_BASE_URL}/api/checklist-items`);
+            const checklistRes = await apiFetch(`${API_BASE_URL}/api/checklist-items`);
             if (checklistRes.ok) {
                 currentChecklistItems = await checklistRes.json();
                 console.log('✅ Loaded', currentChecklistItems.length, 'checklist items');
@@ -4025,7 +4058,7 @@ async function exportData() {
         // Fetch email logs for all students
         console.log('📧 Fetching email history for all students...');
         const emailLogsPromises = students.map(student =>
-            fetch(`${API_BASE_URL}/api/email-logs/${student.id}`)
+            apiFetch(`${API_BASE_URL}/api/email-logs/${student.id}`)
                 .then(res => res.ok ? res.json() : [])
                 .catch(() => [])
         );
@@ -4118,7 +4151,7 @@ async function importData() {
                 // Get current checklist items from API for validation
                 let currentChecklistItemIds = new Set();
                 try {
-                    const checklistRes = await fetch(`${API_BASE_URL}/api/checklist-items`);
+                    const checklistRes = await apiFetch(`${API_BASE_URL}/api/checklist-items`);
                     if (checklistRes.ok) {
                         const currentItems = await checklistRes.json();
                         currentChecklistItemIds = new Set(currentItems.map(item => item.id));
@@ -4185,7 +4218,7 @@ async function restoreEmailLogs(emailLogsData) {
             data: emailLogsData
         };
 
-        const response = await fetch(`${API_BASE_URL}/api/restore-email-logs`, {
+        const response = await apiFetch(`${API_BASE_URL}/api/restore-email-logs`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(restorePayload)
@@ -4701,7 +4734,7 @@ let currentStudentChecklistCompletion = [];
 // Load checklist items from API
 async function loadChecklistItems() {
     try {
-        const response = await fetch(`${API_BASE_URL}/api/checklist-items`);
+        const response = await apiFetch(`${API_BASE_URL}/api/checklist-items`);
         if (response.ok) {
             checklistItems = await response.json();
             console.log('✅ Loaded checklist items:', checklistItems.length, 'items');
@@ -4717,7 +4750,7 @@ async function loadChecklistItems() {
 // Load checklist completion for a student
 async function loadStudentChecklistCompletion(studentId) {
     try {
-        const response = await fetch(`${API_BASE_URL}/api/students/${studentId}/checklist-completion`);
+        const response = await apiFetch(`${API_BASE_URL}/api/students/${studentId}/checklist-completion`);
         if (response.ok) {
             currentStudentChecklistCompletion = await response.json();
             console.log(`✅ Loaded checklist completion for student ${studentId}:`, currentStudentChecklistCompletion);
@@ -4736,7 +4769,7 @@ async function loadChecklistCompletionForAllStudents() {
         console.log('📋 Loading checklist completion for all students (BATCHED)...');
         
         // PERFORMANCE FIX #1: Fetch ALL completions in a SINGLE request instead of 228 parallel requests
-        const response = await fetch(`${API_BASE_URL}/api/checklist-completions/all`);
+        const response = await apiFetch(`${API_BASE_URL}/api/checklist-completions/all`);
         
         if (!response.ok) {
             throw new Error(`Failed to fetch checklist completions: ${response.status}`);
@@ -4772,7 +4805,7 @@ async function loadChecklistCompletionForAllStudents() {
 // Load categories from API
 async function loadEmailTemplateCategories() {
     try {
-        const response = await fetch(`${API_BASE_URL}/api/email-template-categories`);
+        const response = await apiFetch(`${API_BASE_URL}/api/email-template-categories`);
         if (response.ok) {
             emailTemplateCategories = await response.json();
             console.log('✅ Loaded categories from API:', emailTemplateCategories);
@@ -4788,7 +4821,7 @@ async function loadEmailTemplateCategories() {
 // Save new category to API
 async function saveNewCategoryToAPI(categoryName) {
     try {
-        const response = await fetch(`${API_BASE_URL}/api/email-template-categories`, {
+        const response = await apiFetch(`${API_BASE_URL}/api/email-template-categories`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ categoryName })
@@ -4813,7 +4846,7 @@ async function loadEmailTemplates() {
     try {
         // Try to load from API first (works on local server)
         try {
-            const response = await fetch(`${API_BASE_URL}/api/email-templates`);
+            const response = await apiFetch(`${API_BASE_URL}/api/email-templates`);
             if (response.ok) {
                 emailTemplates = await response.json();
                 renderEmailTemplatesList();
@@ -5069,7 +5102,7 @@ function deleteCategoryConfirm(categoryName) {
 
 async function deleteCategory(categoryName) {
     try {
-        const response = await fetch(`${API_BASE_URL}/api/email-template-categories/${encodeURIComponent(categoryName)}`, {
+        const response = await apiFetch(`${API_BASE_URL}/api/email-template-categories/${encodeURIComponent(categoryName)}`, {
             method: 'DELETE'
         });
 
@@ -5111,7 +5144,7 @@ async function saveEditedCategory(event) {
     }
     
     try {
-        const response = await fetch(`${API_BASE_URL}/api/email-template-categories/${encodeURIComponent(oldName)}`, {
+        const response = await apiFetch(`${API_BASE_URL}/api/email-template-categories/${encodeURIComponent(oldName)}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ newName })
@@ -5244,7 +5277,7 @@ async function saveEmailTemplate(event) {
     const body = document.getElementById('emailBody').value;
 
     try {
-        const response = await fetch(`${API_BASE_URL}/api/email-templates`, {
+        const response = await apiFetch(`${API_BASE_URL}/api/email-templates`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id, name, category, button_label, subject, body })
@@ -5275,7 +5308,7 @@ async function deleteEmailTemplate(templateId) {
     }
 
     try {
-        const response = await fetch(`${API_BASE_URL}/api/email-templates/${templateId}`, {
+        const response = await apiFetch(`${API_BASE_URL}/api/email-templates/${templateId}`, {
             method: 'DELETE'
         });
 
@@ -5310,7 +5343,7 @@ function populateEmailHistory(student) {
     console.log(`📧 Loading email history for student ID: ${student.id}`);
     
     // Load email history from server
-    fetch(`${API_BASE_URL}/api/email-logs/${student.id}`)
+    apiFetch(`${API_BASE_URL}/api/email-logs/${student.id}`)
         .then(response => {
             console.log(`📋 API Response status: ${response.status}`);
             return response.json();
@@ -5607,7 +5640,7 @@ async function sendEmailToStudent(templateId, studentId) {
     console.log(`📧 Sending email to: ${student.name} <${studentEmail}>`);
 
     try {
-        const response = await fetch(`${API_BASE_URL}/api/send-email`, {
+        const response = await apiFetch(`${API_BASE_URL}/api/send-email`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -5868,7 +5901,7 @@ async function sendBulkEmail(event) {
                 body = body.replace(regex, tags[key]);
             });
 
-            const response = await fetch(`${API_BASE_URL}/api/send-email`, {
+            const response = await apiFetch(`${API_BASE_URL}/api/send-email`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -5939,7 +5972,7 @@ function createDynamicCohortPage(pageId) {
 
 async function loadCohorts() {
     try {
-        const response = await fetch(`${API_BASE_URL}/api/cohorts`);
+        const response = await apiFetch(`${API_BASE_URL}/api/cohorts`);
         if (response.ok) {
             cohorts = await response.json();
             console.log('✅ Loaded cohorts:', cohorts);
@@ -6170,7 +6203,7 @@ async function saveCohort(event) {
                 });
                 
                 // Save updated students to database
-                const saveResponse = await fetch(`${API_BASE_URL}/api/students`, {
+                const saveResponse = await apiFetch(`${API_BASE_URL}/api/students`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(updatedStudents)
@@ -6234,7 +6267,7 @@ async function deleteCohortConfirm(idOrName, isHardcoded = false) {
                 updateCohortsTable();
             } else {
                 // Delete dynamic cohort via API
-                const response = await fetch(`${API_BASE_URL}/api/cohorts/${id}`, {
+                const response = await apiFetch(`${API_BASE_URL}/api/cohorts/${id}`, {
                     method: 'DELETE'
                 });
                 
@@ -6388,7 +6421,7 @@ async function saveChecklistItem(event) {
     }
     
     try {
-        const response = await fetch(`${API_BASE_URL}/api/checklist-items`, {
+        const response = await apiFetch(`${API_BASE_URL}/api/checklist-items`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -6462,7 +6495,7 @@ async function saveEditedChecklistItem(event) {
     }
     
     try {
-        const response = await fetch(`${API_BASE_URL}/api/checklist-items/${id}`, {
+        const response = await apiFetch(`${API_BASE_URL}/api/checklist-items/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -6507,7 +6540,7 @@ function deleteChecklistItemConfirm(itemId) {
 // Delete checklist item
 async function deleteChecklistItem(itemId) {
     try {
-        const response = await fetch(`${API_BASE_URL}/api/checklist-items/${itemId}`, {
+        const response = await apiFetch(`${API_BASE_URL}/api/checklist-items/${itemId}`, {
             method: 'DELETE'
         });
         
@@ -6607,7 +6640,7 @@ async function addNewChecklistCategory() {
     
     // Create a placeholder item in the new category (marked with ~ prefix to hide from main table)
     try {
-        const response = await fetch(`${API_BASE_URL}/api/checklist-items`, {
+        const response = await apiFetch(`${API_BASE_URL}/api/checklist-items`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -6666,7 +6699,7 @@ async function editChecklistCategory(oldName) {
         let successCount = 0;
         
         for (const item of itemsToUpdate) {
-            const response = await fetch(`${API_BASE_URL}/api/checklist-items/${item.id}`, {
+            const response = await apiFetch(`${API_BASE_URL}/api/checklist-items/${item.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -6721,7 +6754,7 @@ async function deleteChecklistCategory(categoryName) {
         let successCount = 0;
         
         for (const item of itemsToDelete) {
-            const response = await fetch(`${API_BASE_URL}/api/checklist-items/${item.id}`, {
+            const response = await apiFetch(`${API_BASE_URL}/api/checklist-items/${item.id}`, {
                 method: 'DELETE'
             });
             

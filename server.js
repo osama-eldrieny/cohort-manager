@@ -49,6 +49,8 @@ import {
     getAllChecklistCompletions,
     authenticateStudent,
     createStudentSessionToken,
+    generateAdminJWT,
+    generateStudentJWT,
     verifyStudentSessionToken,
     getStudentById,
     logoutStudentSession,
@@ -1051,6 +1053,9 @@ app.post('/api/auth/login', async (req, res) => {
         // Create session token
         const sessionToken = await createSessionToken(user.id);
 
+        // Generate JWT token (STEP 4.3)
+        const jwtToken = generateAdminJWT(user.id);
+
         res.json({
             success: true,
             user: {
@@ -1059,7 +1064,8 @@ app.post('/api/auth/login', async (req, res) => {
                 name: user.name,
                 isAdmin: user.is_admin
             },
-            sessionToken
+            sessionToken,
+            jwtToken
         });
     } catch (error) {
         console.error('❌ Login error:', error);
@@ -1137,6 +1143,9 @@ app.post('/api/student/login', async (req, res) => {
         // Create student session token
         const sessionToken = await createStudentSessionToken(student.id);
 
+        // Generate JWT token (STEP 4.4)
+        const jwtToken = generateStudentJWT(student.id);
+
         res.json({
             success: true,
             user: {
@@ -1150,7 +1159,8 @@ app.post('/api/student/login', async (req, res) => {
                 remaining: student.remaining,
                 isStudent: true
             },
-            sessionToken
+            sessionToken,
+            jwtToken
         });
     } catch (error) {
         console.error('❌ Student login error:', error);

@@ -341,7 +341,7 @@
     </div>
 
     <script>
-        const API_BASE_URL = 'https://cohort-manager-bao4aij45-osama-eldrienys-projects.vercel.app';
+        const API_BASE_URL = 'http://localhost:3002';
 
         function switchTab(tab) {
             // Update tabs
@@ -394,6 +394,7 @@
 
                 if (response.ok && data.sessionToken) {
                     localStorage.setItem('admin_session_token', data.sessionToken);
+                    localStorage.setItem('admin_jwt_token', data.jwtToken);
                     localStorage.setItem('admin_user', JSON.stringify(data.user));
                     localStorage.setItem('user_type', 'admin');
                     window.location.href = 'index.html';
@@ -432,6 +433,7 @@
 
                 if (response.ok && data.sessionToken) {
                     localStorage.setItem('student_session_token', data.sessionToken);
+                    localStorage.setItem('student_jwt_token', data.jwtToken);
                     localStorage.setItem('student_user', JSON.stringify(data.user));
                     localStorage.setItem('user_type', 'student');
                     window.location.href = 'student-dashboard.html';

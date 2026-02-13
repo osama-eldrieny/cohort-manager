@@ -2,12 +2,36 @@ import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import jwt from 'jsonwebtoken';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 let supabase = null;
 const STUDENTS_JSON = path.join(__dirname, 'students.json');
+
+// JWT Generation Functions (STEP 4.2)
+export function generateAdminJWT(userId) {
+    const payload = {
+        user_id: userId,
+        user_role: 'admin',
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
+    };
+    const token = jwt.sign(payload, process.env.SUPABASE_JWT_SECRET || 'your-secret-key');
+    return token;
+}
+
+export function generateStudentJWT(studentId) {
+    const payload = {
+        student_id: studentId,
+        user_role: 'student',
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
+    };
+    const token = jwt.sign(payload, process.env.SUPABASE_JWT_SECRET || 'your-secret-key');
+    return token;
+}
 
 // Initialize Supabase client
 export function initializeDatabase() {

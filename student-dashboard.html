@@ -7,6 +7,11 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
         :root {
             --primary: #667eea;
             --primary-dark: #764ba2;
@@ -259,6 +264,8 @@
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 18px;
             flex-grow: 1;
+            display: flex;
+            flex-direction: column;
         }
 
         .link-card {
@@ -444,9 +451,6 @@
         }
 
         @media (max-width: 768px) {
-            body {
-                padding-top: 60px;
-            }
 
             .links-grid,
             .videos-grid {
@@ -669,6 +673,36 @@
     <script>
         const API_BASE_URL = 'https://cohort-manager-bao4aij45-osama-eldrienys-projects.vercel.app';
 
+        // ============================================
+        // JWT TOKEN MANAGEMENT
+        // ============================================
+        function getJWTToken() {
+            return localStorage.getItem('student_jwt_token') || localStorage.getItem('admin_jwt_token');
+        }
+
+        function getJWTHeaders() {
+            const token = getJWTToken();
+            if (!token) return {};
+            return {
+                'Authorization': `Bearer ${token}`
+            };
+        }
+
+        // ============================================
+        // API FETCH WRAPPER WITH JWT
+        // ============================================
+        async function apiFetch(url, options = {}) {
+            const headers = {
+                ...getJWTHeaders(),
+                ...options.headers
+            };
+            
+            return fetch(url, {
+                ...options,
+                headers
+            });
+        }
+
         // Check if student is logged in
         function checkStudentAuth() {
             const sessionToken = localStorage.getItem('student_session_token');
@@ -685,7 +719,7 @@
         // Fetch fresh student data from database
         async function fetchFreshStudentData() {
             try {
-                const response = await fetch(`${API_BASE_URL}/api/students`);
+                const response = await apiFetch(`${API_BASE_URL}/api/students`);
                 if (!response.ok) return null;
                 
                 const students = await response.json();
@@ -716,8 +750,17 @@
                 return;
             }
 
-            // Try to fetch fresh data from server
-            const freshStudent = await fetchFreshStudentData();
+            // ⚡ OPTIMIZATION: Start loading cohort resources using CACHED cohort immediately
+            // Don't wait for fresh student data - load both in true parallel
+            const cohortResourcesPromise = loadCohortResources(student.cohort).catch(err => 
+                console.warn('Failed to load cohort resources:', err)
+            );
+
+            // Also fetch fresh student data in parallel
+            const freshStudentPromise = fetchFreshStudentData();
+            
+            // Wait for fresh student data
+            const freshStudent = await freshStudentPromise;
             if (freshStudent) {
                 student = freshStudent;
                 console.log('Loaded fresh student data from server');
@@ -747,10 +790,19 @@
                 document.getElementById('cardPaymentStatus').textContent = 'No fees assigned';
             }
 
-            // Load cohort resources
-            await loadCohortResources(student.cohort);
+            // Show loading skeletons immediately (cohort resources are loading in background)
+            document.getElementById('linksContainer').innerHTML = `
+                <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
+                    ${[1,2,3].map(() => `<div style="height: 50px; background: #f0f0f0; border-radius: 8px; animation: pulse 1.5s infinite;"></div>`).join('')}
+                </div>
+            `;
+            document.getElementById('videosContainer').innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; width: 100%;">
+                    ${[1,2,3,4,5].map(() => `<div style="height: 150px; background: #f0f0f0; border-radius: 8px; animation: pulse 1.5s infinite;"></div>`).join('')}
+                </div>
+            `;
             
-            // Hide loading spinner after data is loaded
+            // Hide loading spinner
             hideLoadingSpinner();
         }
 
@@ -765,7 +817,8 @@
         // Load resources for the student's cohort
         async function loadCohortResources(cohort) {
             try {
-                const response = await fetch(`${API_BASE_URL}/api/cohorts`);
+                // Fetch all cohorts and filter for the student's cohort
+                const response = await apiFetch(`${API_BASE_URL}/api/cohorts`);
                 if (!response.ok) throw new Error('Failed to load cohorts');
 
                 const cohorts = await response.json();
@@ -860,7 +913,7 @@
             const sessionToken = localStorage.getItem('student_session_token');
             
             if (sessionToken) {
-                fetch(`${API_BASE_URL}/api/student/logout`, {
+                apiFetch(`${API_BASE_URL}/api/student/logout`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${sessionToken}`
